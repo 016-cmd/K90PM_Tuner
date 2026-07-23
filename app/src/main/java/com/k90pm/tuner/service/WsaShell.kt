@@ -1,21 +1,25 @@
 package com.k90pm.tuner.service
 
+import rikka.shizuku.Shizuku
+import java.io.BufferedReader
+import java.io.InputStreamReader
+
 /**
- * 内核音频节点执行器
+ * 内核音频节点执行器。
  *
- * 通过 Runtime.exec("su -c ...") 执行 tinymix 命令。
- * 仅当用户在 Magisk/APatch 已授权后调用。
- * APP 自身不主动申请 root——用户手动去面具授权。
+ * 通过 Shizuku 获取 root shell，执行 tinymix 命令。
+ * 与 Operit 相同的机制——ADB 一次授权，不再弹 su 窗口。
  */
 object WsaShell {
 
-    fun ensureRoot(): Boolean = ModuleDetector.checkRoot()
-
     private fun execSync(cmd: String): String {
         return try {
-            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-            val output = proc.inputStream.bufferedReader().readText()
-            proc.waitFor(); proc.destroy()
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val output = reader.readText()
+            process.waitFor()
+            process.destroy()
+            reader.close()
             output.trim()
         } catch (e: Exception) { "" }
     }
@@ -41,5 +45,15 @@ object WsaShell {
         }
         val result = execSync("tinymix $id $normalized 2>&1")
         return !result.contains("Error", true) && !result.contains("invalid", true)
+    }
+
+    fun hasShizukuRoot(): Boolean {
+        return try {
+            if (!Shizuku.pingBinder()) return false
+            val p = Shizuku.newProcess(arrayOf("sh", "-c", "echo OK"), null, null)
+            val out = BufferedReader(InputStreamReader(p.inputStream)).readText().trim()
+            p.waitFor(); p.destroy()
+            out.startsWith("OK")
+        } catch (_: Exception) { false }
     }
 }
