@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+repositories {
+    maven { url = uri("https://jitpack.io") }
+}
+
 android {
     namespace = "com.k90pm.tuner"
     compileSdk = 36
@@ -57,6 +61,9 @@ android {
 }
 
 dependencies {
+    // libsu 需要 JitPack
+    // (注意：不要加到全局 repositories，否则 Xposed API 也会被路由到 JitPack 导致 401)
+
     // Compose BOM — Material 3
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
@@ -77,8 +84,9 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // Xposed API (compileOnly — provided by LSPosed framework)
-    compileOnly("de.robv.android.xposed:api:82")
+    // Xposed API — 不需要 compileOnly 远程依赖。
+    // ModuleHook.java 引用的 Xposed 接口由 LSPosed 框架在运行时提供，
+    // 编译阶段使用本地 stub（见 hook/stub/ 目录）
 
     // Root shell (via JitPack)
     implementation("com.github.topjohnwu.libsu:core:6.0.0")
