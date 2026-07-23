@@ -1,11 +1,11 @@
 package com.k90pm.tuner.service
 
-import java.io.File
+import com.topjohnwu.superuser.Shell
 
 /**
  * K90PM 音质模块检测器
- * 
- * 检查 Magisk/KSU/AP 模块目录中是否安装了 k90pm_audio_plus。
+ *
+ * 使用 root shell 检测，因为 /data/adb 目录仅 root 可读。
  */
 object ModuleDetector {
 
@@ -16,49 +16,51 @@ object ModuleDetector {
     )
 
     /** 是否安装了 K90PM 音质模块 */
-    val isInstalled: Boolean by lazy {
-        MODULE_PATHS.any { path ->
-            val propFile = File(path, "module.prop")
-            propFile.exists() && propFile.canRead()
-        }
-    }
+    @Volatile var isInstalled: Boolean = false
+        private set
 
-    /** 检测到的模块版本名 */
-    val installedVersion: String by lazy {
-        for (path in MODULE_PATHS) {
-            val propFile = File(path, "module.prop")
-            if (propFile.exists()) {
-                propFile.readLines().forEach { line ->
-                    if (line.startsWith("version=")) {
-                        return@lazy line.substringAfter("=").trim()
+    @Volatile var installedVersion: String = "未安装"
+        private set
+
+    @Volatile var edition: String = "未知"
+        private set
+
+    /** 执行检测（需要 root） */
+    fun detect(): Boolean {
+        return try {
+            val result = Shell.cmd(
+                MODULE_PATHS.joinToString("; ") { "test -f $it/module.prop && echo FOUND:$it" }
+            ).exec()
+
+            for (line in result.out) {
+                if (line.startsWith("FOUND:")) {
+                    val foundPath = line.removePrefix("FOUND:")
+                    isInstalled = true
+
+                    // 读取 module.prop 内容
+                    val propResult = Shell.cmd("cat $foundPath/module.prop").exec()
+                    val props = propResult.out.joinToString("\n")
+                    installedVersion = props.lines()
+                        .firstOrNull { it.startsWith("version=") }
+                        ?.substringAfter("=")?.trim() ?: "未知版本"
+
+                    edition = when {
+                        props.contains("Ultra", ignoreCase = true) -> "Ultra"
+                        props.contains("Standard", ignoreCase = true) -> "Standard"
+                        else -> "未知"
                     }
+                    return true
                 }
             }
+            isInstalled = false
+            installedVersion = "未安装"
+            edition = "未知"
+            false
+        } catch (e: Exception) {
+            isInstalled = false
+            installedVersion = "未安装"
+            edition = "未知"
+            false
         }
-        "未安装"
-    }
-
-    /** 检测到的是公开版(Standard)还是私人版(Ultra) */
-    val edition: String by lazy {
-        for (path in MODULE_PATHS) {
-            val propFile = File(path, "module.prop")
-            if (propFile.exists()) {
-                propFile.readLines().forEach { line ->
-                    when {
-                        line.contains("Ultra", ignoreCase = true) -> return@lazy "Ultra"
-                        line.contains("Standard", ignoreCase = true) -> return@lazy "Standard"
-                    }
-                }
-            }
-        }
-        "未知"
-    }
-
-    /**
-     * 刷新检测结果（重新读取文件系统）
-     */
-    fun refresh() {
-        // 懒加载变量在 Kotlin 中只初始化一次，
-        // 如需刷新可使用可变状态（在 ViewModel 中处理）
     }
 }
