@@ -1,28 +1,29 @@
 package com.k90pm.tuner.service
 
-import com.topjohnwu.superuser.Shell
-
 /**
  * 内核音频节点执行器
  *
- * 通过 libsu (root) 执行 tinymix 命令，
+ * 通过 Runtime.exec("su -c ...") 执行 tinymix 命令，
  * 直接读写 WSA/WSA2 功放芯片寄存器。
+ * 不依赖 libsu（避免触发 su 授权弹窗）。
  */
 object WsaShell {
 
-    /** 检查 root shell 是否可用（不主动申请权限，仅检测） */
-    fun ensureRoot(): Boolean = try {
-        Shell.getShell().isRoot
-    } catch (_: Exception) { false }
+    /** 检查 root shell 是否可用（只在已有授权时通过，不弹窗） */
+    fun ensureRoot(): Boolean {
+        return ModuleDetector.checkRootAccess()
+    }
 
     /**
-     * 同步执行 shell 命令并返回 stdout 字符串。
-     * 使用 libsu root shell。
+     * 同步执行 root 命令并返回 stdout。
      */
     private fun execSync(cmd: String): String {
         return try {
-            val job = Shell.getShell().newJob().add(cmd).to(ArrayList(), ArrayList()).exec()
-            job.out.joinToString("\n").trim()
+            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
+            val output = proc.inputStream.bufferedReader().readText()
+            proc.waitFor()
+            proc.destroy()
+            output.trim()
         } catch (e: Exception) {
             ""
         }
@@ -59,10 +60,6 @@ object WsaShell {
 
     /**
      * 设置 tinymix 控件值。
-     *
-     * @param id    控件 ID
-     * @param value 值 — INT 传数字字符串如 "100"，BOOL 传 "1"/"0" 或 "On"/"Off"，
-     *              ENUM 传枚举值如 "G_18_DB"
      */
     fun setTinymix(id: Int, value: String): Boolean {
         val normalized = when {
