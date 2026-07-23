@@ -12,16 +12,10 @@ import java.io.InputStreamReader
  */
 object WsaShell {
 
+    /** 执行 shell 命令，返回 stdout，失败返回 "" */
     private fun execSync(cmd: String): String {
-        return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = reader.readText()
-            process.waitFor()
-            process.destroy()
-            reader.close()
-            output.trim()
-        } catch (e: Exception) { "" }
+        if (!Shizuku.pingBinder()) return ""
+        return Shizuku.executeCommand(cmd)
     }
 
     fun getTinymix(id: Int): String {
@@ -49,11 +43,7 @@ object WsaShell {
 
     fun hasShizukuRoot(): Boolean {
         return try {
-            if (!Shizuku.pingBinder()) return false
-            val p = Shizuku.newProcess(arrayOf("sh", "-c", "echo OK"), null, null)
-            val out = BufferedReader(InputStreamReader(p.inputStream)).readText().trim()
-            p.waitFor(); p.destroy()
-            out.startsWith("OK")
+            Shizuku.pingBinder() && Shizuku.executeCommand("echo OK").trim().startsWith("OK")
         } catch (_: Exception) { false }
     }
 }
