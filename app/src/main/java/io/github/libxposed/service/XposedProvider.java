@@ -4,16 +4,43 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
 
 /**
- * Stub XposedProvider — 仅用于 LSPosed 模块发现。
- * LSPosed 扫描所有声明此 provider 的 APK 作为候选模块。
- * 实际 Hook 逻辑仍通过 xposed_init / java_init.list 入口加载。
+ * Stub XposedProvider — LSPosed 模块发现入口。
+ *
+ * LSPosed 扫描声明此 provider 的 APK，然后通过
+ * {@code call("SendBinder", null, extras)} 传递 Binder。
+ * 我们接收 Binder 但不做进一步处理（本模块不需要 Hook 系统进程，
+ * 实际控制通过 root shell 直接操作 tinymix）。
+ *
+ * 关键：必须实现 call() 方法，否则 LSPosed 认为模块不可用。
  */
 public class XposedProvider extends ContentProvider {
+
+    private static final String TAG = "K90PM_XposedProvider";
+    private static final String SEND_BINDER = "SendBinder";
+
     @Override
     public boolean onCreate() {
+        Log.i(TAG, "LSPosed module provider initialized");
         return true;
+    }
+
+    @Override
+    public Bundle call(String method, String arg, Bundle extras) {
+        if (SEND_BINDER.equals(method) && extras != null) {
+            IBinder binder = extras.getBinder("binder");
+            if (binder != null) {
+                Log.i(TAG, "LSPosed binder received, module activated");
+                // 不调用 XposedServiceHelper，因为我们不需要 Hook 接口
+                // 仅需标记：provider.call() 返回非空表示模块存活
+            }
+            return new Bundle(); // 返回空 Bundle 表示接收成功
+        }
+        return null;
     }
 
     @Override
