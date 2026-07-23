@@ -17,7 +17,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.github.libxposed.annotation.SinceApi;
 
 @SuppressWarnings("unused")
 public final class XposedService {
@@ -104,7 +103,7 @@ public final class XposedService {
     /**
      * Callback interface for hot reload requests.
      */
-    @SinceApi(API_102)
+    
     public interface HotReloadCallback {
         /**
          * Called when hot reload completes or fails.
@@ -265,7 +264,7 @@ public final class XposedService {
      * @throws UnsupportedOperationException If the framework does not support service API 102
      * @throws ServiceException              If the service is dead or an error occurred
      */
-    @SinceApi(API_102)
+    
     @NonNull
     public List<HookedTarget> getRunningTargets() {
         requireApi(API_102);
@@ -315,7 +314,7 @@ public final class XposedService {
      * @throws ServiceException  If the service is dead or an error occurred
      * @throws SecurityException If the target is invalid or no longer belongs to this module
      */
-    @SinceApi(API_102)
+    
     public void hotReloadModule(@NonNull HookedTarget target, @Nullable Bundle data,
                                 @NonNull HotReloadCallback callback) {
         requireApi(API_102);
