@@ -12,6 +12,9 @@ import java.io.InputStreamReader
  */
 object WsaShell {
 
+    /** 对外暴露的执行命令接口（供 ModuleDetector 等使用） */
+    fun execSyncCmd(cmd: String): String = execSync(cmd)
+
     private fun execSync(cmd: String): String {
         return try {
             val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
