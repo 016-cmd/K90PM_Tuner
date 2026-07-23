@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
  *
  * 管理：模块检测状态、WSA 控件实时值、root 权限状态
  *
- * 重要：APP 启动时不主动调用 su！用户需手动在 Magisk 授权后回 APP 点击"激活"。
+ * 重要：APP 启动时不主动调用任何 su/root！通过 Shizuku 机制静默获取 root。
  */
 class MainViewModel : ViewModel() {
 
@@ -62,13 +62,13 @@ class MainViewModel : ViewModel() {
 
     /**
      * 用户手动点击"激活"按钮触发。
-     * 调用 su 检测 root（如果在面具已授权则不弹窗）。
+     * 通过 Shizuku 检测 root——不弹 su 窗口。
      */
     fun requestRootAndDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
 
-            val rootOk = ModuleDetector.checkRoot()
+            val rootOk = WsaShell.hasShizukuRoot()
             _hasRoot.value = rootOk
 
             if (rootOk) {
@@ -85,7 +85,7 @@ class MainViewModel : ViewModel() {
                 if (canEdit) { refreshAllControls(); startAutoRefresh() }
             } else {
                 _moduleStatus.update {
-                    it.copy(isChecking = false, version = "请先去面具永久授权本APP")
+                    it.copy(isChecking = false, version = "请先开启Shizuku授权")
                 }
             }
         }
