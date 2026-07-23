@@ -61,41 +61,31 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * 用户手动触发：检测 root 状态 + 完整检测
-     * 不调用 su！仅检测是否能读取 root-only 目录。
-     * 用户需先自己去 Magisk/APatch 授权，然后回来点此按钮。
+     * 用户手动点击"激活"按钮触发。
+     * 调用 su 检测 root（如果在面具已授权则不弹窗）。
      */
     fun requestRootAndDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
 
-            // 不调 su，只检查能否读取 root-only 目录
-            val hasRootNow = ModuleDetector.checkRootByFileAccess()
-            _hasRoot.value = hasRootNow
+            val rootOk = ModuleDetector.checkRoot()
+            _hasRoot.value = rootOk
 
-            if (hasRootNow) {
-                val installed = ModuleDetector.detectByFileAccess()
-                val version = if (installed) ModuleDetector.installedVersion else "未安装"
-                val edition = if (installed) ModuleDetector.edition else "-"
-                val lsposedOn = ModuleDetector.isLsposedEnabled
-
+            if (rootOk) {
+                ModuleDetector.detect()
                 _moduleStatus.update {
                     it.copy(
-                        isInstalled = installed,
-                        version = version,
-                        edition = edition,
-                        isLsposedEnabled = lsposedOn,
+                        isInstalled = ModuleDetector.isInstalled,
+                        version = ModuleDetector.installedVersion,
+                        edition = ModuleDetector.edition,
+                        isLsposedEnabled = ModuleDetector.isLsposedEnabled,
                         isChecking = false
                     )
                 }
-
-                if (canEdit) {
-                    refreshAllControls()
-                    startAutoRefresh()
-                }
+                if (canEdit) { refreshAllControls(); startAutoRefresh() }
             } else {
                 _moduleStatus.update {
-                    it.copy(isChecking = false, version = "请先去面具授权Root")
+                    it.copy(isChecking = false, version = "请先去面具永久授权本APP")
                 }
             }
         }
