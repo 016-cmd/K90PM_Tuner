@@ -28,9 +28,18 @@ object ModuleDetector {
         }
     }
 
-    /** 通过 strings 读 LSPosed 数据库检查模块启用状态 */
+    /** 检测 LSPosed 是否已加载本模块 */
     fun checkLsposedEnabled() {
         isLsposedEnabled = try {
+            // 方式1: 检查 ModuleHook 写入的标记文件
+            if (java.io.File("/data/local/tmp/xposed_loaded.marker").exists()) {
+                return@try true
+            }
+            // 方式2: 检查 app 内部 fallback 标记
+            if (java.io.File("/data/data/com.k90pm.tuner/files/xposed_loaded.marker").exists()) {
+                return@try true
+            }
+            // 方式3: strings 读 LSPosed 数据库
             val db = "/data/adb/lspd/config/modules_config.db"
             val out = WsaShell.execSyncCmd("strings $db")
             out.contains("com.k90pm.tuner")
