@@ -1,14 +1,10 @@
 package com.k90pm.tuner.service
 
 import com.topjohnwu.superuser.Shell
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 /**
  * 内核音频节点执行器
- * 
+ *
  * 通过 libsu (root) 执行 tinymix 命令，
  * 直接读写 WSA/WSA2 功放芯片寄存器。
  */
@@ -19,15 +15,11 @@ object WsaShell {
         Shell.getShell().isRoot
 
     /**
-     * 执行 shell 命令，返回 stdout 字符串。
-     * 静默执行，不抛异常。
+     * 同步执行 shell 命令并返回 stdout 字符串。
      */
-    suspend fun exec(cmd: String): String = withContext(Dispatchers.IO) {
-        try {
-            val result = Shell.getShell().newJob()
-                .add(cmd)
-                .to(ArrayList<String>(), null)
-                .exec()
+    private fun execSync(cmd: String): String {
+        return try {
+            val result = Shell.cmd(cmd).exec()
             result.out.joinToString("\n").trim()
         } catch (e: Exception) {
             ""
@@ -35,42 +27,51 @@ object WsaShell {
     }
 
     /**
-     * 读取 tinymix 控件的当前选中值。
-     * tinymix ID 输出格式: "控件名: >值 其他可选值..." 或 "控件名: 值"
-     * 返回 ">" 标记的值（当前选中项）或整行。
+     * 读取 tinymix 控件的当前值。
+     *
+     * 输出格式:
+     *   INT:  "名称: 84 (dsrange 0->124)"     → 返回 "84"
+     *   BOOL: "名称: On" 或 "名称: Off"       → 返回 "On" / "Off"
+     *   ENUM: "名称: >选中 其他..."           → 返回 "选中"
      */
-    suspend fun getTinymix(id: Int): String {
-        val raw = exec("tinymix $id 2>/dev/null")
+    fun getTinymix(id: Int): String {
+        val raw = execSync("tinymix $id 2>/dev/null")
         if (raw.isBlank()) return "N/A"
 
-        // 提取 ">" 标记的值
+        // ENUM: 查找 ">" 标记
         val arrowIdx = raw.indexOf('>')
-        return if (arrowIdx >= 0) {
-            val afterArrow = raw.substring(arrowIdx + 1)
-            afterArrow.split(" ", "\t").firstOrNull { it.isNotBlank() } ?: raw
-        } else {
-            // 没有 ">" → 可能是 On/Off 型，取冒号后的值
-            raw.substringAfter(":").trim().let {
-                it.takeWhile { c -> c != '\n' && c != '\r' }
-            }
+        if (arrowIdx >= 0) {
+            val after = raw.substring(arrowIdx + 1)
+            return after.takeWhile { it != ' ' && it != '\t' && it != '\n' }
         }
+
+        // INT / BOOL: 取冒号后、空格或换行前的值
+        val colonIdx = raw.indexOf(':')
+        if (colonIdx >= 0) {
+            val afterColon = raw.substring(colonIdx + 1).trimStart()
+            return afterColon.takeWhile { it != ' ' && it != '\t' && it != '(' && it != '\n' }
+        }
+
+        return raw
     }
 
     /**
-     * 设置 tinymix 控件的值。
-     * @param id 控件 ID
-     * @param value 值（整数或字符串如 "On"/"Off"）
+     * 设置 tinymix 控件值。
+     *
+     * @param id    控件 ID
+     * @param value 值 — INT 传数字字符串如 "100"，BOOL 传 "1"/"0" 或 "On"/"Off"，
+     *              ENUM 传枚举值如 "G_18_DB"
      */
-    suspend fun setTinymix(id: Int, value: String): Boolean {
-        val result = exec("tinymix $id '$value' 2>/dev/null")
-        // tinymix 成功时通常无输出，有输出可能是错误
-        return result.isEmpty() || !result.contains("Error")
-    }
-
-    /**
-     * 获取控件详细信息（含可选值列表）
-     */
-    suspend fun getTinymixDetail(id: Int): String {
-        return exec("tinymix $id 2>/dev/null")
+    fun setTinymix(id: Int, value: String): Boolean {
+        // ENUM 用字符串值，其他用纯数字格式
+        val normalized = when {
+            // BOOL 文字形式 → 转数字
+            value.equals("On", ignoreCase = true) -> "1"
+            value.equals("Off", ignoreCase = true) -> "0"
+            else -> value
+        }
+        val result = execSync("tinymix $id $normalized 2>&1")
+        // 成功时无输出或有 "Error" 以外的回显
+        return !result.contains("Error", ignoreCase = true) && !result.contains("invalid", ignoreCase = true)
     }
 }
