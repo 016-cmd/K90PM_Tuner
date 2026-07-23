@@ -1,77 +1,28 @@
 package io.github.libxposed.service;
 
 import android.os.IBinder;
-import android.util.Log;
 
-import androidx.annotation.NonNull;
-
-import java.util.HashSet;
-import java.util.Set;
-
-@SuppressWarnings("unused")
+/**
+ * 极简 XposedServiceHelper — 仅跟踪 lspd Binder 连接状态。
+ * 当 lspd 通过 XposedProvider.call("SendBinder") 发送 Binder 时，
+ * 标记 isConnected=true，Binder 死亡时标记 false。
+ */
 public final class XposedServiceHelper {
 
-    /**
-     * Callback interface for Xposed service.
-     */
-    public interface OnServiceListener {
-        /**
-         * Callback when the service is connected.<br/>
-         * This method could be called multiple times if multiple Xposed frameworks exist.
-         *
-         * @param service Service instance
-         */
-        void onServiceBind(@NonNull XposedService service);
+    private static volatile boolean sConnected = false;
 
-        /**
-         * Callback when the service is dead.
-         */
-        void onServiceDied(@NonNull XposedService service);
+    /** APP 层调用：检查 lspd 是否发送过 Binder（模块是否被 LSPosed 加载） */
+    public static boolean isConnected() {
+        return sConnected;
     }
-
-    private static final String TAG = "XposedServiceHelper";
-    private static final Set<XposedService> mCache = new HashSet<>();
-    private static OnServiceListener mListener = null;
 
     static void onBinderReceived(IBinder binder) {
         if (binder == null) return;
-        synchronized (mCache) {
-            try {
-                var service = new XposedService(IXposedService.Stub.asInterface(binder));
-                if (mListener == null) {
-                    mCache.add(service);
-                } else {
-                    binder.linkToDeath(() -> mListener.onServiceDied(service), 0);
-                    mListener.onServiceBind(service);
-                }
-            } catch (Throwable t) {
-                Log.e(TAG, "onBinderReceived", t);
-            }
-        }
-    }
-
-    /**
-     * Register a ServiceListener to receive service binders from Xposed frameworks.<br/>
-     * This method should only be called once.
-     *
-     * @param listener Listener to register
-     */
-    public static void registerListener(OnServiceListener listener) {
-        synchronized (mCache) {
-            mListener = listener;
-            if (!mCache.isEmpty()) {
-                for (var it = mCache.iterator(); it.hasNext(); ) {
-                    try {
-                        var service = it.next();
-                        service.asInterface().asBinder().linkToDeath(() -> mListener.onServiceDied(service), 0);
-                        mListener.onServiceBind(service);
-                    } catch (Throwable t) {
-                        Log.e(TAG, "registerListener", t);
-                        it.remove();
-                    }
-                }
-                mCache.clear();
-            }
+        try {
+            sConnected = true;
+            binder.linkToDeath(() -> sConnected = false, 0);
+        } catch (Throwable ignored) {
+            // Binder 发送太快或已经死亡
         }
     }
 }
