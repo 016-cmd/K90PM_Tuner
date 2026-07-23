@@ -29,7 +29,7 @@
             android:value="K90 Pro Max WSA功放寄存器实时控制" />
         <meta-data
             android:name="xposedminversion"
-            android:value="82" />
+            android:value="93" />
 
         <activity
             android:name=".app.MainActivity"
