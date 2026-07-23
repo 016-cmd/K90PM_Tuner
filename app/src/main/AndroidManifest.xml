@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 网络（未来 OTA 等） -->
+    <!-- 强制保留 meta-data（AGP 可能 strip 非标准条目） -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- 前台服务（Shell 守护） -->
@@ -20,15 +21,19 @@
         android:enableOnBackInvokedCallback="true">
 
         <!-- Xposed 模块标识 (LSPosed 通过 meta-data 识别) -->
+        <!-- tools:node="merge" 防止 AGP 8.x 静默移除 -->
         <meta-data
             android:name="xposedmodule"
-            android:value="true" />
+            android:value="true"
+            tools:node="merge" />
         <meta-data
             android:name="xposeddescription"
-            android:value="K90 Pro Max WSA功放寄存器实时控制" />
+            android:value="K90 Pro Max WSA功放寄存器实时控制"
+            tools:node="merge" />
         <meta-data
             android:name="xposedminversion"
-            android:value="93" />
+            android:value="93"
+            tools:node="merge" />
 
         <activity
             android:name=".app.MainActivity"
