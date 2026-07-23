@@ -29,11 +29,6 @@ public class ModuleHook extends XposedModule {
         // 不 Hook 特定应用。模块通过 root shell 操作 tinymix。
     }
 
-    @Override
-    public void onSystemServerLoaded(XposedModuleInterface.SystemServerLoadedParam param) {
-        // 系统服务加载时不操作
-    }
-
     private static void writeMarker() {
         try {
             File marker = new File("/data/local/tmp", MARKER_NAME);
