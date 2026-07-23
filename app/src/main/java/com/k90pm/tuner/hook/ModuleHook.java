@@ -3,7 +3,7 @@ package com.k90pm.tuner.hook;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.IXposedHookZygoteInit.StartupParam;
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
+import de.robv.android.xposed.XC_LoadPackage.LoadPackageParam;
 
 /**
  * K90PM Tuner — Xposed 入口（纯 Java，LSPosed 框架要求）
