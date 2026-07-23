@@ -1,5 +1,6 @@
 package com.k90pm.tuner.ui
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.k90pm.tuner.service.*
@@ -9,14 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/**
- * 主 ViewModel — K90PM 音质模块伴生 APP。
- *
- * 管理：Magisk 模块检测状态、WSA 控件实时值、root 权限状态。
-  */
 class MainViewModel : ViewModel() {
 
-    // ── 模块检测状态 ──
     data class ModuleStatus(
         val isInstalled: Boolean = false,
         val version: String = "检测中...",
@@ -27,42 +22,49 @@ class MainViewModel : ViewModel() {
     private val _moduleStatus = MutableStateFlow(ModuleStatus())
     val moduleStatus: StateFlow<ModuleStatus> = _moduleStatus.asStateFlow()
 
-    // ── WSA 控件实时值 ──
     private val _controlValues = MutableStateFlow<Map<Int, String>>(emptyMap())
     val controlValues: StateFlow<Map<Int, String>> = _controlValues.asStateFlow()
 
-    // ── Root 状态 ──
     private val _hasRoot = MutableStateFlow<Boolean?>(null)
     val hasRoot: StateFlow<Boolean?> = _hasRoot.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val prefs by lazy { AppContextHolder.ctx.getSharedPreferences("k90pm_tuner", Context.MODE_PRIVATE) }
+
     init {
-        // 启动时自动尝试检测 Root（用户已在 Magisk 永久授权则不弹窗）
-        autoDetect()
+        if (prefs.getBoolean("root_granted", false)) {
+            // 之前已授权 → 静默 su 验证；Magisk 永久授权不弹窗
+            autoDetect()
+        } else {
+            // 首次使用 → 不调 su，等用户手动激活
+            _moduleStatus.update { it.copy(isChecking = false, version = "点击下方按钮激活") }
+        }
     }
 
-    /** 启动时静默检测：Root 已授权则自动加载，否则等用户手动激活 */
     private fun autoDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             val rootOk = WsaShell.hasRoot()
             _hasRoot.value = rootOk
             if (rootOk) {
+                prefs.edit().putBoolean("root_granted", true).apply()
                 doDetectAndLoad()
             } else {
+                // 权限被收回
+                prefs.edit().putBoolean("root_granted", false).apply()
                 _moduleStatus.update { it.copy(isChecking = false, version = "点击下方按钮激活") }
             }
         }
     }
 
-    /** 用户手动点击激活按钮 */
     fun requestRootAndDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
             val rootOk = WsaShell.hasRoot()
             _hasRoot.value = rootOk
             if (rootOk) {
+                prefs.edit().putBoolean("root_granted", true).apply()
                 doDetectAndLoad()
             } else {
                 _moduleStatus.update { it.copy(isChecking = false, version = "请先在 Magisk 中授权 Root") }
@@ -73,12 +75,7 @@ class MainViewModel : ViewModel() {
     private fun doDetectAndLoad() {
         ModuleDetector.detect()
         _moduleStatus.update {
-            it.copy(
-                isInstalled = ModuleDetector.isInstalled,
-                version = ModuleDetector.installedVersion,
-                edition = ModuleDetector.edition,
-                isChecking = false
-            )
+            it.copy(isInstalled = ModuleDetector.isInstalled, version = ModuleDetector.installedVersion, edition = ModuleDetector.edition, isChecking = false)
         }
         if (canEdit) { refreshAllControls(); startAutoRefresh() }
     }
