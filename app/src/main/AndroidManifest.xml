@@ -12,6 +12,9 @@
     <!-- 查询 Magisk/KSU 模块安装状态 -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
+    <!-- Shizuku (静默 root) -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
