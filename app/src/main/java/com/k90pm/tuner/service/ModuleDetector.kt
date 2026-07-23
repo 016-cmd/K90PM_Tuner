@@ -32,6 +32,17 @@ object ModuleDetector {
         private set
 
     /**
+     * 无 root 检测 LSPosed 标记文件是否存在
+     * 使用 Java File API（同 uid 下的文件可读）
+     */
+    fun checkMarkerNoRoot(): Boolean {
+        return try {
+            val marker = java.io.File(XPOSED_MARKER)
+            marker.exists()
+        } catch (_: Exception) { false }
+    }
+
+    /**
      * 检查是否可访问 root——用最轻量方式，
      * 不触发 su 弹窗（仅在已授权时通过）。
      */
