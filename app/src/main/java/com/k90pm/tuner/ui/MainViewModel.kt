@@ -21,6 +21,7 @@ class MainViewModel : ViewModel() {
         val isInstalled: Boolean = false,
         val version: String = "检测中...",
         val edition: String = "-",
+        val isLsposedEnabled: Boolean = false,
         val isChecking: Boolean = true
     )
 
@@ -28,7 +29,6 @@ class MainViewModel : ViewModel() {
     val moduleStatus: StateFlow<ModuleStatus> = _moduleStatus.asStateFlow()
 
     // ── WSA 控件实时值 ──
-    // tinymixId → 当前值字符串
     private val _controlValues = MutableStateFlow<Map<Int, String>>(emptyMap())
     val controlValues: StateFlow<Map<Int, String>> = _controlValues.asStateFlow()
 
@@ -45,7 +45,7 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * 检测 K90PM 模块安装状态
+     * 检测 K90PM 模块安装状态 + LSPosed 启用状态
      */
     fun checkModule() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -54,12 +54,14 @@ class MainViewModel : ViewModel() {
             val installed = ModuleDetector.detect()
             val version = if (installed) ModuleDetector.installedVersion else "未安装"
             val edition = if (installed) ModuleDetector.edition else "-"
+            val lsposedOn = ModuleDetector.isLsposedEnabled
 
             _moduleStatus.update {
                 it.copy(
                     isInstalled = installed,
                     version = version,
                     edition = edition,
+                    isLsposedEnabled = lsposedOn,
                     isChecking = false
                 )
             }
@@ -67,8 +69,8 @@ class MainViewModel : ViewModel() {
             // 检测 root
             _hasRoot.value = WsaShell.ensureRoot()
 
-            // 模块已安装且有 root → 刷新一次 + 开始轮询（PBR/VBAT 播放状态会变）
-            if (installed && _hasRoot.value) {
+            // 三方条件全满足 → 开始管控
+            if (canEdit) {
                 refreshAllControls()
                 startAutoRefresh()
             }
@@ -132,8 +134,11 @@ class MainViewModel : ViewModel() {
         _controlValues.value[id] ?: "—"
 
     /**
-     * 控件是否可编辑（模块已安装 + 有 root）
+     * 控件是否可编辑
+     * 三重门：模块已安装 且 LSPosed 已启用 且 root 可用
      */
     val canEdit: Boolean
-        get() = _moduleStatus.value.isInstalled && _hasRoot.value
+        get() = _moduleStatus.value.isInstalled
+                && _moduleStatus.value.isLsposedEnabled
+                && _hasRoot.value
 }
