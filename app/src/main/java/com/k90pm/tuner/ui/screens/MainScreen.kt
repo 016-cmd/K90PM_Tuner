@@ -73,7 +73,8 @@ fun MainScreen(
             ModuleStatusCard(
                 status = moduleStatus,
                 hasRoot = hasRoot,
-                onRefresh = { viewModel.checkModule() }
+                onRefresh = { viewModel.checkModule() },
+                onActivate = { viewModel.requestRootAndDetect() }
             )
 
             Spacer(Modifier.height(4.dp))
