@@ -43,42 +43,21 @@ class MainViewModel : ViewModel() {
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        // 启动时只做不需要 root 的初步检测
-        checkModuleNoRoot()
+        // 不碰任何文件系统 / su / root
+        // 仅设置初始状态，等待用户手动点按钮
+        _moduleStatus.update {
+            it.copy(isChecking = false, version = "点击下方按钮激活")
+        }
     }
 
     /**
-     * 刷新按钮：已有 root 则重新完整检测，否则仅无 root 检测
+     * 刷新按钮：已有 root 则重新完整检测，否则提示用户先激活
      */
     fun checkModule() {
         if (_hasRoot.value == true) {
             requestRootAndDetect()
-        } else {
-            checkModuleNoRoot()
         }
-    }
-
-    /**
-     * 启动时检测（不碰 su，不弹窗）
-     */
-    private fun checkModuleNoRoot() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _moduleStatus.update { it.copy(isChecking = true) }
-
-            // 仅检测 LSPosed 是否已加载过 Hook（读标记文件）
-            // 如果 LSPosed 从未加载，标记文件不存在
-            val lsposedOn = ModuleDetector.checkMarkerNoRoot()
-
-            _moduleStatus.update {
-                it.copy(
-                    isInstalled = false,          // 需要 root 才能确认模块路径
-                    version = "需授权后检测",
-                    edition = "-",
-                    isLsposedEnabled = lsposedOn,
-                    isChecking = false
-                )
-            }
-        }
+        // 否则不做事——用户需要先点"激活"按钮
     }
 
     /**
