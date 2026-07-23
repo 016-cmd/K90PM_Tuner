@@ -67,9 +67,10 @@ class MainViewModel : ViewModel() {
             // 检测 root
             _hasRoot.value = WsaShell.ensureRoot()
 
-            // 模块已安装且有 root → 刷新一次控件初始值（开关状态）
+            // 模块已安装且有 root → 刷新一次 + 开始轮询（PBR/VBAT 播放状态会变）
             if (installed && _hasRoot.value) {
                 refreshAllControls()
+                startAutoRefresh()
             }
         }
     }
