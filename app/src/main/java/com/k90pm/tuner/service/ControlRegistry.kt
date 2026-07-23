@@ -40,8 +40,9 @@ enum class ControlCategory(val displayName: String, val order: Int) {
     PBR("低音辐射器", 2),
     POWER("电源管理", 3),
     VOLUME("数字音量", 4),
-    PROTECT("保护与限幅", 5),
-    ROUTING("路由配置", 6)
+    DAC_VOLUME("DAC 数字音量", 5),
+    PROTECT("保护与限幅", 6),
+    ROUTING("路由配置", 7)
 }
 
 /**
@@ -98,6 +99,29 @@ object ControlRegistry {
         WsaControl(275, "Softclip", WsaChip.WSA2, "RX1", ControlType.BOOL, ControlCategory.PROTECT),
 
         WsaControl(272, "SPKR/RECV 路由", WsaChip.WSA2, "-", ControlType.BOOL, ControlCategory.ROUTING),
+
+        // ── DAC 端数字音量（RX_RX0/1/2） ──
+        // 这些是 DAC 输出端的数字音量，控制送入 WSA 功放的信号电平。
+        // 模块 mixer_paths 中 speaker 路由下 RX_RX2 = 120，WSA2 低音单元核心依赖此控件。
+        WsaControl(118, "DAC 数字音量", WsaChip.WSA, "RX0", ControlType.INT, ControlCategory.DAC_VOLUME,
+            "DAC RX0 输出电平", range = 0..124),
+        WsaControl(119, "DAC 数字音量", WsaChip.WSA, "RX1", ControlType.INT, ControlCategory.DAC_VOLUME,
+            "DAC RX1 输出电平", range = 0..124),
+        WsaControl(120, "DAC 数字音量", WsaChip.WSA2, "RX2", ControlType.INT, ControlCategory.DAC_VOLUME,
+            "DAC RX2 输出电平 → WSA2 低音单元", range = 0..124),
+
+        // ── 数字静音 ──
+        WsaControl(203, "数字静音", WsaChip.WSA, "RX0", ControlType.BOOL, ControlCategory.PROTECT),
+        WsaControl(204, "数字静音", WsaChip.WSA, "RX1", ControlType.BOOL, ControlCategory.PROTECT),
+        WsaControl(278, "数字静音", WsaChip.WSA2, "RX0", ControlType.BOOL, ControlCategory.PROTECT),
+        WsaControl(279, "数字静音", WsaChip.WSA2, "RX1", ControlType.BOOL, ControlCategory.PROTECT),
+
+        // ── COMP 开关（压缩器旁路） ──
+        WsaControl(207, "COMP 开关", WsaChip.WSA, "1", ControlType.BOOL, ControlCategory.GAIN,
+            "压缩器旁路开关"),
+        WsaControl(208, "COMP 开关", WsaChip.WSA, "2", ControlType.BOOL, ControlCategory.GAIN),
+        WsaControl(282, "COMP 开关", WsaChip.WSA2, "1", ControlType.BOOL, ControlCategory.GAIN),
+        WsaControl(283, "COMP 开关", WsaChip.WSA2, "2", ControlType.BOOL, ControlCategory.GAIN),
     )
 
     /** 按类别分组 */
