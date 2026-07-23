@@ -54,7 +54,7 @@ class MainViewModel : ViewModel() {
             // 给 lsposed 一点加载时间
             delay(300)
 
-            val installed = ModuleDetector.isInstalled
+            val installed = ModuleDetector.detect()
             val version = if (installed) ModuleDetector.installedVersion else "未安装"
             val edition = if (installed) ModuleDetector.edition else "-"
 
