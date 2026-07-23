@@ -80,8 +80,8 @@ dependencies {
     // Xposed API (compileOnly — provided by LSPosed framework)
     compileOnly("de.robv.android.xposed:api:82")
 
-    // Root shell
-    implementation("com.topjohnwu.libsu:core:5.2.2")
+    // Root shell (via JitPack)
+    implementation("com.github.topjohnwu.libsu:core:6.0.0")
 
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
