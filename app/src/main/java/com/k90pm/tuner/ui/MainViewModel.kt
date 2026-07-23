@@ -85,8 +85,7 @@ class MainViewModel : ViewModel() {
                 delay(2000) // 每 2 秒刷新一次控件值
                 val newValues = mutableMapOf<Int, String>()
                 ControlRegistry.all.forEach { ctrl ->
-                    val v = WsaShell.getTinymix(ctrl.tinymixId)
-                    newValues[ctrl.tinymixId] = v
+                    newValues[ctrl.tinymixId] = WsaShell.getTinymix(ctrl.tinymixId)
                 }
                 _controlValues.update { newValues }
             }
@@ -102,19 +101,12 @@ class MainViewModel : ViewModel() {
      * 刷新所有 WSA 控件值
      */
     fun refreshAllControls() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _isRefreshing.value = true
             val newValues = mutableMapOf<Int, String>()
-
-            coroutineScope {
-                ControlRegistry.all.forEach { ctrl ->
-                    launch {
-                        val value = WsaShell.getTinymix(ctrl.tinymixId)
-                        newValues[ctrl.tinymixId] = value
-                    }
-                }
+            ControlRegistry.all.forEach { ctrl ->
+                newValues[ctrl.tinymixId] = WsaShell.getTinymix(ctrl.tinymixId)
             }
-
             _controlValues.update { newValues }
             _isRefreshing.value = false
         }
