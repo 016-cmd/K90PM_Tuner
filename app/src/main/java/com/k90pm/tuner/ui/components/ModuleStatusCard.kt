@@ -124,25 +124,25 @@ fun ModuleStatusCard(
                 if (hasRoot == null || hasRoot == false) {
                     Spacer(Modifier.height(10.dp))
                     Button(
-                        onClick = onActivate,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(
-                            Icons.Rounded.Security,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "授权 Root 并激活",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    onClick = onActivate,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Rounded.Security,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "通过 Shizuku 激活",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
                 }
 
                 // ── 状态提示 ──
@@ -150,8 +150,8 @@ fun ModuleStatusCard(
                     status.isInstalled && status.isLsposedEnabled && hasRoot == true -> null
                     !status.isInstalled && hasRoot == true -> "未检测到 K90PM 音质模块\n寄存器调节功能已锁定"
                     !status.isLsposedEnabled && hasRoot == true -> "请在 LSPosed 管理器中启用本模块\n否则无法控制 WSA 寄存器"
-                    hasRoot == false -> "请在 Magisk 中授权本 APP 的 Root 权限\n然后返回这里点击「激活」按钮"
-                    hasRoot == null -> "点击上方按钮，在 Magisk 弹窗中授权\n即可激活 WSA 寄存器控制"
+                    hasRoot == false -> "请开启 Shizuku 并授权本 APP\n然后返回这里点击「激活」按钮"
+                    hasRoot == null -> "首次使用请先安装 Shizuku\n点击上方按钮激活 WSA 寄存器控制"
                     else -> null
                 }
 
