@@ -80,9 +80,6 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // libxposed service (完整 API，含 isModuleActive)
-    compileOnly("io.github.libxposed:service:1.2.1")
-
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
