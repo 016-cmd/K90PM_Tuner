@@ -10,17 +10,9 @@ import com.topjohnwu.superuser.Shell
  */
 object WsaShell {
 
-    /** 确保 root shell 可用并已初始化 */
-    private val rootShell: Shell by lazy {
-        Shell.getShell().apply {
-            // 先 ping 一下确保 root shell 就绪
-            if (!isRoot) throw IllegalStateException("Root shell unavailable")
-        }
-    }
-
-    /** 确保 root shell 可用 */
+    /** 检查 root shell 是否可用（不主动申请权限，仅检测） */
     fun ensureRoot(): Boolean = try {
-        rootShell.isRoot
+        Shell.getShell().isRoot
     } catch (_: Exception) { false }
 
     /**
@@ -29,7 +21,7 @@ object WsaShell {
      */
     private fun execSync(cmd: String): String {
         return try {
-            val job = rootShell.newJob().add(cmd).to(ArrayList(), ArrayList()).exec()
+            val job = Shell.getShell().newJob().add(cmd).to(ArrayList(), ArrayList()).exec()
             job.out.joinToString("\n").trim()
         } catch (e: Exception) {
             ""
