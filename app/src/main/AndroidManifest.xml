@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <!-- 强制保留 meta-data（AGP 可能 strip 非标准条目） -->
-    <uses-permission android:name="android.permission.INTERNET" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- 前台服务（Shell 守护） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-
-    <!-- 查询 Magisk/KSU 模块安装状态 -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-
-    <!-- Shizuku (静默 root) -->
-    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
     <application
         android:allowBackup="false"
@@ -23,23 +13,6 @@
         android:theme="@style/Theme.K90PM.Tuner"
         android:enableOnBackInvokedCallback="true">
 
-        <!-- Xposed 模块标识 (LSPosed 通过 meta-data 识别) -->
-        <meta-data
-            android:name="xposedmodule"
-            android:value="true" />
-        <meta-data
-            android:name="xposeddescription"
-            android:value="K90 Pro Max WSA功放寄存器实时控制" />
-        <meta-data
-            android:name="xposedminversion"
-            android:value="101" />
-
-        <!-- LSPosed 新版识别：authority 必须为 包名.XposedService -->
-        <provider
-            android:name="io.github.libxposed.service.XposedProvider"
-            android:exported="true"
-            android:authorities="com.k90pm.tuner.XposedService" />
-
         <activity
             android:name=".app.MainActivity"
             android:exported="true"
@@ -48,10 +21,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
             </intent-filter>
         </activity>
 
