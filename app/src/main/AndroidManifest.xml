@@ -18,23 +18,18 @@
         android:label="K90PM Tuner"
         android:supportsRtl="true"
         android:theme="@style/Theme.K90PM.Tuner"
-        android:enableOnBackInvokedCallback="true"
-        tools:keep="xposedmodule,xposeddescription,xposedminversion">
+        android:enableOnBackInvokedCallback="true">
 
         <!-- Xposed 模块标识 (LSPosed 通过 meta-data 识别) -->
-        <!-- tools:node="merge" 防止 AGP 8.x 静默移除 -->
         <meta-data
             android:name="xposedmodule"
-            android:value="true"
-            tools:node="merge" />
+            android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="K90 Pro Max WSA功放寄存器实时控制"
-            tools:node="merge" />
+            android:value="K90 Pro Max WSA功放寄存器实时控制" />
         <meta-data
             android:name="xposedminversion"
-            android:value="93"
-            tools:node="merge" />
+            android:value="82" />
 
         <activity
             android:name=".app.MainActivity"
