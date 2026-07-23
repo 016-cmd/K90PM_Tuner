@@ -68,7 +68,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
 
-            val rootOk = WsaShell.hasShizukuRoot()
+            val rootOk = WsaShell.hasRoot()
             _hasRoot.value = rootOk
 
             if (rootOk) {
