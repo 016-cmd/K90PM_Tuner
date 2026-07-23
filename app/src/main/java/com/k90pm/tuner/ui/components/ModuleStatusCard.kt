@@ -21,9 +21,8 @@ import com.k90pm.tuner.ui.MainViewModel
 
 /**
  * 顶部模块检测卡片
- * 
- * 显示 K90PM 音质模块安装状态。
- * 设计语言：LSPosed 管理器风格 — 圆角卡片 + 状态指示器 + 清晰层级
+ *
+ * 显示 K90PM 音质模块安装状态 + LSPosed 启用状态 + Root 状态。
  */
 @Composable
 fun ModuleStatusCard(
@@ -48,10 +47,9 @@ fun ModuleStatusCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 状态指示灯（静态，避免 Compose API 版本兼容问题）
                 val indicatorColor = when {
                     status.isChecking -> MaterialTheme.colorScheme.outline
-                    status.isInstalled -> Color(0xFF4CAF50)
+                    status.isInstalled && status.isLsposedEnabled && hasRoot -> Color(0xFF4CAF50)
                     else -> Color(0xFFCF6679)
                 }
 
@@ -72,7 +70,6 @@ fun ModuleStatusCard(
 
                 Spacer(Modifier.weight(1f))
 
-                // 刷新按钮
                 IconButton(
                     onClick = onRefresh,
                     modifier = Modifier.size(36.dp)
@@ -88,7 +85,6 @@ fun ModuleStatusCard(
 
             Spacer(Modifier.height(14.dp))
 
-            // 状态信息
             if (status.isChecking) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(
@@ -104,30 +100,34 @@ fun ModuleStatusCard(
                     )
                 }
             } else {
-                // 已检测完成
                 InfoRow("版本", status.version)
                 InfoRow("类型", status.edition)
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
 
-                // Root 状态
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        if (hasRoot) Icons.Rounded.Shield else Icons.Rounded.WarningAmber,
-                        contentDescription = null,
-                        tint = if (hasRoot) Color(0xFF4CAF50) else Color(0xFFCF6679),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        if (hasRoot) "Root 权限 · 已获取" else "Root 权限 · 未获取",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (hasRoot) Color(0xFF4CAF50) else Color(0xFFCF6679)
-                    )
+                // ── 三重状态指示 ──
+                TripleStatusRow(
+                    label = "LSPosed",
+                    ok = status.isLsposedEnabled,
+                    okText = "已启用",
+                    failText = "未启用"
+                )
+                TripleStatusRow(
+                    label = "Root",
+                    ok = hasRoot,
+                    okText = "已获取",
+                    failText = "未获取"
+                )
+
+                // ── 状态提示 ──
+                val hintText = when {
+                    !status.isInstalled -> "未检测到 K90PM 音质模块\n寄存器调节功能已锁定"
+                    !status.isLsposedEnabled -> "请在 LSPosed 管理器中启用本模块\n否则无法控制 WSA 寄存器"
+                    !hasRoot -> "需要 Root 权限才能操作 WSA 寄存器"
+                    else -> null
                 }
 
-                // 未安装提示
-                if (!status.isInstalled) {
+                if (hintText != null) {
                     Spacer(Modifier.height(10.dp))
                     Surface(
                         color = Color(0xFFCF6679).copy(alpha = 0.1f),
@@ -145,8 +145,7 @@ fun ModuleStatusCard(
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                "未检测到 K90PM 音质模块（公开版或私人版）。\n"
-                                        + "寄存器调节功能已锁定，其他功能不受影响。",
+                                hintText,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFCF6679).copy(alpha = 0.9f),
                                 lineHeight = 18.sp
@@ -156,6 +155,41 @@ fun ModuleStatusCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * 三重状态行：OK 绿色对勾 / 失败 红色叉
+ */
+@Composable
+private fun TripleStatusRow(
+    label: String,
+    ok: Boolean,
+    okText: String,
+    failText: String
+) {
+    Row(
+        modifier = Modifier.padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(52.dp)
+        )
+        Icon(
+            if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+            contentDescription = null,
+            tint = if (ok) Color(0xFF4CAF50) else Color(0xFFCF6679),
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            if (ok) okText else failText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (ok) Color(0xFF4CAF50) else Color(0xFFCF6679)
+        )
     }
 }
 
