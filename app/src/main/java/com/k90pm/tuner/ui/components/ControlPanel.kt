@@ -133,7 +133,13 @@ private fun ControlItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = control.chip.displayName,
+                text = buildString {
+                    append(control.chip.displayName)
+                    if (control.description.isNotBlank()) {
+                        append(" · ")
+                        append(control.description)
+                    }
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
