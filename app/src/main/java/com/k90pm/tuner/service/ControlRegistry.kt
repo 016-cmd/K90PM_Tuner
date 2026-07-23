@@ -129,14 +129,14 @@ object ControlRegistry {
         WsaControl(279, "数字静音", WsaChip.WSA2, "RX1", ControlType.BOOL, ControlCategory.PROTECT,
             "快速静音开关"),
 
-        // ── COMP 开关（压缩器旁路） ──
-        WsaControl(207, "COMP 开关", WsaChip.WSA, "1", ControlType.BOOL, ControlCategory.GAIN,
+        // ── COMP 开关（压缩器旁路，每芯片 2 通道） ──
+        WsaControl(207, "COMP 开关", WsaChip.WSA, "CH1", ControlType.BOOL, ControlCategory.GAIN,
             "压缩器旁路开关"),
-        WsaControl(208, "COMP 开关", WsaChip.WSA, "2", ControlType.BOOL, ControlCategory.GAIN,
+        WsaControl(208, "COMP 开关", WsaChip.WSA, "CH2", ControlType.BOOL, ControlCategory.GAIN,
             "压缩器旁路开关"),
-        WsaControl(282, "COMP 开关", WsaChip.WSA2, "1", ControlType.BOOL, ControlCategory.GAIN,
+        WsaControl(282, "COMP 开关", WsaChip.WSA2, "CH1", ControlType.BOOL, ControlCategory.GAIN,
             "压缩器旁路开关"),
-        WsaControl(283, "COMP 开关", WsaChip.WSA2, "2", ControlType.BOOL, ControlCategory.GAIN,
+        WsaControl(283, "COMP 开关", WsaChip.WSA2, "CH2", ControlType.BOOL, ControlCategory.GAIN,
             "压缩器旁路开关"),
     )
 
