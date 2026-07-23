@@ -1,28 +1,22 @@
 package com.k90pm.tuner.service
 
-import rikka.shizuku.Shizuku
-import java.io.BufferedReader
-import java.io.InputStreamReader
-
 /**
  * 内核音频节点执行器。
  *
- * 通过 Shizuku newProcess 获取 root shell，执行 tinymix 命令。
- * 与 Operit 相同机制——Shizuku 一次授权后不弹窗。
+ * 通过 Runtime.exec("su -c ...") 执行 root 命令。
+ * 与 Operit (此 AI APP) 相同机制——用户在 Magisk 永久授权后不再弹窗。
+ * APP 代码中无 Shizuku 依赖，无第三方 root 库，极简安全。
  */
 object WsaShell {
 
-    /** 对外暴露的执行命令接口（供 ModuleDetector 等使用） */
+    /** 执行 root 命令（公开接口，供 ModuleDetector 使用） */
     fun execSyncCmd(cmd: String): String = execSync(cmd)
 
     private fun execSync(cmd: String): String {
         return try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = reader.readText()
-            process.waitFor()
-            process.destroy()
-            reader.close()
+            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
+            val output = proc.inputStream.bufferedReader().readText()
+            proc.waitFor(); proc.destroy()
             output.trim()
         } catch (e: Exception) { "" }
     }
@@ -50,11 +44,11 @@ object WsaShell {
         return !result.contains("Error", true) && !result.contains("invalid", true)
     }
 
-    fun hasShizukuRoot(): Boolean {
+    /** 用户已在 Magisk 永久授权 → su 不弹窗，返回 true */
+    fun hasRoot(): Boolean {
         return try {
-            if (!Shizuku.pingBinder()) return false
-            val p = Shizuku.newProcess(arrayOf("sh", "-c", "echo OK"), null, null)
-            val out = BufferedReader(InputStreamReader(p.inputStream)).readText().trim()
+            val p = Runtime.getRuntime().exec(arrayOf("su", "-c", "echo OK"))
+            val out = p.inputStream.bufferedReader().readText().trim()
             p.waitFor(); p.destroy()
             out.startsWith("OK")
         } catch (_: Exception) { false }
