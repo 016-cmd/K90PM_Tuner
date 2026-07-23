@@ -50,9 +50,6 @@ class MainViewModel : ViewModel() {
     fun checkModule() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
-            
-            // 给 lsposed 一点加载时间
-            delay(300)
 
             val installed = ModuleDetector.detect()
             val version = if (installed) ModuleDetector.installedVersion else "未安装"
@@ -70,11 +67,35 @@ class MainViewModel : ViewModel() {
             // 检测 root
             _hasRoot.value = WsaShell.ensureRoot()
 
-            // 读取所有控件当前值
+            // 模块已安装且有 root → 开始自动轮询控件状态
             if (installed && _hasRoot.value) {
                 refreshAllControls()
+                startAutoRefresh()
             }
         }
+    }
+
+    // ── 自动轮询 ──
+    private var autoRefreshJob: Job? = null
+
+    private fun startAutoRefresh() {
+        autoRefreshJob?.cancel()
+        autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(2000) // 每 2 秒刷新一次控件值
+                val newValues = mutableMapOf<Int, String>()
+                ControlRegistry.all.forEach { ctrl ->
+                    val v = WsaShell.getTinymix(ctrl.tinymixId)
+                    newValues[ctrl.tinymixId] = v
+                }
+                _controlValues.update { newValues }
+            }
+        }
+    }
+
+    fun stopAutoRefresh() {
+        autoRefreshJob?.cancel()
+        autoRefreshJob = null
     }
 
     /**
