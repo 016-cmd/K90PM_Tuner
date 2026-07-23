@@ -7,15 +7,21 @@ import java.io.InputStreamReader
 /**
  * 内核音频节点执行器。
  *
- * 通过 Shizuku 获取 root shell，执行 tinymix 命令。
- * 与 Operit 相同的机制——ADB 一次授权，不再弹 su 窗口。
+ * 通过 Shizuku newProcess 获取 root shell，执行 tinymix 命令。
+ * 与 Operit 相同机制——Shizuku 一次授权后不弹窗。
  */
 object WsaShell {
 
-    /** 执行 shell 命令，返回 stdout，失败返回 "" */
     private fun execSync(cmd: String): String {
-        if (!Shizuku.pingBinder()) return ""
-        return Shizuku.executeCommand(cmd)
+        return try {
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val output = reader.readText()
+            process.waitFor()
+            process.destroy()
+            reader.close()
+            output.trim()
+        } catch (e: Exception) { "" }
     }
 
     fun getTinymix(id: Int): String {
@@ -43,7 +49,11 @@ object WsaShell {
 
     fun hasShizukuRoot(): Boolean {
         return try {
-            Shizuku.pingBinder() && Shizuku.executeCommand("echo OK").trim().startsWith("OK")
+            if (!Shizuku.pingBinder()) return false
+            val p = Shizuku.newProcess(arrayOf("sh", "-c", "echo OK"), null, null)
+            val out = BufferedReader(InputStreamReader(p.inputStream)).readText().trim()
+            p.waitFor(); p.destroy()
+            out.startsWith("OK")
         } catch (_: Exception) { false }
     }
 }
