@@ -16,11 +16,12 @@ object WsaShell {
 
     /**
      * 同步执行 shell 命令并返回 stdout 字符串。
+     * 用 su -c 确保 root 权限执行。
      */
     private fun execSync(cmd: String): String {
         return try {
-            val result = Shell.cmd(cmd).exec()
-            result.out.joinToString("\n").trim()
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
+            process.inputStream.bufferedReader().readText().trim()
         } catch (e: Exception) {
             ""
         }
