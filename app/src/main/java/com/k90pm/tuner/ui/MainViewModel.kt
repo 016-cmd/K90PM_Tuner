@@ -61,19 +61,20 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * 用户手动触发：请求 root + 完整检测
-     * 调用此方法才会触发 su → Magisk 弹窗
+     * 用户手动触发：检测 root 状态 + 完整检测
+     * 不调用 su！仅检测是否能读取 root-only 目录。
+     * 用户需先自己去 Magisk/APatch 授权，然后回来点此按钮。
      */
     fun requestRootAndDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
 
-            // 这才是唯一会触发 su 的地方
-            val hasRootNow = ModuleDetector.checkRootAccess()
+            // 不调 su，只检查能否读取 root-only 目录
+            val hasRootNow = ModuleDetector.checkRootByFileAccess()
             _hasRoot.value = hasRootNow
 
             if (hasRootNow) {
-                val installed = ModuleDetector.detect()
+                val installed = ModuleDetector.detectByFileAccess()
                 val version = if (installed) ModuleDetector.installedVersion else "未安装"
                 val edition = if (installed) ModuleDetector.edition else "-"
                 val lsposedOn = ModuleDetector.isLsposedEnabled
@@ -93,7 +94,9 @@ class MainViewModel : ViewModel() {
                     startAutoRefresh()
                 }
             } else {
-                _moduleStatus.update { it.copy(isChecking = false) }
+                _moduleStatus.update {
+                    it.copy(isChecking = false, version = "请先去面具授权Root")
+                }
             }
         }
     }
