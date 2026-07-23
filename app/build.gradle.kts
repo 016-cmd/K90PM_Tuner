@@ -80,9 +80,9 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // Shizuku (静默 root，不弹 su 窗口)
-    implementation("dev.rikka.shizuku:api:13.1.5")
-    implementation("dev.rikka.shizuku:provider:13.1.5")
+    // Shizuku (静默 root, API 12 有 public newProcess)
+    implementation("dev.rikka.shizuku:api:12.2.0")
+    implementation("dev.rikka.shizuku:provider:12.2.0")
 
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
