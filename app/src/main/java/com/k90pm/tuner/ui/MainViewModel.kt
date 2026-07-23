@@ -73,6 +73,7 @@ class MainViewModel : ViewModel() {
 
             if (rootOk) {
                 ModuleDetector.detect()
+                ModuleDetector.checkLsposedEnabled()
                 _moduleStatus.update {
                     it.copy(
                         isInstalled = ModuleDetector.isInstalled,
