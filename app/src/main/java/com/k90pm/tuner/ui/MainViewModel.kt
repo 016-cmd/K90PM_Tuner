@@ -10,12 +10,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * 主 ViewModel
+ * 主 ViewModel — K90PM 音质模块伴生 APP。
  *
- * 管理：模块检测状态、WSA 控件实时值、root 权限状态
- *
- * 重要：APP 启动时不主动调用任何 su/root！通过 Shizuku 机制静默获取 root。
- */
+ * 管理：Magisk 模块检测状态、WSA 控件实时值、root 权限状态。
+  */
 class MainViewModel : ViewModel() {
 
     // ── 模块检测状态 ──
@@ -23,7 +21,6 @@ class MainViewModel : ViewModel() {
         val isInstalled: Boolean = false,
         val version: String = "检测中...",
         val edition: String = "-",
-        val isLsposedEnabled: Boolean = false,
         val isChecking: Boolean = true
     )
 
@@ -34,36 +31,25 @@ class MainViewModel : ViewModel() {
     private val _controlValues = MutableStateFlow<Map<Int, String>>(emptyMap())
     val controlValues: StateFlow<Map<Int, String>> = _controlValues.asStateFlow()
 
-    // ── Root 状态（初始 unknown，等用户手动触发）──
-    private val _hasRoot = MutableStateFlow<Boolean?>(null) // null = 未检测
+    // ── Root 状态 ──
+    private val _hasRoot = MutableStateFlow<Boolean?>(null)
     val hasRoot: StateFlow<Boolean?> = _hasRoot.asStateFlow()
 
-    // ── 加载状态 ──
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        // 不碰任何文件系统 / su / root
-        // 仅设置初始状态，等待用户手动点按钮
         _moduleStatus.update {
             it.copy(isChecking = false, version = "点击下方按钮激活")
         }
     }
 
-    /**
-     * 刷新按钮：已有 root 则重新完整检测，否则提示用户先激活
-     */
     fun checkModule() {
         if (_hasRoot.value == true) {
             requestRootAndDetect()
         }
-        // 否则不做事——用户需要先点"激活"按钮
     }
 
-    /**
-     * 用户手动点击"激活"按钮触发。
-     * 通过 Shizuku 检测 root——不弹 su 窗口。
-     */
     fun requestRootAndDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
@@ -73,20 +59,18 @@ class MainViewModel : ViewModel() {
 
             if (rootOk) {
                 ModuleDetector.detect()
-                ModuleDetector.checkLsposedEnabled()
                 _moduleStatus.update {
                     it.copy(
                         isInstalled = ModuleDetector.isInstalled,
                         version = ModuleDetector.installedVersion,
                         edition = ModuleDetector.edition,
-                        isLsposedEnabled = ModuleDetector.isLsposedEnabled,
                         isChecking = false
                     )
                 }
                 if (canEdit) { refreshAllControls(); startAutoRefresh() }
             } else {
                 _moduleStatus.update {
-                    it.copy(isChecking = false, version = "请先开启Shizuku授权")
+                    it.copy(isChecking = false, version = "请先在 Magisk 中授权 Root")
                 }
             }
         }
@@ -139,7 +123,5 @@ class MainViewModel : ViewModel() {
         _controlValues.value[id] ?: "—"
 
     val canEdit: Boolean
-        get() = _moduleStatus.value.isInstalled
-                && _moduleStatus.value.isLsposedEnabled
-                && _hasRoot.value == true
+        get() = _moduleStatus.value.isInstalled && _hasRoot.value == true
 }
