@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.update
 
 /**
  * 主 ViewModel
- * 
+ *
  * 管理：模块检测状态、WSA 控件实时值、root 权限状态
+ *
+ * 重要：APP 启动时不主动调用 su！用户需手动在 Magisk 授权后回 APP 点击"激活"。
  */
 class MainViewModel : ViewModel() {
 
@@ -32,47 +34,87 @@ class MainViewModel : ViewModel() {
     private val _controlValues = MutableStateFlow<Map<Int, String>>(emptyMap())
     val controlValues: StateFlow<Map<Int, String>> = _controlValues.asStateFlow()
 
-    // ── Root 状态 ──
-    private val _hasRoot = MutableStateFlow(false)
-    val hasRoot: StateFlow<Boolean> = _hasRoot.asStateFlow()
+    // ── Root 状态（初始 unknown，等用户手动触发）──
+    private val _hasRoot = MutableStateFlow<Boolean?>(null) // null = 未检测
+    val hasRoot: StateFlow<Boolean?> = _hasRoot.asStateFlow()
 
     // ── 加载状态 ──
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        checkModule()
+        // 启动时只做不需要 root 的初步检测
+        checkModuleNoRoot()
     }
 
     /**
-     * 检测 K90PM 模块安装状态 + LSPosed 启用状态
+     * 刷新按钮：已有 root 则重新完整检测，否则仅无 root 检测
      */
     fun checkModule() {
+        if (_hasRoot.value == true) {
+            requestRootAndDetect()
+        } else {
+            checkModuleNoRoot()
+        }
+    }
+
+    /**
+     * 启动时检测（不碰 su，不弹窗）
+     */
+    private fun checkModuleNoRoot() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
 
-            val installed = ModuleDetector.detect()
-            val version = if (installed) ModuleDetector.installedVersion else "未安装"
-            val edition = if (installed) ModuleDetector.edition else "-"
-            val lsposedOn = ModuleDetector.isLsposedEnabled
+            // 仅检测 LSPosed 是否已加载过 Hook（读标记文件）
+            // 如果 LSPosed 从未加载，标记文件不存在
+            val lsposedOn = ModuleDetector.checkMarkerNoRoot()
 
             _moduleStatus.update {
                 it.copy(
-                    isInstalled = installed,
-                    version = version,
-                    edition = edition,
+                    isInstalled = false,          // 需要 root 才能确认模块路径
+                    version = "需授权后检测",
+                    edition = "-",
                     isLsposedEnabled = lsposedOn,
                     isChecking = false
                 )
             }
+        }
+    }
 
-            // 检测 root
-            _hasRoot.value = WsaShell.ensureRoot()
+    /**
+     * 用户手动触发：请求 root + 完整检测
+     * 调用此方法才会触发 su → Magisk 弹窗
+     */
+    fun requestRootAndDetect() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _moduleStatus.update { it.copy(isChecking = true) }
 
-            // 三方条件全满足 → 开始管控
-            if (canEdit) {
-                refreshAllControls()
-                startAutoRefresh()
+            // 这才是唯一会触发 su 的地方
+            val hasRootNow = ModuleDetector.checkRootAccess()
+            _hasRoot.value = hasRootNow
+
+            if (hasRootNow) {
+                val installed = ModuleDetector.detect()
+                val version = if (installed) ModuleDetector.installedVersion else "未安装"
+                val edition = if (installed) ModuleDetector.edition else "-"
+                val lsposedOn = ModuleDetector.isLsposedEnabled
+
+                _moduleStatus.update {
+                    it.copy(
+                        isInstalled = installed,
+                        version = version,
+                        edition = edition,
+                        isLsposedEnabled = lsposedOn,
+                        isChecking = false
+                    )
+                }
+
+                if (canEdit) {
+                    refreshAllControls()
+                    startAutoRefresh()
+                }
+            } else {
+                _moduleStatus.update { it.copy(isChecking = false) }
             }
         }
     }
@@ -84,7 +126,7 @@ class MainViewModel : ViewModel() {
         autoRefreshJob?.cancel()
         autoRefreshJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
-                delay(2000) // 每 2 秒刷新一次控件值
+                delay(2000)
                 val newValues = mutableMapOf<Int, String>()
                 ControlRegistry.all.forEach { ctrl ->
                     newValues[ctrl.tinymixId] = WsaShell.getTinymix(ctrl.tinymixId)
@@ -99,9 +141,6 @@ class MainViewModel : ViewModel() {
         autoRefreshJob = null
     }
 
-    /**
-     * 刷新所有 WSA 控件值
-     */
     fun refreshAllControls() {
         viewModelScope.launch(Dispatchers.IO) {
             _isRefreshing.value = true
@@ -114,31 +153,20 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    /**
-     * 设置单个控件的值
-     */
     fun setControl(control: WsaControl, value: String) {
         viewModelScope.launch {
             val success = WsaShell.setTinymix(control.tinymixId, value)
             if (success) {
-                // 立即更新本地状态
                 _controlValues.update { it + (control.tinymixId to value) }
             }
         }
     }
 
-    /**
-     * 获取控件的当前显示值
-     */
     fun getValue(id: Int): String =
         _controlValues.value[id] ?: "—"
 
-    /**
-     * 控件是否可编辑
-     * 三重门：模块已安装 且 LSPosed 已启用 且 root 可用
-     */
     val canEdit: Boolean
         get() = _moduleStatus.value.isInstalled
                 && _moduleStatus.value.isLsposedEnabled
-                && _hasRoot.value
+                && _hasRoot.value == true
 }
