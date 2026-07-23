@@ -3,8 +3,9 @@ package com.k90pm.tuner.service
 /**
  * K90PM 音质模块 + LSPosed 启用状态检测器
  *
- * 不主动申请 root！所有需要 root 的检测通过尝试 su 命令完成，
- * 仅在 APP 已有 root 授权（Magisk 提前授权）时才生效。
+ * **完全不调用 su！** 仅通过 Java File API 检测 root-only 目录是否可读。
+ * 用户需先自己去 Magisk/APatch 给 APP 授权 root，
+ * 授权后 APP 才能读取 /data/adb/ 等受保护目录。
  */
 object ModuleDetector {
 
@@ -14,83 +15,57 @@ object ModuleDetector {
         "/data/adb/ap/modules/k90pm_audio_plus"
     )
 
-    /** 标记文件路径：ModuleHook.initZygote 写入 */
     private const val XPOSED_MARKER = "/data/local/tmp/xposed_loaded.marker"
+    private const val ROOT_TEST_DIR = "/data/adb"
 
-    /** 是否安装了 K90PM 音质模块 */
     @Volatile var isInstalled: Boolean = false
         private set
-
     @Volatile var installedVersion: String = "未安装"
         private set
-
     @Volatile var edition: String = "未知"
         private set
-
-    /** LSPosed 是否已启用本模块 */
     @Volatile var isLsposedEnabled: Boolean = false
         private set
 
     /**
-     * 无 root 检测 LSPosed 标记文件是否存在
-     * 使用 Java File API（同 uid 下的文件可读）
+     * 纯文件方式检测 root：尝试列出 /data/adb 目录。
+     * 此目录仅 root 可读——如果 list() 返回非 null 说明已有 root 授权。
+     * 不调用 su，不触发 Magisk 弹窗。
      */
-    fun checkMarkerNoRoot(): Boolean {
+    fun checkRootByFileAccess(): Boolean {
         return try {
-            val marker = java.io.File(XPOSED_MARKER)
-            marker.exists()
+            val dir = java.io.File(ROOT_TEST_DIR)
+            dir.exists() && dir.canRead()
         } catch (_: Exception) { false }
     }
 
     /**
-     * 检查是否可访问 root——用最轻量方式，
-     * 不触发 su 弹窗（仅在已授权时通过）。
+     * 纯文件方式完整检测（不调 su）
      */
-    fun checkRootAccess(): Boolean {
+    fun detectByFileAccess(): Boolean {
         return try {
-            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "echo OK"))
-            val output = proc.inputStream.bufferedReader().readText()
-            proc.waitFor()
-            proc.destroy()
-            output.startsWith("OK")
-        } catch (_: Exception) { false }
-    }
-
-    /**
-     * 执行检测。
-     * 如果 root 不可用则跳过，返回 false。
-     */
-    fun detect(): Boolean {
-        if (!checkRootAccess()) {
-            isInstalled = false
-            isLsposedEnabled = false
-            return false
-        }
-        return try {
-            // 1. 检测模块安装
+            // 1. 检测模块安装：检查 module.prop 文件是否存在
             val found = MODULE_PATHS.firstOrNull { path ->
                 try {
-                    val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "test -f $path/module.prop && echo YES || echo NO"))
-                    val out = proc.inputStream.bufferedReader().readText()
-                    proc.waitFor(); proc.destroy()
-                    out.startsWith("YES")
+                    java.io.File("$path/module.prop").exists()
                 } catch (_: Exception) { false }
             }
 
             if (found != null) {
                 isInstalled = true
-                val proc2 = Runtime.getRuntime().exec(arrayOf("su", "-c", "cat $found/module.prop"))
-                val props = proc2.inputStream.bufferedReader().readText()
-                proc2.waitFor(); proc2.destroy()
-
-                installedVersion = props.lines()
-                    .firstOrNull { it.startsWith("version=") }
-                    ?.substringAfter("=")?.trim() ?: "未知版本"
-
-                edition = when {
-                    props.contains("Ultra", true) -> "Ultra"
-                    props.contains("Standard", true) -> "Standard"
-                    else -> "未知"
+                try {
+                    val props = java.io.File("$found/module.prop").readText()
+                    installedVersion = props.lines()
+                        .firstOrNull { it.startsWith("version=") }
+                        ?.substringAfter("=")?.trim() ?: "未知版本"
+                    edition = when {
+                        props.contains("Ultra", true) -> "Ultra"
+                        props.contains("Standard", true) -> "Standard"
+                        else -> "未知"
+                    }
+                } catch (_: Exception) {
+                    installedVersion = "未知版本"
+                    edition = "未知"
                 }
             } else {
                 isInstalled = false
@@ -98,12 +73,9 @@ object ModuleDetector {
                 edition = "未知"
             }
 
-            // 2. 检测 LSPosed 标记
+            // 2. 检测 LSPosed 标记文件
             isLsposedEnabled = try {
-                val proc3 = Runtime.getRuntime().exec(arrayOf("su", "-c", "test -f $XPOSED_MARKER && echo YES || echo NO"))
-                val out3 = proc3.inputStream.bufferedReader().readText()
-                proc3.waitFor(); proc3.destroy()
-                out3.startsWith("YES")
+                java.io.File(XPOSED_MARKER).exists()
             } catch (_: Exception) { false }
 
             isInstalled
