@@ -1,6 +1,6 @@
 package com.k90pm.tuner.ui.components
 
-import androidx.compose.animation.*
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
