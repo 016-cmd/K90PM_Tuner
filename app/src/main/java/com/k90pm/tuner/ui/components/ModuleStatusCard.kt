@@ -11,18 +11,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.k90pm.tuner.ui.MainViewModel
 
 /**
- * 顶部模块检测卡片
- *
- * 显示 K90PM 音质模块安装状态 + LSPosed 启用状态 + Root 状态。
+ * 顶部模块检测卡片 — K90PM 音质模块伴生 APP。
+ * 显示 Magisk 模块安装状态 + Root 状态。
  */
 @Composable
 fun ModuleStatusCard(
@@ -36,51 +33,30 @@ fun ModuleStatusCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            // 标题行
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+
+            // ── 标题行 ──
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 val indicatorColor = when {
                     status.isChecking -> MaterialTheme.colorScheme.outline
-                    status.isInstalled && status.isLsposedEnabled && hasRoot == true -> Color(0xFF4CAF50)
+                    status.isInstalled && hasRoot == true -> Color(0xFF4CAF50)
                     else -> Color(0xFFCF6679)
                 }
-
                 Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(indicatorColor)
+                    Modifier.size(12.dp).clip(CircleShape).background(indicatorColor)
                 )
                 Spacer(Modifier.width(12.dp))
-
                 Text(
-                    text = "K90PM 音质模块",
+                    "K90PM 音质模块",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.SemiBold
                 )
-
                 Spacer(Modifier.weight(1f))
-
-                IconButton(
-                    onClick = onRefresh,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        Icons.Rounded.Refresh,
-                        contentDescription = "刷新",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
+                IconButton(onClick = onRefresh, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Rounded.Refresh, "刷新", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                 }
             }
 
@@ -88,17 +64,9 @@ fun ModuleStatusCard(
 
             if (status.isChecking) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(14.dp),
-                        strokeWidth = 1.5.dp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 1.5.dp)
                     Spacer(Modifier.width(10.dp))
-                    Text(
-                        "正在检测...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("正在检测...", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 InfoRow("版本", status.version)
@@ -106,78 +74,53 @@ fun ModuleStatusCard(
 
                 Spacer(Modifier.height(6.dp))
 
-                // ── 三重状态指示 ──
-                TripleStatusRow(
-                    label = "LSPosed",
-                    ok = status.isLsposedEnabled,
-                    okText = "已启用",
-                    failText = "未启用"
-                )
-                TripleStatusRow(
-                    label = "Root",
-                    ok = hasRoot == true,
-                    okText = "已获取",
-                    failText = if (hasRoot == null) "未检测" else "未获取"
-                )
+                // ── Root 状态 ──
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                    Text("Root", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(52.dp))
+                    Icon(
+                        if (hasRoot == true) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+                        null,
+                        tint = if (hasRoot == true) Color(0xFF4CAF50) else Color(0xFFCF6679),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        if (hasRoot == true) "已获取" else if (hasRoot == null) "未检测" else "未获取",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (hasRoot == true) Color(0xFF4CAF50) else Color(0xFFCF6679)
+                    )
+                }
 
-                // ── 激活按钮（Root 未检测时显示）──
+                // ── 激活按钮 ──
                 if (hasRoot == null || hasRoot == false) {
                     Spacer(Modifier.height(10.dp))
                     Button(
-                    onClick = onActivate,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        Icons.Rounded.Security,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "通过 Shizuku 激活",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                        onClick = onActivate,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Rounded.Security, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("授权 Root 并激活", fontWeight = FontWeight.SemiBold)
+                    }
                 }
 
                 // ── 状态提示 ──
                 val hintText = when {
-                    status.isInstalled && status.isLsposedEnabled && hasRoot == true -> null
-                    !status.isInstalled && hasRoot == true -> "未检测到 K90PM 音质模块\n寄存器调节功能已锁定"
-                    !status.isLsposedEnabled && hasRoot == true -> "请在 LSPosed 管理器中启用本模块\n否则无法控制 WSA 寄存器"
-                    hasRoot == false -> "请开启 Shizuku 并授权本 APP\n然后返回这里点击「激活」按钮"
-                    hasRoot == null -> "首次使用请先安装 Shizuku\n点击上方按钮激活 WSA 寄存器控制"
+                    status.isInstalled && hasRoot == true -> null
+                    !status.isInstalled && hasRoot == true -> "未检测到 K90PM 音质模块\n请先刷入 Magisk 音质模块"
+                    hasRoot == false -> "请在 Magisk 中永久授权本 APP"
+                    hasRoot == null -> "点击上方按钮获取 Root 权限\n在 Magisk 弹窗中授权即可"
                     else -> null
                 }
-
                 if (hintText != null) {
                     Spacer(Modifier.height(10.dp))
-                    Surface(
-                        color = Color(0xFFCF6679).copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Icon(
-                                Icons.Rounded.Info,
-                                contentDescription = null,
-                                tint = Color(0xFFCF6679),
-                                modifier = Modifier.size(18.dp)
-                            )
+                    Surface(color = Color(0xFFCF6679).copy(alpha = 0.1f), shape = RoundedCornerShape(10.dp)) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
+                            Icon(Icons.Rounded.Info, null, tint = Color(0xFFCF6679), modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text(
-                                hintText,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFCF6679).copy(alpha = 0.9f),
-                                lineHeight = 18.sp
-                            )
+                            Text(hintText, style = MaterialTheme.typography.bodySmall, color = Color(0xFFCF6679).copy(alpha = 0.9f), lineHeight = 18.sp)
                         }
                     }
                 }
@@ -186,58 +129,10 @@ fun ModuleStatusCard(
     }
 }
 
-/**
- * 三重状态行：OK 绿色对勾 / 失败 红色叉
- */
-@Composable
-private fun TripleStatusRow(
-    label: String,
-    ok: Boolean,
-    okText: String,
-    failText: String
-) {
-    Row(
-        modifier = Modifier.padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(52.dp)
-        )
-        Icon(
-            if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
-            contentDescription = null,
-            tint = if (ok) Color(0xFF4CAF50) else Color(0xFFCF6679),
-            modifier = Modifier.size(14.dp)
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            if (ok) okText else failText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (ok) Color(0xFF4CAF50) else Color(0xFFCF6679)
-        )
-    }
-}
-
 @Composable
 private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(36.dp)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+    Row(Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(36.dp))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
     }
 }
