@@ -32,20 +32,16 @@ object ModuleDetector {
     fun checkLsposedEnabled() {
         isLsposedEnabled = try {
             // 方式1: ModuleHook.isLoaded() — HyperLight 同款
-            if (com.k90pm.tuner.hook.ModuleHook.isLoaded()) {
-                return@try true
-            }
+            com.k90pm.tuner.hook.ModuleHook.isLoaded() ||
             // 方式2: 检查标记文件
-            if (java.io.File("/data/local/tmp/xposed_loaded.marker").exists()) {
-                return@try true
-            }
-            if (java.io.File("/data/data/com.k90pm.tuner/files/xposed_loaded.marker").exists()) {
-                return@try true
-            }
+            java.io.File("/data/local/tmp/xposed_loaded.marker").exists() ||
+            java.io.File("/data/data/com.k90pm.tuner/files/xposed_loaded.marker").exists() ||
             // 方式3: strings 读 LSPosed 数据库
-            val db = "/data/adb/lspd/config/modules_config.db"
-            val out = WsaShell.execSyncCmd("strings $db")
-            out.contains("com.k90pm.tuner")
+            run {
+                val db = "/data/adb/lspd/config/modules_config.db"
+                val out = WsaShell.execSyncCmd("strings $db")
+                out.contains("com.k90pm.tuner")
+            }
         } catch (_: Exception) { false }
     }
 }
