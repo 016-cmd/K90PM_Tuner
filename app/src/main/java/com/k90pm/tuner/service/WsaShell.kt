@@ -10,18 +10,27 @@ import com.topjohnwu.superuser.Shell
  */
 object WsaShell {
 
+    /** 确保 root shell 可用并已初始化 */
+    private val rootShell: Shell by lazy {
+        Shell.getShell().apply {
+            // 先 ping 一下确保 root shell 就绪
+            if (!isRoot) throw IllegalStateException("Root shell unavailable")
+        }
+    }
+
     /** 确保 root shell 可用 */
-    fun ensureRoot(): Boolean =
-        Shell.getShell().isRoot
+    fun ensureRoot(): Boolean = try {
+        rootShell.isRoot
+    } catch (_: Exception) { false }
 
     /**
      * 同步执行 shell 命令并返回 stdout 字符串。
-     * 用 su -c 确保 root 权限执行。
+     * 使用 libsu root shell。
      */
     private fun execSync(cmd: String): String {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-            process.inputStream.bufferedReader().readText().trim()
+            val job = rootShell.newJob().add(cmd).to(ArrayList(), ArrayList()).exec()
+            job.out.joinToString("\n").trim()
         } catch (e: Exception) {
             ""
         }
@@ -64,15 +73,12 @@ object WsaShell {
      *              ENUM 传枚举值如 "G_18_DB"
      */
     fun setTinymix(id: Int, value: String): Boolean {
-        // ENUM 用字符串值，其他用纯数字格式
         val normalized = when {
-            // BOOL 文字形式 → 转数字
             value.equals("On", ignoreCase = true) -> "1"
             value.equals("Off", ignoreCase = true) -> "0"
             else -> value
         }
         val result = execSync("tinymix $id $normalized 2>&1")
-        // 成功时无输出或有 "Error" 以外的回显
         return !result.contains("Error", ignoreCase = true) && !result.contains("invalid", ignoreCase = true)
     }
 }
