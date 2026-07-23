@@ -1,8 +1,5 @@
 package com.k90pm.tuner.ui.components
 
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -51,28 +48,18 @@ fun ModuleStatusCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 状态指示灯
+                // 状态指示灯（静态，避免 Compose API 版本兼容问题）
                 val indicatorColor = when {
                     status.isChecking -> MaterialTheme.colorScheme.outline
                     status.isInstalled -> Color(0xFF4CAF50)
                     else -> Color(0xFFCF6679)
-                }
-                val pulseAlpha: Float by if (status.isChecking) {
-                    val infinite = rememberInfiniteTransition()
-                    infinite.animateFloat(
-                        initialValue = 0.4f,
-                        targetValue = 1f,
-                        animationSpec = infiniteRepeatable(animation = tween(800))
-                    )
-                } else {
-                    remember { mutableFloatStateOf(1f) }
                 }
 
                 Box(
                     modifier = Modifier
                         .size(12.dp)
                         .clip(CircleShape)
-                        .background(indicatorColor.copy(alpha = pulseAlpha))
+                        .background(indicatorColor)
                 )
                 Spacer(Modifier.width(12.dp))
 
