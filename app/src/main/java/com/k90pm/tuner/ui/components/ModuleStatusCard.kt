@@ -59,7 +59,11 @@ fun ModuleStatusCard(
                 }
                 val pulseAlpha: Float by if (status.isChecking) {
                     val infinite = rememberInfiniteTransition()
-                    infinite.animateFloat(0.4f, 1f, infiniteRepeatable(animationSpec = tween(800)))
+                    infinite.animateFloat(
+                        initialValue = 0.4f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(animation = tween(800))
+                    )
                 } else {
                     remember { mutableFloatStateOf(1f) }
                 }
