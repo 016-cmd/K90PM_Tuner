@@ -1,35 +1,26 @@
 package com.k90pm.tuner.service
 
-import java.io.File
-
 /**
  * K90PM 音质模块 + LSPosed 启用状态检测器。
  *
- * 启动时零调用。用户点击激活后通过 Shizuku shell 检测。
+ * 通过 Runtime.exec("su") 检测，与 Operit 相同机制。
+ * 用户在 Magisk 永久授权后 su 不弹窗。
  */
 object ModuleDetector {
-
-    private val MODULE_PATHS = listOf(
-        "/data/adb/modules/k90pm_audio_plus",
-        "/data/adb/ksu/modules/k90pm_audio_plus",
-        "/data/adb/ap/modules/k90pm_audio_plus"
-    )
 
     @Volatile var isInstalled = false; private set
     @Volatile var installedVersion = "未安装"; private set
     @Volatile var edition = "未知"; private set
     @Volatile var isLsposedEnabled = false; private set
 
-    /** 通过 Shizuku shell 检测模块安装状态 */
     fun detect() {
-        val shell = WsaShell.execSyncCmd("test -f /data/adb/modules/k90pm_audio_plus/module.prop && echo YES")
-        if (shell == "YES") {
+        val modProp = WsaShell.execSyncCmd("cat /data/adb/modules/k90pm_audio_plus/module.prop 2>/dev/null")
+        if (modProp.isNotBlank()) {
             isInstalled = true
-            val props = WsaShell.execSyncCmd("cat /data/adb/modules/k90pm_audio_plus/module.prop")
-            installedVersion = props.lines().firstOrNull { it.startsWith("version=") }?.substringAfter("=")?.trim() ?: "未知版本"
+            installedVersion = modProp.lines().firstOrNull { it.startsWith("version=") }?.substringAfter("=")?.trim() ?: "未知版本"
             edition = when {
-                props.contains("Ultra", true) -> "Ultra"
-                props.contains("Standard", true) -> "Standard"
+                modProp.contains("Ultra", true) -> "Ultra"
+                modProp.contains("Standard", true) -> "Standard"
                 else -> "未知"
             }
         } else {
@@ -37,12 +28,12 @@ object ModuleDetector {
         }
     }
 
-    /** 通过 Shizuku shell 查询 LSPosed 数据库 */
+    /** 通过 strings 读 LSPosed 数据库检查模块启用状态 */
     fun checkLsposedEnabled() {
         isLsposedEnabled = try {
-            val sql = "SELECT enabled FROM modules_state WHERE module_pkg_name='com.k90pm.tuner' AND user_id=0"
-            val result = WsaShell.execSyncCmd("sqlite3 /data/adb/lspd/config/modules_config.db \"$sql\"")
-            result.trim() == "1"
+            val db = "/data/adb/lspd/config/modules_config.db"
+            val out = WsaShell.execSyncCmd("strings $db")
+            out.contains("com.k90pm.tuner")
         } catch (_: Exception) { false }
     }
 }
