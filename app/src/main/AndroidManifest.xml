@@ -31,11 +31,11 @@
             android:name="xposedminversion"
             android:value="93" />
 
-        <!-- LSPosed 新版识别：必须声明 XposedProvider（authorities 硬编码防止被 AGP 优化） -->
+        <!-- LSPosed 新版识别：authority 必须为 包名.XposedService -->
         <provider
             android:name="io.github.libxposed.service.XposedProvider"
             android:exported="true"
-            android:authorities="com.k90pm.tuner.xposed" />
+            android:authorities="com.k90pm.tuner.XposedService" />
 
         <activity
             android:name=".app.MainActivity"
