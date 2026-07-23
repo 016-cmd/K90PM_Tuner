@@ -4,13 +4,12 @@ import androidx.annotation.NonNull;
 
 import java.util.Objects;
 
-import io.github.libxposed.annotation.SinceApi;
 
 /**
  * Information about a process currently hooked by this module.
  * <p>Instances are snapshot handles and do not define stable value equality.</p>
  */
-@SinceApi(XposedService.API_102)
+
 @SuppressWarnings("unused")
 public final class HookedTarget {
     /**
