@@ -217,19 +217,32 @@ private fun ControlItem(
 
             ControlType.INT -> {
                 val range = control.range ?: 0..124
-                val curVal = currentValue.toIntOrNull() ?: range.first
+                val externalValue = currentValue.toIntOrNull() ?: range.first
+
+                // 本地滑动状态 — 拖动时用本地值避免与外部 state 冲突
+                var sliderValue by remember(externalValue) {
+                    mutableFloatStateOf(externalValue.toFloat())
+                }
+                // 当外部值变化（如自动轮询刷新）时同步本地值
+                LaunchedEffect(externalValue) {
+                    sliderValue = externalValue.toFloat()
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "$curVal",
+                        text = "${sliderValue.toInt()}",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.width(28.dp)
                     )
                     Slider(
-                        value = curVal.toFloat(),
-                        onValueChange = { onValueChange(it.toInt().toString()) },
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        onValueChangeFinished = {
+                            // 松手时才真正设置
+                            onValueChange(sliderValue.toInt().toString())
+                        },
                         valueRange = range.first.toFloat()..range.last.toFloat(),
                         enabled = enabled,
                         modifier = Modifier.width(120.dp),
