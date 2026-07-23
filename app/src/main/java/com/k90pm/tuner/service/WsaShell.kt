@@ -9,7 +9,7 @@ package com.k90pm.tuner.service
  */
 object WsaShell {
 
-    fun ensureRoot(): Boolean = ModuleDetector.checkRootByFileAccess()
+    fun ensureRoot(): Boolean = ModuleDetector.checkRoot()
 
     private fun execSync(cmd: String): String {
         return try {
