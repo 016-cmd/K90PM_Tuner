@@ -15,10 +15,11 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="K90PM Tuner"
         android:supportsRtl="true"
         android:theme="@style/Theme.K90PM.Tuner"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        tools:keep="xposedmodule,xposeddescription,xposedminversion">
 
         <!-- Xposed 模块标识 (LSPosed 通过 meta-data 识别) -->
         <!-- tools:node="merge" 防止 AGP 8.x 静默移除 -->
