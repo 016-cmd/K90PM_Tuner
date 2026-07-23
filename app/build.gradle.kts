@@ -80,9 +80,8 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // Shizuku (静默 root, API 12 有 public newProcess)
-    implementation("dev.rikka.shizuku:api:12.2.0")
-    implementation("dev.rikka.shizuku:provider:12.2.0")
+    // libxposed service (完整 API，含 isModuleActive)
+    compileOnly("io.github.libxposed:service:1.2.1")
 
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
