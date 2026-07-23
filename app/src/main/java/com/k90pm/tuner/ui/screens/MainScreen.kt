@@ -73,7 +73,7 @@ fun MainScreen(
             ModuleStatusCard(
                 status = moduleStatus,
                 hasRoot = hasRoot,
-                onRefresh = { viewModel.checkModule() },
+                onRefresh = { viewModel.requestRootAndDetect() },
                 onActivate = { viewModel.requestRootAndDetect() }
             )
 
