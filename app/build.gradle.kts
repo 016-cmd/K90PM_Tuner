@@ -4,10 +4,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-repositories {
-    maven { url = uri("https://jitpack.io") }
-}
-
 android {
     namespace = "com.k90pm.tuner"
     compileSdk = 36
@@ -83,10 +79,6 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-
-    // Xposed API — 不需要 compileOnly 远程依赖。
-    // ModuleHook.java 引用的 Xposed 接口由 LSPosed 框架在运行时提供，
-    // 编译阶段使用本地 stub（见 hook/stub/ 目录）
 
     // Root shell (via JitPack)
     implementation("com.github.topjohnwu.libsu:core:6.0.0")
