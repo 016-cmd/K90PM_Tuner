@@ -5,9 +5,6 @@
 -keep class io.github.libxposed.service.XposedProvider { *; }
 -keep class com.k90pm.tuner.hook.** { *; }
 
-# ── libsu ──
--dontwarn com.topjohnwu.superuser.**
-
 # ── Kotlin ──
 -keepattributes *Annotation*
 -keepattributes InnerClasses
