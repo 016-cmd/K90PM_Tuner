@@ -39,14 +39,13 @@ enum class ControlCategory(val displayName: String, val order: Int) {
     GAIN("增益控制", 1),
     PBR("低音辐射器", 2),
     POWER("电源管理", 3),
-    PROTECT("保护与限幅", 4),
-    ROUTING("路由配置", 5)
+    PROTECT("保护与限幅", 4)
 }
 
 /**
- * 预定义的 WSA/WSA2 控件清单（仅 BOOL 开关 + ENUM 枚举，无滑条）
+ * 预定义的 WSA/WSA2 控件清单（仅 BOOL 开关 + ENUM 枚举）
  * 
- * 数字音量等 INT 控件由模块 mixer_paths 预设，不需要 APP 实时调节。
+ * 数字音量等 INT 控件由模块 mixer_paths 预设，路由切换因风险移除。
  * tinymix ID 来源：REDMI K90 Pro Max (myron) 实测。
  */
 object ControlRegistry {
@@ -82,9 +81,6 @@ object ControlRegistry {
         WsaControl(204, "数字静音", WsaChip.WSA, "RX1", ControlType.BOOL, ControlCategory.PROTECT,
             "快速静音开关"),
 
-        WsaControl(197, "路由切换", WsaChip.WSA, "-", ControlType.BOOL, ControlCategory.ROUTING,
-            "扬声器/听筒切换"),
-
         // ── WSA2 低音单元 ──
         WsaControl(270, "增益模式", WsaChip.WSA2, "RX0", ControlType.ENUM, ControlCategory.GAIN,
             "压缩器增益档位",
@@ -114,9 +110,6 @@ object ControlRegistry {
             "快速静音开关"),
         WsaControl(279, "数字静音", WsaChip.WSA2, "RX1", ControlType.BOOL, ControlCategory.PROTECT,
             "快速静音开关"),
-
-        WsaControl(272, "路由切换", WsaChip.WSA2, "-", ControlType.BOOL, ControlCategory.ROUTING,
-            "扬声器/听筒切换"),
     )
 
     /** 按类别分组 */
