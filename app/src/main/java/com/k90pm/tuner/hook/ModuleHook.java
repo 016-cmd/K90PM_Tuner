@@ -31,14 +31,19 @@ public class ModuleHook extends XposedModule {
 
     private static void writeMarker() {
         try {
+            // 写标记到 /data/local/tmp (全局可写，不需要 root)
             File marker = new File("/data/local/tmp", MARKER_NAME);
-            if (!marker.exists()) {
-                marker.createNewFile();
-                Log.i(TAG, "Marker created: LSPosed module loaded");
-            }
+            marker.createNewFile();
             marker.setLastModified(System.currentTimeMillis());
+            Log.i(TAG, "Marker created: " + marker.getAbsolutePath() + " exists=" + marker.exists());
         } catch (Exception e) {
             Log.w(TAG, "Failed to write marker", e);
+            // fallback: 写 app 内部目录
+            try {
+                File f2 = new File("/data/data/com.k90pm.tuner/files/" + MARKER_NAME);
+                f2.createNewFile();
+                Log.i(TAG, "Fallback marker created: " + f2.getAbsolutePath());
+            } catch (Exception ignored) {}
         }
     }
 }
