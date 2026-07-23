@@ -27,8 +27,9 @@ import com.k90pm.tuner.ui.MainViewModel
 @Composable
 fun ModuleStatusCard(
     status: MainViewModel.ModuleStatus,
-    hasRoot: Boolean,
-    onRefresh: () -> Unit
+    hasRoot: Boolean?,
+    onRefresh: () -> Unit,
+    onActivate: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -49,7 +50,7 @@ fun ModuleStatusCard(
             ) {
                 val indicatorColor = when {
                     status.isChecking -> MaterialTheme.colorScheme.outline
-                    status.isInstalled && status.isLsposedEnabled && hasRoot -> Color(0xFF4CAF50)
+                    status.isInstalled && status.isLsposedEnabled && hasRoot == true -> Color(0xFF4CAF50)
                     else -> Color(0xFFCF6679)
                 }
 
@@ -114,16 +115,43 @@ fun ModuleStatusCard(
                 )
                 TripleStatusRow(
                     label = "Root",
-                    ok = hasRoot,
+                    ok = hasRoot == true,
                     okText = "已获取",
-                    failText = "未获取"
+                    failText = if (hasRoot == null) "未检测" else "未获取"
                 )
+
+                // ── 激活按钮（Root 未检测时显示）──
+                if (hasRoot == null || hasRoot == false) {
+                    Spacer(Modifier.height(10.dp))
+                    Button(
+                        onClick = onActivate,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            Icons.Rounded.Security,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "授权 Root 并激活",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
 
                 // ── 状态提示 ──
                 val hintText = when {
-                    !status.isInstalled -> "未检测到 K90PM 音质模块\n寄存器调节功能已锁定"
-                    !status.isLsposedEnabled -> "请在 LSPosed 管理器中启用本模块\n否则无法控制 WSA 寄存器"
-                    !hasRoot -> "需要 Root 权限才能操作 WSA 寄存器"
+                    status.isInstalled && status.isLsposedEnabled && hasRoot == true -> null
+                    !status.isInstalled && hasRoot == true -> "未检测到 K90PM 音质模块\n寄存器调节功能已锁定"
+                    !status.isLsposedEnabled && hasRoot == true -> "请在 LSPosed 管理器中启用本模块\n否则无法控制 WSA 寄存器"
+                    hasRoot == false -> "请在 Magisk 中授权本 APP 的 Root 权限\n然后返回这里点击「激活」按钮"
+                    hasRoot == null -> "点击上方按钮，在 Magisk 弹窗中授权\n即可激活 WSA 寄存器控制"
                     else -> null
                 }
 
