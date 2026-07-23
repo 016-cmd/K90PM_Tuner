@@ -3,64 +3,36 @@ package com.k90pm.tuner.service
 /**
  * 内核音频节点执行器
  *
- * 通过 Runtime.exec("su -c ...") 执行 tinymix 命令，
- * 直接读写 WSA/WSA2 功放芯片寄存器。
- * 不依赖 libsu（避免触发 su 授权弹窗）。
+ * 通过 Runtime.exec("su -c ...") 执行 tinymix 命令。
+ * 仅当用户在 Magisk/APatch 已授权后调用。
+ * APP 自身不主动申请 root——用户手动去面具授权。
  */
 object WsaShell {
 
-    /** 检查 root shell 是否可用（只在已有授权时通过，不弹窗） */
-    fun ensureRoot(): Boolean {
-        return ModuleDetector.checkRootAccess()
-    }
+    fun ensureRoot(): Boolean = ModuleDetector.checkRootByFileAccess()
 
-    /**
-     * 同步执行 root 命令并返回 stdout。
-     */
     private fun execSync(cmd: String): String {
         return try {
             val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
             val output = proc.inputStream.bufferedReader().readText()
-            proc.waitFor()
-            proc.destroy()
+            proc.waitFor(); proc.destroy()
             output.trim()
-        } catch (e: Exception) {
-            ""
-        }
+        } catch (e: Exception) { "" }
     }
 
-    /**
-     * 读取 tinymix 控件的当前值。
-     *
-     * 输出格式:
-     *   INT:  "名称: 84 (dsrange 0->124)"     → 返回 "84"
-     *   BOOL: "名称: On" 或 "名称: Off"       → 返回 "On" / "Off"
-     *   ENUM: "名称: >选中 其他..."           → 返回 "选中"
-     */
     fun getTinymix(id: Int): String {
         val raw = execSync("tinymix $id 2>/dev/null")
         if (raw.isBlank()) return "N/A"
-
-        // ENUM: 查找 ">" 标记
         val arrowIdx = raw.indexOf('>')
-        if (arrowIdx >= 0) {
-            val after = raw.substring(arrowIdx + 1)
-            return after.takeWhile { it != ' ' && it != '\t' && it != '\n' }
-        }
-
-        // INT / BOOL: 取冒号后、空格或换行前的值
+        if (arrowIdx >= 0) return raw.substring(arrowIdx + 1).takeWhile { it != ' ' && it != '\t' && it != '\n' }
         val colonIdx = raw.indexOf(':')
         if (colonIdx >= 0) {
             val afterColon = raw.substring(colonIdx + 1).trimStart()
             return afterColon.takeWhile { it != ' ' && it != '\t' && it != '(' && it != '\n' }
         }
-
         return raw
     }
 
-    /**
-     * 设置 tinymix 控件值。
-     */
     fun setTinymix(id: Int, value: String): Boolean {
         val normalized = when {
             value.equals("On", ignoreCase = true) -> "1"
@@ -68,6 +40,6 @@ object WsaShell {
             else -> value
         }
         val result = execSync("tinymix $id $normalized 2>&1")
-        return !result.contains("Error", ignoreCase = true) && !result.contains("invalid", ignoreCase = true)
+        return !result.contains("Error", true) && !result.contains("invalid", true)
     }
 }
