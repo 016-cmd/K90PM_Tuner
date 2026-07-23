@@ -3,7 +3,6 @@ package io.github.libxposed.service;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import io.github.libxposed.annotation.SinceApi;
 
 /**
  * Result of an asynchronous hot reload request.
@@ -13,7 +12,7 @@ import io.github.libxposed.annotation.SinceApi;
  *                null message means the old module refused reload by returning {@code false} from
  *                {@code onHotReloading}; a non-null message describes a reload exception.
  */
-@SinceApi(XposedService.API_102)
+
 public record HotReloadResult(@NonNull Status status, @Nullable String message) {
     /**
      * Hot reload completion status.
