@@ -39,41 +39,48 @@ class MainViewModel : ViewModel() {
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        _moduleStatus.update {
-            it.copy(isChecking = false, version = "点击下方按钮激活")
+        // 启动时自动尝试检测 Root（用户已在 Magisk 永久授权则不弹窗）
+        autoDetect()
+    }
+
+    /** 启动时静默检测：Root 已授权则自动加载，否则等用户手动激活 */
+    private fun autoDetect() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val rootOk = WsaShell.hasRoot()
+            _hasRoot.value = rootOk
+            if (rootOk) {
+                doDetectAndLoad()
+            } else {
+                _moduleStatus.update { it.copy(isChecking = false, version = "点击下方按钮激活") }
+            }
         }
     }
 
-    fun checkModule() {
-        if (_hasRoot.value == true) {
-            requestRootAndDetect()
-        }
-    }
-
+    /** 用户手动点击激活按钮 */
     fun requestRootAndDetect() {
         viewModelScope.launch(Dispatchers.IO) {
             _moduleStatus.update { it.copy(isChecking = true) }
-
             val rootOk = WsaShell.hasRoot()
             _hasRoot.value = rootOk
-
             if (rootOk) {
-                ModuleDetector.detect()
-                _moduleStatus.update {
-                    it.copy(
-                        isInstalled = ModuleDetector.isInstalled,
-                        version = ModuleDetector.installedVersion,
-                        edition = ModuleDetector.edition,
-                        isChecking = false
-                    )
-                }
-                if (canEdit) { refreshAllControls(); startAutoRefresh() }
+                doDetectAndLoad()
             } else {
-                _moduleStatus.update {
-                    it.copy(isChecking = false, version = "请先在 Magisk 中授权 Root")
-                }
+                _moduleStatus.update { it.copy(isChecking = false, version = "请先在 Magisk 中授权 Root") }
             }
         }
+    }
+
+    private fun doDetectAndLoad() {
+        ModuleDetector.detect()
+        _moduleStatus.update {
+            it.copy(
+                isInstalled = ModuleDetector.isInstalled,
+                version = ModuleDetector.installedVersion,
+                edition = ModuleDetector.edition,
+                isChecking = false
+            )
+        }
+        if (canEdit) { refreshAllControls(); startAutoRefresh() }
     }
 
     // ── 自动轮询 ──
