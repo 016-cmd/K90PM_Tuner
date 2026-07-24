@@ -20,17 +20,16 @@ class MediaNotificationListener : NotificationListenerService() {
             // 检查是否为媒体通知（通过 category 判断，兼容所有 API）
             if (notification.category != "transport") return
 
-            // 提取 largeIcon（专辑封面）- 直接从通知中获取，不复制到文件
+            // 提取 largeIcon（专辑封面）- 直接从通知中获取，不写文件
             val largeIcon: Bitmap? = try {
-                val iconObj = notification.largeIcon
-                if (iconObj != null) {
-                    val drawable = iconObj.loadDrawable(this@MediaNotificationListener)
+                @Suppress("DEPRECATION")
+                notification.largeIcon?.loadDrawable(this@MediaNotificationListener)?.let { drawable ->
                     val bmp = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
                     val canvas = android.graphics.Canvas(bmp)
                     drawable.setBounds(0, 0, 512, 512)
                     drawable.draw(canvas)
                     bmp
-                } else null
+                }
             } catch (_: Exception) { null }
 
             if (largeIcon != null) {
