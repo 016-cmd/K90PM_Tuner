@@ -10,16 +10,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * iOS 26 液态玻璃卡片。
- * - 使用当前主题 surface 色 + 半透明
- * - 斜向渐变高光（左上角亮 → 右下角暗）
- * - 0.5dp 可见边框
+ * iOS 26 液态玻璃卡片 — Scene 风格简化版。
+ * 半透明 surface 色 + 圆角 + 0.5dp 边框。
  */
 @Composable
 fun GlassCard(
@@ -30,45 +26,20 @@ fun GlassCard(
     val colors = MaterialTheme.colorScheme
     val isDark = isSystemInDarkTheme()
 
-    // 背景：surface 色层 + 半透明
-    val bgAlpha = if (isDark) 0.30f else 0.60f
-    val baseBg = colors.surface.copy(alpha = bgAlpha)
-
-    // 渐变叠加：左上角更亮
-    val highlightColor = if (isDark)
-        Color.White.copy(alpha = 0.08f)
-    else
-        Color.White.copy(alpha = 0.6f)
-    val shadowColor = Color.White.copy(alpha = 0f)
-
-    // 边框：表面色变体的微妙描边
-    val borderColor = if (isDark)
-        colors.outlineVariant.copy(alpha = 0.5f)
-    else
-        colors.outlineVariant.copy(alpha = 0.7f)
-
+    // 仿 Scene: surface 色 + alpha
+    val bgAlpha = if (isDark) 0.25f else 0.5f
+    val borderColor = colors.outlineVariant.copy(alpha = if (isDark) 0.4f else 0.6f)
     val shape = RoundedCornerShape(20.dp)
 
     Box(
         modifier = modifier
             .clip(shape)
-            .background(baseBg)
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(highlightColor, shadowColor),
-                    start = Offset(0f, 0f),
-                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                )
-            )
+            .background(colors.surface.copy(alpha = bgAlpha))
             .border(0.5.dp, borderColor, shape)
-            .then(
-                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
-            )
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
+            modifier = Modifier.fillMaxWidth().padding(20.dp)
         ) {
             content()
         }
@@ -76,7 +47,7 @@ fun GlassCard(
 }
 
 /**
- * 液态玻璃容器——纯外观，无内容 padding
+ * 液态玻璃容器——纯外观无 padding
  */
 @Composable
 fun GlassSurface(
@@ -85,11 +56,8 @@ fun GlassSurface(
 ) {
     val colors = MaterialTheme.colorScheme
     val isDark = isSystemInDarkTheme()
-    val bgAlpha = if (isDark) 0.30f else 0.60f
-    val borderColor = if (isDark)
-        colors.outlineVariant.copy(alpha = 0.5f)
-    else
-        colors.outlineVariant.copy(alpha = 0.7f)
+    val bgAlpha = if (isDark) 0.25f else 0.5f
+    val borderColor = colors.outlineVariant.copy(alpha = if (isDark) 0.4f else 0.6f)
 
     Box(
         modifier = modifier
