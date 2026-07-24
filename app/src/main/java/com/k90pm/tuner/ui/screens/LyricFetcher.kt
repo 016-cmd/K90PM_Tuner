@@ -115,9 +115,12 @@ object LyricFetcher {
     }
 
     // ── 酷狗 ──
+    // 流程：搜索 → 拿 hash → 查歌词列表 → 取 id+accesskey → 下载解码 base64 LRC
     private suspend fun kugou(title: String, artist: String): LyricResult? {
         try {
             val keyword = URLEncoder.encode("$title $artist", "UTF-8")
+
+            // 1. 搜索歌曲拿 FileHash
             val searchUrl = "https://songsearch.kugou.com/song_search_v2?keyword=$keyword&page=1&pagesize=3"
             val searchJson = httpGet(searchUrl) ?: return null
             val lists = JSONObject(searchJson).optJSONObject("data")?.optJSONArray("lists")
@@ -132,14 +135,33 @@ object LyricFetcher {
                 hash = s.optString("FileHash", "")
                 if (sName.contains(title, ignoreCase = true) && sArtist.contains(artist, ignoreCase = true)) break
             }
-            if (hash.isNullOrEmpty()) return null
+            if (hash.isNullOrEmpty()) hash = lists.getJSONObject(0).optString("FileHash", "") ?: return null
 
-            // 获取歌词
-            val lyricUrl = "https://lyrics.kugou.com/search?ver=1&man=yes&client=pc&hash=$hash"
-            val lyricJson = httpGet(lyricUrl) ?: return null
-            val candidates = JSONObject(lyricUrl).optJSONArray("candidates") ?: return null
-            // 酷狗歌词可能有加密，这里只做基本路径 —— 如果失败就返回 null
-            return null // 酷狗 KRC 加密暂不解，先用网易云和QQ
+            // 2. 查歌词候选列表
+            val lyricSearchUrl = "https://lyrics.kugou.com/search?ver=1&man=yes&client=pc&hash=$hash"
+            val lyricSearchJson = httpGet(lyricSearchUrl) ?: return null
+            val candidates = JSONObject(lyricSearchJson).optJSONArray("candidates")
+            if (candidates == null || candidates.length() == 0) return null
+
+            // 取第一个（得分最高）
+            val first = candidates.getJSONObject(0)
+            val lyricId = first.optString("id", "")
+            val accessKey = first.optString("accesskey", "")
+            if (lyricId.isEmpty() || accessKey.isEmpty()) return null
+
+            // 3. 下载歌词（返回 base64 编码的 LRC）
+            val downloadUrl = "https://lyrics.kugou.com/download?ver=1&client=pc&id=$lyricId&accesskey=$accessKey&fmt=lrc&charset=utf8"
+            val downloadJson = httpGet(downloadUrl) ?: return null
+            val content = JSONObject(downloadJson).optString("content", "")
+                .takeIf { it.isNotBlank() } ?: return null
+
+            // 4. Base64 解码 → LRC 文本
+            val decoded = android.util.Base64.decode(content, android.util.Base64.DEFAULT)
+            val lrcText = String(decoded, Charsets.UTF_8)
+
+            val lines = parseLrc(lrcText)
+            if (lines.isEmpty()) return null
+            return LyricResult(lines, "酷狗音乐")
         } catch (_: Exception) { return null }
     }
 
