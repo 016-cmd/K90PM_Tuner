@@ -48,7 +48,8 @@ private fun rememberGlassModifier(
     fillColor: Color,
     borderColor: Color,
 ): Modifier {
-    val cachedBlur = remember { mutableStateOf<Pair<Size, Bitmap>?>(null) }
+    // 缓存 key = (尺寸, 位置) — 二者任一变化即重新裁剪（Scene h41.m() 同款语义）
+    val cachedBlur = remember { mutableStateOf<Pair<Pair<Size, Pair<Float, Float>>, Bitmap>?>(null) }
 
     return Modifier
         .clip(shape)
@@ -63,7 +64,9 @@ private fun rememberGlassModifier(
             if (cardW <= 0 || cardH <= 0) return@onGloballyPositioned
 
             val cardSize = Size(cardW, cardH)
-            if (cachedBlur.value?.first == cardSize) return@onGloballyPositioned
+            val cardPos = Pair(pos.x, pos.y)
+            val cacheKey = Pair(cardSize, cardPos)
+            if (cachedBlur.value?.first == cacheKey) return@onGloballyPositioned
 
             // Scene 同款算法: x = iArr[0] / width, y = iArr[1] / width
             val x = (pos.x / scale).toInt()
@@ -80,7 +83,6 @@ private fun rememberGlassModifier(
             try {
                 val cropped = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(cropped)
-                // Scene: Rect(i, i2, width3 + i, height2 + i2) → Rect(0,0, ...)
                 canvas.drawBitmap(
                     blurred,
                     Rect(sx, sy, sx + sw, sy + sh),
@@ -88,14 +90,13 @@ private fun rememberGlassModifier(
                     null
                 )
                 cachedBlur.value?.second?.recycle()
-                cachedBlur.value = Pair(cardSize, cropped)
+                cachedBlur.value = Pair(cacheKey, cropped)
             } catch (_: Exception) {}
         }
         .drawBehind {
             val pair = cachedBlur.value ?: return@drawBehind
             val bmp = pair.second
             if (bmp.isRecycled) return@drawBehind
-            // 拉伸小图到卡片尺寸 — 模糊后的图看不出拉伸
             drawContext.canvas.nativeCanvas.drawBitmap(
                 bmp,
                 Rect(0, 0, bmp.width, bmp.height),
