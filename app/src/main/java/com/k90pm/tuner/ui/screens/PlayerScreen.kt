@@ -260,6 +260,8 @@ class MediaSessionHelper(private val ctx: Context) {
             process.waitFor()
 
             android.util.Log.d("PlayerScreen", "dumpsys err=[$errOutput] outLen=${output.length}")
+            // DEBUG: 打印前500字符
+            android.util.Log.d("PlayerScreen", "dumpsys HEAD=[${output.take(500)}]")
 
             var pkg = ""
             var title = ""
@@ -271,7 +273,7 @@ class MediaSessionHelper(private val ctx: Context) {
             for (line in output.lines()) {
                 val t = line.trim()
                 // 进入 Sessions Stack
-                if (t.startsWith("Sessions stack") || t.startsWith("Active sessions")) {
+                if (t.startsWith("Sessions Stack") || t.startsWith("Active Sessions") || t.startsWith("Active sessions")) {
                     inStack = true
                     continue
                 }
