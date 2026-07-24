@@ -4,8 +4,11 @@
     <!-- 前台服务（Shell 守护） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- 频谱特效：Visualizer API 需要 RECORD_AUDIO -->
+    <!-- 频谱特效：Visualizer API 需要 RECORD_AUDIO（保留备用） -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- 歌词在线获取 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="false"
