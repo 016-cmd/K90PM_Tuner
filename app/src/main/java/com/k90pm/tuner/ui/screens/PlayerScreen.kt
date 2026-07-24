@@ -1,7 +1,14 @@
 package com.k90pm.tuner.ui.screens
 
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.MediaMetadata
+import android.media.session.MediaController
+import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,41 +23,54 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * 播放器页面 — 通过 MediaSession 读取当前播放的歌曲信息并控制播放
+ * 播放器页面 — 通过 MediaSessionManager 读取当前播放的歌曲信息并控制播放
+ * 与车机/蓝牙耳机显示歌曲信息的方式相同
  */
 @Composable
 fun PlayerScreen(activity: Activity) {
     val ctx = LocalContext.current
-    val mediaInfo = remember { MediaSessionHelper(ctx) }
+    val helper = remember { MediaSessionHelper(ctx) }
 
-    // 定时刷新
-    var tick by remember { mutableIntStateOf(0) }
+    // 异步轮询 State，不在主线程阻塞
+    var songInfo by remember { mutableStateOf(MediaSessionHelper.SongInfo()) }
+    var albumArt by remember { mutableStateOf<Bitmap?>(null) }
+    var available by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(1000)
-            tick++
+            val info = withContext(Dispatchers.IO) {
+                withTimeoutOrNull(2000) { helper.getSongInfo() }
+            }
+            if (info != null) {
+                songInfo = info
+                albumArt = info.albumArt
+                available = info.packageName.isNotEmpty()
+            }
+            delay(1000)
         }
     }
-
-    // 每次 tick 时刷新
-    val songInfo = remember(tick) { mediaInfo.getSongInfo() }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(top = 60.dp, bottom = 120.dp), // 留空间给 Dock
+            .padding(top = 60.dp, bottom = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // ── 标题 ──
         Text(
             "音乐播放器",
             style = MaterialTheme.typography.titleLarge,
@@ -59,7 +79,7 @@ fun PlayerScreen(activity: Activity) {
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            if (songInfo.packageName.isNotEmpty()) "正在监听: ${songInfo.packageName}" else "未检测到播放中的音乐",
+            if (available) "正在监听: ${songInfo.packageName}" else "未检测到播放中的音乐\n打开酷狗/QQ音乐/网易云播放即可",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -76,17 +96,25 @@ fun PlayerScreen(activity: Activity) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Icons.Rounded.MusicNote,
-                null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-            )
+            if (albumArt != null) {
+                Image(
+                    bitmap = albumArt!!.asImageBitmap(),
+                    contentDescription = "专辑封面",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Rounded.MusicNote,
+                    null,
+                    modifier = Modifier.size(80.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                )
+            }
         }
 
         Spacer(Modifier.height(20.dp))
 
-        // ── 歌曲信息 ──
         Text(
             songInfo.title,
             style = MaterialTheme.typography.headlineSmall,
@@ -122,55 +150,37 @@ fun PlayerScreen(activity: Activity) {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 上一首
             IconButton(
-                onClick = { mediaInfo.skipToPrevious() },
+                onClick = { helper.execAsync("input keyevent 88") },
                 modifier = Modifier.size(56.dp)
             ) {
-                Icon(
-                    Icons.Rounded.SkipPrevious,
-                    "上一首",
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
+                Icon(Icons.Rounded.SkipPrevious, "上一首", modifier = Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onSurface)
             }
 
-            // 播放/暂停
-            val isPlaying = songInfo.isPlaying
             IconButton(
                 onClick = {
-                    if (isPlaying) mediaInfo.pause() else mediaInfo.play()
+                    if (songInfo.isPlaying) helper.execAsync("input keyevent 127")
+                    else helper.execAsync("input keyevent 126")
                 },
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
+                modifier = Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)
             ) {
                 Icon(
-                    if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    if (isPlaying) "暂停" else "播放",
+                    if (songInfo.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    if (songInfo.isPlaying) "暂停" else "播放",
                     modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
 
-            // 下一首
             IconButton(
-                onClick = { mediaInfo.skipToNext() },
+                onClick = { helper.execAsync("input keyevent 87") },
                 modifier = Modifier.size(56.dp)
             ) {
-                Icon(
-                    Icons.Rounded.SkipNext,
-                    "下一首",
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
+                Icon(Icons.Rounded.SkipNext, "下一首", modifier = Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onSurface)
             }
         }
 
         Spacer(Modifier.height(40.dp))
-
-        // ── 频谱卡片占位（下一轮实现 Visualizer）──
         SpectrumPlaceholder()
     }
 }
@@ -184,43 +194,26 @@ fun SpectrumPlaceholder() {
     val shape = RoundedCornerShape(20.dp)
     val fillColor = if (isDark) Color.Black.copy(alpha = 0.20f)
     else Color.White.copy(alpha = 0.35f)
-    val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
-    else Color.Black.copy(alpha = 0.06f)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
             .clip(shape)
-            .background(fillColor, shape)
-            .then(
-                Modifier.clip(shape).let { Modifier }
-            ),
+            .background(fillColor, shape),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Rounded.GraphicEq,
-                null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-            )
+            Icon(Icons.Rounded.GraphicEq, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
             Spacer(Modifier.height(12.dp))
-            Text(
-                "RGB 频谱特效",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                "需要通过 Visualizer API 读取系统音频",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-            )
+            Text("RGB 频谱特效", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("通过 Visualizer API 读取系统音频", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
         }
     }
 }
 
-// ── MediaSession 读取工具（通过 dumpsys + root）──
+// ── MediaSession 读取工具 ──
+// 同时尝试 MediaSessionManager API 和 dumpsys fallback
 
 class MediaSessionHelper(private val ctx: Context) {
     data class SongInfo(
@@ -228,49 +221,89 @@ class MediaSessionHelper(private val ctx: Context) {
         val artist: String = "未知歌手",
         val album: String = "",
         val packageName: String = "",
-        val isPlaying: Boolean = false
+        val isPlaying: Boolean = false,
+        val albumArt: Bitmap? = null
     )
 
-    fun getSongInfo(): SongInfo {
+    private val manager = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+    private var activeController: MediaController? = null
+    private var registered = false
+
+    /**
+     * 获取歌曲信息。先尝试 MediaSessionManager.getActiveSessions（需要通知权限或 root），
+     * 失败则 fallback 到 dumpsys（root），再失败返回空。
+     */
+    suspend fun getSongInfo(): SongInfo = withContext(Dispatchers.IO) {
         try {
+            // 方式1：MediaSessionManager（标准 API）
+            val sessions = try {
+                manager.getActiveSessions(
+                    ComponentName(ctx.packageName, androidx.media.session.MediaButtonReceiver::class.java)
+                )
+            } catch (_: SecurityException) { null }
+
+            if (!sessions.isNullOrEmpty()) {
+                val ctrl = sessions.firstOrNull { it.playbackState != null } ?: sessions.first()
+                activeController = ctrl
+                val meta = ctrl.metadata
+                val state = ctrl.playbackState
+                return@withContext SongInfo(
+                    title = meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "未知歌曲",
+                    artist = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "未知歌手",
+                    album = meta?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: "",
+                    packageName = ctrl.packageName ?: "",
+                    isPlaying = state?.state == PlaybackState.STATE_PLAYING,
+                    albumArt = meta?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+                )
+            }
+
+            // 方式2：dumpsys fallback（root）
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "dumpsys media_session"))
-            val output = process.inputStream.bufferedReader().readText()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
             process.waitFor()
 
-            val lines = output.lines()
             var pkg = ""
             var title = ""
             var artist = ""
             var album = ""
             var isPlaying = false
+            var firstSession = true
+            var inSession = false
 
-            for (i in lines.indices) {
-                val line = lines[i].trim()
+            for (line in output.lines()) {
+                val t = line.trim()
+                if (t.startsWith("Sessions stack") || t.startsWith("Active sessions")) {
+                    inSession = true; continue
+                }
+                if (!inSession) continue
+
                 when {
-                    line.startsWith("package=") -> pkg = line.substringAfter("package=")
-                    line.contains("state=PlaybackState") -> {
-                        isPlaying = line.contains("state=3")
+                    t.startsWith("package=") -> {
+                        if (firstSession) { pkg = t.substringAfter("package="); firstSession = false }
                     }
-                    line.startsWith("title=") -> title = line.substringAfter("title=")
-                    line.startsWith("artist=") -> artist = line.substringAfter("artist=")
-                    line.startsWith("album=") -> album = line.substringAfter("album=")
+                    t.contains("state=PlaybackState") -> isPlaying = t.contains("state=3")
+                    t.startsWith("title=") -> { if (title.isEmpty()) title = t.substringAfter("title=") }
+                    t.startsWith("artist=") -> { if (artist.isEmpty()) artist = t.substringAfter("artist=") }
+                    t.startsWith("album=") -> { if (album.isEmpty()) album = t.substringAfter("album=") }
                 }
             }
 
-            return SongInfo(title, artist, album, pkg, isPlaying)
+            return@withContext SongInfo(
+                title = title.ifEmpty { "未知歌曲" },
+                artist = artist.ifEmpty { "未知歌手" },
+                album = album,
+                packageName = pkg,
+                isPlaying = isPlaying
+            )
         } catch (_: Exception) {}
-        return SongInfo()
+
+        SongInfo()
     }
 
-    // 简单控制：通过 input keyevent
-    fun play() = exec("input keyevent 126")  // MEDIA_PLAY
-    fun pause() = exec("input keyevent 127") // MEDIA_PAUSE
-    fun skipToNext() = exec("input keyevent 87")  // MEDIA_NEXT
-    fun skipToPrevious() = exec("input keyevent 88") // MEDIA_PREVIOUS
-
-    private fun exec(cmd: String) {
-        try {
-            Runtime.getRuntime().exec(arrayOf("su", "-c", cmd)).waitFor()
-        } catch (_: Exception) {}
+    fun execAsync(cmd: String) {
+        Thread {
+            try { Runtime.getRuntime().exec(arrayOf("su", "-c", cmd)).waitFor() }
+            catch (_: Exception) {}
+        }.start()
     }
 }
