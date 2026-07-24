@@ -33,7 +33,7 @@ private val DarkBackground = Color(0xFF0D0D0F)
 private val DarkSurface = Color(0xFF1A1A1E)
 private val DarkSurfaceVariant = Color(0xFF25252B)
 private val DarkTextPrimary = Color(0xFFEBEBF0)
-private val DarkTextSecondary = Color(0xFF9A9AA6)
+private val DarkTextSecondary = Color(0xFFB0B0B8)  // 提亮，深色卡片中可读
 
 private val LightColorScheme = lightColorScheme(
     primary = WarmGold,
