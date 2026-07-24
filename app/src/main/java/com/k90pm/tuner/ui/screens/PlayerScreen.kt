@@ -2,9 +2,7 @@ package com.k90pm.tuner.ui.screens
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Bitmap
 import android.media.MediaMetadata
-import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import androidx.compose.foundation.background
@@ -202,10 +200,13 @@ fun PlayerScreen(activity: Activity) {
                         )
                     }
                 }
+                // 将 positionMs 传给 LyricView
                 lyricLines.isNotEmpty() -> {
                     LyricView(
                         lines = lyricLines,
                         source = lyricSource,
+                        positionMs = songInfo.positionMs,
+                        isPlaying = songInfo.isPlaying,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -217,15 +218,29 @@ fun PlayerScreen(activity: Activity) {
     }
 }
 
-// ── 歌词滚动视图 ──
+// ── 歌词滚动视图（带播放位置高亮） ──
 @Composable
 private fun LyricView(
     lines: List<LyricFetcher.LyricLine>,
     source: String,
+    positionMs: Long,
+    isPlaying: Boolean,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
+
+    // 找到当前播放到的歌词行索引
+    val currentIndex = remember(lines, positionMs) {
+        lines.indexOfLast { it.timeMs <= positionMs }.coerceAtLeast(0)
+    }
+
+    // 自动滚动到当前行（播放时）
+    LaunchedEffect(currentIndex, isPlaying) {
+        if (isPlaying && lines.isNotEmpty()) {
+            listState.animateScrollToItem(currentIndex)
+        }
+    }
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -235,24 +250,33 @@ private fun LyricView(
         // 来源提示
         item {
             Text(
-                "歌词来源：$source",
+                "歌词来源：$source  |  ${formatTime(positionMs)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant.copy(alpha = 0.4f),
                 modifier = Modifier.padding(bottom = 12.dp)
             )
         }
-        itemsIndexed(lines) { _, line ->
+        itemsIndexed(lines, key = { i, _ -> i }) { index, line ->
+            val isCurrent = index == currentIndex
             Text(
                 line.text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = colors.onSurface.copy(alpha = 0.85f),
+                style = if (isCurrent) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                color = if (isCurrent) colors.primary else colors.onSurface.copy(alpha = 0.55f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 6.dp)
             )
         }
     }
+}
+
+private fun formatTime(ms: Long): String {
+    val totalSec = ms / 1000
+    val min = totalSec / 60
+    val sec = totalSec % 60
+    return "%d:%02d".format(min, sec)
 }
 
 // ── MediaSession 读取工具 ──
@@ -263,7 +287,7 @@ class MediaSessionHelper(private val ctx: Context) {
         val album: String = "",
         val packageName: String = "",
         val isPlaying: Boolean = false,
-        val albumArt: Bitmap? = null
+        val positionMs: Long = 0
     )
 
     private val manager = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
@@ -297,6 +321,7 @@ class MediaSessionHelper(private val ctx: Context) {
             var artist = ""
             var album = ""
             var isPlaying = false
+            var positionMs = 0L
             var inStack = false
 
             for (line in output.lines()) {
@@ -311,6 +336,9 @@ class MediaSessionHelper(private val ctx: Context) {
                     t.startsWith("state=PlaybackState") -> {
                         val m = Regex("""state=(\w+)\((\d+)\)""").find(t)
                         if (m != null) isPlaying = m.groupValues[2] == "3"
+                        // 提取 position=毫秒
+                        val p = Regex("""position=(\d+)""").find(t)
+                        if (p != null) positionMs = p.groupValues[1].toLongOrNull() ?: 0
                     }
                     t.startsWith("metadata:") -> {
                         val desc = t.substringAfter("description=").trim()
@@ -329,7 +357,8 @@ class MediaSessionHelper(private val ctx: Context) {
                 artist = artist.ifEmpty { "未知歌手" },
                 album = album,
                 packageName = pkg,
-                isPlaying = isPlaying
+                isPlaying = isPlaying,
+                positionMs = positionMs
             )
         } catch (_: Exception) {}
         SongInfo()
