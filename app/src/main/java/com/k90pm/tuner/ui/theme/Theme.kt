@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
+import java.io.File
 
 // ── 品牌色 ──
 private val WarmGold = Color(0xFFD4A853)
@@ -114,9 +115,11 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
 
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
         if (wallpaperUri != null) {
+            // 支持 file:/ 路径和 content:// URI
+            val model: Any = if (wallpaperUri.startsWith("content://")) wallpaperUri else File(wallpaperUri)
             Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
-                    model = wallpaperUri,
+                    model = model,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
