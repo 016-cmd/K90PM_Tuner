@@ -29,7 +29,7 @@ fun MainScreen(
     val canEdit = viewModel.canEdit
 
     if (showSettings) {
-        SettingsScreen(onBack = { showSettings = false })
+        SettingsScreen(onBack = { showSettings = false; /* 返回后 Theme 读取最新 pref */ })
         return
     }
 
