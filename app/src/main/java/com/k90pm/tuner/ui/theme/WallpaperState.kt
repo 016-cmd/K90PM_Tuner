@@ -20,12 +20,21 @@ object WallpaperState {
     var isDark: Boolean = false
         private set
 
-    fun set(ctx: Context, bitmap: Bitmap, dark: Boolean) {
+    /** 屏幕物理宽度 / 192（Scene 同款缩放比），用于坐标换算 */
+    @Volatile
+    var scale: Float = 1f
+        private set
+
+    fun set(ctx: Context, bitmap: Bitmap, dark: Boolean, screenWidthPx: Int) {
         original?.recycle()
         blurred?.recycle()
         original = bitmap
         blurred = BlurUtils.blur(ctx, bitmap, radius = 16f)
         isDark = dark
+        // Scene: float width = rootView.getWidth() / 192
+        scale = if (blurred != null && blurred!!.width > 0) {
+            screenWidthPx.toFloat() / blurred!!.width.toFloat()
+        } else 1f
     }
 
     fun clear() {
@@ -33,5 +42,6 @@ object WallpaperState {
         blurred?.recycle()
         original = null
         blurred = null
+        scale = 1f
     }
 }
