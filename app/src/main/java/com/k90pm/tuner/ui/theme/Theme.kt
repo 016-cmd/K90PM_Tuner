@@ -12,6 +12,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
+import coil3.toBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.graphics.BitmapFactory
 import java.io.File
 
 // ── 品牌色 ──
@@ -112,6 +116,28 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
     val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
+
+    // 壁纸变化时异步加载 bitmap → 模糊 → WallpaperState
+    LaunchedEffect(wallpaperUri, isDark) {
+        if (wallpaperUri != null) {
+            try {
+                withContext(Dispatchers.IO) {
+                    val bitmap = if (wallpaperUri.startsWith("content://")) {
+                        ctx.contentResolver.openInputStream(
+                            android.net.Uri.parse(wallpaperUri)
+                        )?.use { BitmapFactory.decodeStream(it) }
+                    } else {
+                        BitmapFactory.decodeFile(wallpaperUri)
+                    }
+                    if (bitmap != null) {
+                        WallpaperState.set(bitmap, isDark)
+                    }
+                }
+            } catch (_: Exception) {}
+        } else {
+            WallpaperState.clear()
+        }
+    }
 
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
         Box(modifier = Modifier.fillMaxSize().background(colorScheme.background)) {
