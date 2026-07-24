@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * 液态玻璃卡片。
- * 底色高透——浅色白底低alpha、深色黑底低alpha，壁纸隐约透出。
+ * 底色高透，模糊效果由系统窗口级 setBlurBehindRadius 提供（Android 12+）。
  */
 @Composable
 fun GlassCard(
@@ -31,9 +31,8 @@ fun GlassCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
-    // 高透：浅色白底0.30，深色黑底0.20
-    val fillColor = if (isDark) Color.Black.copy(alpha = 0.20f)
-    else Color.White.copy(alpha = 0.30f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = 0.15f)
+    else Color.White.copy(alpha = 0.25f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.05f)
@@ -53,9 +52,6 @@ fun GlassCard(
     }
 }
 
-/**
- * 液态玻璃容器——无内边距
- */
 @Composable
 fun GlassSurface(
     modifier: Modifier = Modifier,
@@ -65,8 +61,8 @@ fun GlassSurface(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = 0.20f)
-    else Color.White.copy(alpha = 0.30f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = 0.15f)
+    else Color.White.copy(alpha = 0.25f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.05f)
@@ -81,9 +77,6 @@ fun GlassSurface(
     }
 }
 
-/**
- * 设置页卡片——稍不透明保证列表可读性
- */
 @Composable
 fun GlassSettingsCard(
     modifier: Modifier = Modifier,
@@ -93,8 +86,8 @@ fun GlassSettingsCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(16.dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = 0.28f)
-    else Color.White.copy(alpha = 0.38f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = 0.22f)
+    else Color.White.copy(alpha = 0.32f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
     else Color.Black.copy(alpha = 0.08f)
