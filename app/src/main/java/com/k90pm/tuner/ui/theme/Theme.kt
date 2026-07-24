@@ -8,17 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.graphics.BitmapFactory
-import java.io.File
 
 // ── 品牌色 ──
 private val WarmGold = Color(0xFFD4A853)
@@ -124,6 +121,9 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     val screenWidthPx = 1080 // K90 Pro Max 常见屏幕物理宽度，后续可用 Resources 动态获取
 
     // 壁纸变化时异步加载 bitmap → 模糊 → WallpaperState
+    // 使用 state 计数器触发 Compose 重组（WallpaperState 是非 Compose 对象）
+    var wallpaperVersion by remember { mutableIntStateOf(0) }
+
     LaunchedEffect(wallpaperUri, isDark) {
         if (wallpaperUri != null) {
             try {
@@ -139,18 +139,26 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
                         WallpaperState.set(ctx, bitmap, isDark, screenWidthPx.toInt())
                     }
                 }
+                wallpaperVersion++ // 触发重组
             } catch (_: Exception) {}
         } else {
             WallpaperState.clear()
+            wallpaperVersion++ // 触发重组
         }
     }
 
+    // 读取 wallpaperVersion 确保 Compose 追踪变化
+    val version = wallpaperVersion
+
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
         Box(modifier = Modifier.fillMaxSize().background(colorScheme.background)) {
-            if (wallpaperUri != null) {
-                val model: Any = if (wallpaperUri.startsWith("content://")) wallpaperUri else File(wallpaperUri)
-                AsyncImage(
-                    model = model,
+            // 全屏壁纸：直接用 WallpaperState 原始 Bitmap，与模糊壁纸同一来源
+            @Suppress("UNUSED_EXPRESSION")
+            version // 读取触发重组
+            val wallpaperBitmap = WallpaperState.original
+            if (wallpaperBitmap != null) {
+                Image(
+                    bitmap = wallpaperBitmap.asImageBitmap(),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
