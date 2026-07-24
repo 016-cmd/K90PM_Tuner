@@ -99,12 +99,10 @@ object ThemePrefs {
 
 @Composable
 fun K90TunerTheme(content: @Composable () -> Unit) {
+    // 🔑 每次 composition 都从 SharedPreferences 读取最新值
     val ctx = LocalContext.current
-    var mode by remember { mutableStateOf(ThemePrefs.getMode(ctx)) }
-    var wallpaperUri by remember { mutableStateOf(ThemePrefs.getWallpaperUri(ctx)) }
-
-    // 监听外部变更（设置页修改后刷新）
-    val forceRefresh = remember { mutableIntStateOf(0) }
+    val mode = ThemePrefs.getMode(ctx)
+    val wallpaperUri = ThemePrefs.getWallpaperUri(ctx)
 
     val isDark = when (mode) {
         ThemeMode.LIGHT -> false
