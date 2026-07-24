@@ -114,19 +114,17 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
 
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
-        if (wallpaperUri != null) {
-            val model: Any = if (wallpaperUri.startsWith("content://")) wallpaperUri else File(wallpaperUri)
-            Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().background(colorScheme.background)) {
+            if (wallpaperUri != null) {
+                val model: Any = if (wallpaperUri.startsWith("content://")) wallpaperUri else File(wallpaperUri)
                 AsyncImage(
                     model = model,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // 内容层直接叠加在壁纸上，无遮罩
-                content()
             }
-        } else {
+            // 内容层直接叠加在壁纸（或纯色背景）上
             content()
         }
     }
