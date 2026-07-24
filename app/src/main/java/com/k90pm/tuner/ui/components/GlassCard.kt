@@ -19,9 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * 液态玻璃卡片 — 参照 K90PM Web UI 设计。
- * 亮色：透明底 + 极淡白填充 + 细边框 + 顶部微高光（模拟 backdrop-filter blur）
- * 暗色：暗底 + 微弱亮填充(0.03) + 细边框 + 顶部微高光
+ * 液态玻璃卡片 — 与 K90PM Web UI 一致：
+ * transparent 底 + 细边框 + 顶部微高光（模拟 backdrop-filter blur 的玻璃反射）。
+ * 无白色填充，壁纸直接透过。
  */
 @Composable
 fun GlassCard(
@@ -33,18 +33,14 @@ fun GlassCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
-    // Web UI 暗色模式: rgba(255,255,255,.03)；亮色: 略白
-    val fillColor = if (isDark) Color.White.copy(alpha = 0.04f)
-    else Color.White.copy(alpha = 0.55f)
-
-    // 边框: 亮色 rgba(60,60,67,.08)；暗色 rgba(255,255,255,.06)
+    // 边框：亮色 rgba(60,60,67,.08)；暗色 rgba(255,255,255,.06)
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.08f)
 
     // 顶部高光（模拟 glass 反射）
     val highlight = Brush.verticalGradient(
         colors = listOf(
-            Color.White.copy(alpha = if (isDark) 0.04f else 0.12f),
+            Color.White.copy(alpha = if (isDark) 0.05f else 0.10f),
             Color.Transparent
         ),
         startY = 0f,
@@ -54,7 +50,7 @@ fun GlassCard(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(fillColor, shape)
+            .background(Color.Transparent, shape)
             .border(0.5.dp, borderColor, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
@@ -84,16 +80,13 @@ fun GlassSurface(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
-    val fillColor = if (isDark) Color.White.copy(alpha = 0.04f)
-    else Color.White.copy(alpha = 0.55f)
-
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.08f)
 
     Box(
         modifier = modifier
             .clip(shape)
-            .background(fillColor, shape)
+            .background(Color.Transparent, shape)
             .border(0.5.dp, borderColor, shape)
     ) {
         content()
@@ -101,7 +94,7 @@ fun GlassSurface(
 }
 
 /**
- * 设置页专用卡片——稍不透明，适合列表项
+ * 设置页专用卡片——微透明底，适合列表项
  */
 @Composable
 fun GlassSettingsCard(
@@ -112,8 +105,9 @@ fun GlassSettingsCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(16.dp)
 
-    val fillColor = if (isDark) Color.White.copy(alpha = 0.05f)
-    else Color.White.copy(alpha = 0.60f)
+    // 设置页需要极淡底色保证可读性
+    val fillColor = if (isDark) Color.White.copy(alpha = 0.03f)
+    else Color.White.copy(alpha = 0.50f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
     else Color.Black.copy(alpha = 0.10f)
