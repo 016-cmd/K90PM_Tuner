@@ -262,44 +262,39 @@ class MediaSessionHelper(private val ctx: Context) {
             var artist = ""
             var album = ""
             var isPlaying = false
-            var firstSession = true
-            var inSession = false
+            var sessionCount = 0
+            var inFirstSession = false
 
             for (line in output.lines()) {
                 val t = line.trim()
                 if (t.startsWith("Sessions stack") || t.startsWith("Active sessions")) {
-                    inSession = true; continue
+                    inFirstSession = true
+                    continue
                 }
-                if (!inSession) continue
-                // 遇到第二个 session 就停止
-                if (!t.startsWith(" ") && t.contains(" com.")) {
-                    if (!firstSession) break
+                if (!inFirstSession) continue
+                // 新的顶级 session 条目（以字母开头，包含 Service 名和包名）
+                // 如 "KugouPlaybackService com.kugou.android/..."
+                if (t[0].isLetter() && t.contains(" com.")) {
+                    sessionCount++
+                    if (sessionCount > 1) break  // 只要第一个
                 }
+                if (sessionCount != 1) continue
 
                 when {
-                    t.startsWith("package=") -> {
-                        if (firstSession) pkg = t.substringAfter("package=").trim()
-                    }
-                    // state=PlaybackState {state=PLAYING(3), ...} 或 state=PAUSED(2)
+                    t.startsWith("package=") -> pkg = t.substringAfter("package=").trim()
                     t.contains("state=PlaybackState") -> {
-                        // 提取 state= 后面的状态数字，PLAYING=3
-                        val stateNum = Regex("""state=\w+\((\d+)\)""").find(t)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-                        isPlaying = stateNum == 3
+                        val m = Regex("""state=(\w+)\((\d+)\)""").find(t)
+                        if (m != null) isPlaying = m.groupValues[2] == "3"
                     }
-                    // metadata: size=8, description=标题, 歌手, 专辑
                     t.startsWith("metadata:") -> {
                         val desc = t.substringAfter("description=").trim()
                         if (desc.isNotEmpty() && desc != "null") {
                             val parts = desc.split(", ")
-                            title = parts.getOrNull(0)?.ifEmpty { null } ?: "未知歌曲"
-                            artist = parts.getOrNull(1)?.ifEmpty { null } ?: "未知歌手"
-                            album = parts.getOrNull(2)?.ifEmpty { null } ?: ""
+                            title = parts.getOrNull(0) ?: ""
+                            artist = parts.getOrNull(1) ?: ""
+                            album = parts.getOrNull(2) ?: ""
                         }
                     }
-                }
-                // 检测 session 结束
-                if (t.startsWith("    ") && !t.startsWith("      ") && firstSession && pkg.isNotEmpty()) {
-                    firstSession = false
                 }
             }
 
