@@ -175,8 +175,8 @@ private fun SectionHeader(title: String) {
         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
     )
 }
+
 @Composable
-private fun SectionHeader(title: String) {
 private fun ThemeOption(
     label: String,
     icon: ImageVector,
