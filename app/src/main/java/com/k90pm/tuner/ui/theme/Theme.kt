@@ -130,7 +130,7 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
                         BitmapFactory.decodeFile(wallpaperUri)
                     }
                     if (bitmap != null) {
-                        WallpaperState.set(bitmap, isDark)
+                        WallpaperState.set(ctx, bitmap, isDark)
                     }
                 }
             } catch (_: Exception) {}
