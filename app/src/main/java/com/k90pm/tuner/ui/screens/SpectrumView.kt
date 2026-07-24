@@ -17,7 +17,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
 /**
- * 频谱特效 — Visualizer 读取系统音频输出（非麦克风），RGB 流光颜色
+ * 频谱特效 — 有音频时动态频谱，无音频时静态底柱 + RGB 流光
  */
 @Composable
 fun SpectrumView(modifier: Modifier = Modifier) {
@@ -28,19 +28,23 @@ fun SpectrumView(modifier: Modifier = Modifier) {
 
     var fftBytes by remember { mutableStateOf(ByteArray(0)) }
     var hue by remember { mutableStateOf(0f) }
+    var hasData by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             try {
                 val visualizer = Visualizer(0)
-                val capSize = Visualizer.getCaptureSizeRange()[1] / 2
-                visualizer.captureSize = capSize
+                val range = Visualizer.getCaptureSizeRange()
+                visualizer.captureSize = range[1] / 2
 
                 visualizer.setDataCaptureListener(
                     object : Visualizer.OnDataCaptureListener {
-                        override fun onWaveFormDataCapture(viz: Visualizer?, waveform: ByteArray?, sr: Int) {}
+                        override fun onWaveFormDataCapture(viz: Visualizer?, wf: ByteArray?, sr: Int) {}
                         override fun onFftDataCapture(viz: Visualizer?, fft: ByteArray?, sr: Int) {
-                            fft?.let { fftBytes = it.copyOf() }
+                            if (fft != null) {
+                                fftBytes = fft.copyOf()
+                                hasData = true
+                            }
                         }
                     },
                     Visualizer.getMaxCaptureRate() / 2,
@@ -56,30 +60,37 @@ fun SpectrumView(modifier: Modifier = Modifier) {
 
                 visualizer.enabled = false
                 visualizer.release()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+                while (isActive) {
+                    hue = (hue + 1f) % 360f
+                    kotlinx.coroutines.delay(50)
+                }
+            }
         }
     }
 
     Canvas(modifier = modifier.clip(shape).background(fillColor, shape)) {
-        if (fftBytes.isEmpty()) return@Canvas
-
         val barCount = 48
-        val barWidth = size.width / barCount * 0.7f
+        val barW = size.width / barCount * 0.7f
         val gap = size.width / barCount * 0.3f
-        val maxH = size.height * 0.85f
+        val maxH = size.height * 0.80f
+        val baseH = size.height * 0.05f
+        val baseY = size.height * 0.92f
 
-        val bars = if (fftBytes.size >= barCount) {
-            (0 until barCount).map { i ->
-                ((fftBytes[i].toInt() and 0xFF) / 255f).coerceIn(0f, 1f)
-            }
-        } else List(barCount) { 0f }
+        val vals = if (fftBytes.size >= barCount) {
+            (0 until barCount).map { ((fftBytes[it].toInt() and 0xFF) / 255f).coerceIn(0f, 1f) }
+        } else List(barCount) { 0.05f }
 
         (0 until barCount).forEach { i ->
             val h = (hue + i * 4f) % 360f
+            val v = vals[i]
+            val barH = if (v > 0.06f && hasData) (v * maxH).coerceAtLeast(baseH) else baseH
+            val alpha = if (hasData && v > 0.06f) 0.9f else 0.25f
+
             drawRect(
-                color = Color.hsl(h, 0.85f, 0.6f),
-                topLeft = Offset(i * (barWidth + gap), maxH - bars[i] * maxH + (size.height - maxH) / 2),
-                size = Size(barWidth, (bars[i] * maxH).coerceAtLeast(2f))
+                color = Color.hsl(h, 0.85f, 0.55f, alpha),
+                topLeft = Offset(i * (barW + gap), baseY - barH),
+                size = Size(barW, barH)
             )
         }
     }
