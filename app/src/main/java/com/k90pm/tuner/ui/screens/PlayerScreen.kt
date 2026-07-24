@@ -48,25 +48,34 @@ fun PlayerScreen(activity: Activity) {
     var lyricLoading by remember { mutableStateOf(false) }
     var lastQueryKey by remember { mutableStateOf("") }
 
-    // 本地进度计时器 — callback anchor + local increment
+    // ── 纯本地自增计时器 ──
+    // 只在两个时刻用外部数据纠正：①切歌后 ②拖动进度条后
     var displayPositionMs by remember { mutableStateOf(0L) }
-    var tickStartNano by remember { mutableStateOf(System.nanoTime()) }
     var tickBaseMs by remember { mutableStateOf(0L) }
+    var tickStartNano by remember { mutableStateOf(System.nanoTime()) }
+    var lastPkg by remember { mutableStateOf("") }
     var lastCallbackPos by remember { mutableStateOf(-1L) }
 
-    // 定时刷新歌曲信息
+    // 定时刷新歌曲信息 & 锚点检测
     LaunchedEffect(Unit) {
         while (true) {
             val info = withContext(Dispatchers.IO) {
                 withTimeoutOrNull(2000) { helper.getSongInfo() }
             }
             if (info != null) {
-                // callback 给的 position 变化时（拖动进度条/切歌），重置锚点
-                val callbackPos = helper.livePositionMs
-                if (callbackPos > 0 && callbackPos != lastCallbackPos) {
-                    tickBaseMs = callbackPos
-                    tickStartNano = helper.livePositionNano
-                    lastCallbackPos = callbackPos
+                // ① 切歌检测：包名变了 → 用 dumpsys position 重置起点
+                if (info.packageName.isNotEmpty() && info.packageName != lastPkg) {
+                    lastPkg = info.packageName
+                    tickBaseMs = info.positionMs
+                    tickStartNano = System.nanoTime()
+                    lastCallbackPos = -1L
+                }
+                // ② callback position 变化（拖动进度条触发）→ 覆盖本地
+                val cb = helper.livePositionMs
+                if (cb > 0 && cb != lastCallbackPos && info.packageName.isNotEmpty()) {
+                    tickBaseMs = cb
+                    tickStartNano = System.nanoTime()
+                    lastCallbackPos = cb
                 }
                 songInfo = info
                 available = info.packageName.isNotEmpty()
@@ -75,14 +84,17 @@ fun PlayerScreen(activity: Activity) {
         }
     }
 
-    // 每 200ms 自增，暂停时定格
+    // 每 200ms 自增，暂停定格
     LaunchedEffect(Unit) {
         while (true) {
             if (songInfo.isPlaying) {
                 displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
             } else {
-                // 暂停时定格当前进度
-                displayPositionMs = tickBaseMs
+                // 暂停时把当前自增值写回 base，防止恢复时跳
+                val cur = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
+                tickBaseMs = cur
+                tickStartNano = System.nanoTime()
+                displayPositionMs = cur
             }
             delay(200)
         }
