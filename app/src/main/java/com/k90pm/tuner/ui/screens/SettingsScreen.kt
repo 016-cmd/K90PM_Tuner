@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.k90pm.tuner.ui.theme.ThemeMode
 import com.k90pm.tuner.ui.theme.ThemePrefs
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +41,19 @@ fun SettingsScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            ThemePrefs.setWallpaperUri(ctx, uri.toString())
+            // 复制到内部存储 → Scene 同款 windowBg.jpg
+            try {
+                val bgFile = File(ctx.filesDir, "windowBg.jpg")
+                ctx.contentResolver.openInputStream(uri)?.use { input ->
+                    FileOutputStream(bgFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                ThemePrefs.setWallpaperUri(ctx, bgFile.path)
+            } catch (_: Exception) {
+                // 回退：直接存 URI
+                ThemePrefs.setWallpaperUri(ctx, uri.toString())
+            }
             activity.recreate()
         }
     }
@@ -128,6 +142,8 @@ fun SettingsScreen(
                         subtitle = null,
                         onClick = {
                             ThemePrefs.setWallpaperUri(ctx, null)
+                            // 删除 Scene 同款壁纸文件
+                            File(ctx.filesDir, "windowBg.jpg").delete()
                             activity.recreate()
                         }
                     )
