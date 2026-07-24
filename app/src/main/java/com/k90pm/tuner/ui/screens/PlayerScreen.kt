@@ -49,11 +49,10 @@ fun PlayerScreen(activity: Activity) {
     var lastQueryKey by remember { mutableStateOf("") }
 
     // ── 纯本地自增计时器 ──
-    // 只在两个时刻用外部数据纠正：①切歌后 ②拖动进度条后
     var displayPositionMs by remember { mutableStateOf(0L) }
     var tickBaseMs by remember { mutableStateOf(0L) }
     var tickStartNano by remember { mutableStateOf(System.nanoTime()) }
-    var lastPkg by remember { mutableStateOf("") }
+    var lastTitle by remember { mutableStateOf("") }
     var lastCallbackPos by remember { mutableStateOf(-1L) }
 
     // 定时刷新歌曲信息 & 锚点检测
@@ -63,16 +62,17 @@ fun PlayerScreen(activity: Activity) {
                 withTimeoutOrNull(2000) { helper.getSongInfo() }
             }
             if (info != null) {
-                // ① 切歌检测：包名变了 → 用 dumpsys position 重置起点
-                if (info.packageName.isNotEmpty() && info.packageName != lastPkg) {
-                    lastPkg = info.packageName
-                    tickBaseMs = info.positionMs
+                // ① 切歌检测：歌名变了 → 重置为 0 重新开始
+                val newKey = "${info.title}|${info.artist}"
+                if (info.title.isNotEmpty() && info.title != "未知歌曲" && newKey != lastTitle) {
+                    lastTitle = newKey
+                    tickBaseMs = 0
                     tickStartNano = System.nanoTime()
                     lastCallbackPos = -1L
                 }
                 // ② callback position 变化（拖动进度条触发）→ 覆盖本地
                 val cb = helper.livePositionMs
-                if (cb > 0 && cb != lastCallbackPos && info.packageName.isNotEmpty()) {
+                if (cb > 0 && cb != lastCallbackPos) {
                     tickBaseMs = cb
                     tickStartNano = System.nanoTime()
                     lastCallbackPos = cb
@@ -90,7 +90,6 @@ fun PlayerScreen(activity: Activity) {
             if (songInfo.isPlaying) {
                 displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
             } else {
-                // 暂停时把当前自增值写回 base，防止恢复时跳
                 val cur = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
                 tickBaseMs = cur
                 tickStartNano = System.nanoTime()
