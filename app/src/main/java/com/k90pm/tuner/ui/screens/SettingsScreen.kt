@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.k90pm.tuner.ui.components.GlassSettingsCard
 import com.k90pm.tuner.ui.theme.ThemeMode
 import com.k90pm.tuner.ui.theme.ThemePrefs
 import java.io.File
@@ -174,22 +175,8 @@ private fun SectionHeader(title: String) {
         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
     )
 }
-
 @Composable
-private fun GlassSettingsCard(content: @Composable ColumnScope.() -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-    ) {
-        Column { content() }
-    }
-}
-
-@Composable
+private fun SectionHeader(title: String) {
 private fun ThemeOption(
     label: String,
     icon: ImageVector,
