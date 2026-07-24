@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import coil3.compose.AsyncImage
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
@@ -117,6 +118,10 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     }
     val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
 
+    // WallpaperState 坐标换算需要屏幕物理宽度
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { 432.dp.toPx() } // 后续可以在 onSizeChanged 中精确化，先用常见值
+
     // 壁纸变化时异步加载 bitmap → 模糊 → WallpaperState
     LaunchedEffect(wallpaperUri, isDark) {
         if (wallpaperUri != null) {
@@ -130,7 +135,7 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
                         BitmapFactory.decodeFile(wallpaperUri)
                     }
                     if (bitmap != null) {
-                        WallpaperState.set(ctx, bitmap, isDark)
+                        WallpaperState.set(ctx, bitmap, isDark, screenWidthPx.toInt())
                     }
                 }
             } catch (_: Exception) {}
