@@ -44,7 +44,7 @@ fun MainScreen(
                         Icon(Icons.Rounded.Tune, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         Spacer(Modifier.width(10.dp))
                         Column {
-                            Text("K90PM Tuner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("K90PM Tuner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             Text("WSA 内核寄存器实时控制", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
