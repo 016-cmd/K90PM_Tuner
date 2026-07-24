@@ -1,5 +1,6 @@
 package com.k90pm.tuner.ui.screens
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +21,7 @@ import com.k90pm.tuner.ui.components.ModuleStatusCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
+    activity: Activity,
     viewModel: MainViewModel = viewModel()
 ) {
     var showSettings by remember { mutableStateOf(false) }
@@ -29,7 +31,7 @@ fun MainScreen(
     val canEdit = viewModel.canEdit
 
     if (showSettings) {
-        SettingsScreen(onBack = { showSettings = false; /* 返回后 Theme 读取最新 pref */ })
+        SettingsScreen(activity = activity, onBack = { showSettings = false })
         return
     }
 
