@@ -237,9 +237,7 @@ class MediaSessionHelper(private val ctx: Context) {
         try {
             // 方式1：MediaSessionManager（标准 API）
             val sessions = try {
-                manager.getActiveSessions(
-                    ComponentName(ctx.packageName, androidx.media.session.MediaButtonReceiver::class.java)
-                )
+                manager.getActiveSessions(null)
             } catch (_: SecurityException) { null }
 
             if (!sessions.isNullOrEmpty()) {
