@@ -48,11 +48,8 @@ fun PlayerScreen(activity: Activity) {
     var lyricLoading by remember { mutableStateOf(false) }
     var lastQueryKey by remember { mutableStateOf("") }
 
-    // 本地进度计时器 — 因为酷狗/部分播放器不实时更新 MediaSession position
+    // 统一进度 — callback 锚点 + 播放时自增
     var displayPositionMs by remember { mutableStateOf(0L) }
-    var tickStartNano by remember { mutableStateOf(System.nanoTime()) }
-    var tickBaseMs by remember { mutableStateOf(0L) }
-    var lastDumpsysPos by remember { mutableStateOf(-1L) }
 
     // 定时刷新歌曲信息
     LaunchedEffect(Unit) {
@@ -61,12 +58,6 @@ fun PlayerScreen(activity: Activity) {
                 withTimeoutOrNull(2000) { helper.getSongInfo() }
             }
             if (info != null) {
-                // 当 dumpsys position 真的变化了（拖动进度条等），重置本地计时器锚点
-                if (info.positionMs != lastDumpsysPos && info.positionMs > 0) {
-                    tickBaseMs = info.positionMs
-                    tickStartNano = System.nanoTime()
-                    lastDumpsysPos = info.positionMs
-                }
                 songInfo = info
                 available = info.packageName.isNotEmpty()
             }
@@ -74,16 +65,16 @@ fun PlayerScreen(activity: Activity) {
         }
     }
 
-    // 播放时每 200ms 自增 displayPositionMs
+    // 统一进度计时：用 callback 的 livePositionMs + livePositionNano 作为锚点
+    // 播放时自增，暂停时定格，拖动时 callback 会更新锚点自然对齐
     LaunchedEffect(Unit) {
         while (true) {
-            if (songInfo.isPlaying) {
-                displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
+            val h = helper
+            if (h.liveIsPlaying) {
+                displayPositionMs = h.livePositionMs +
+                    (System.nanoTime() - h.livePositionNano) / 1_000_000
             } else {
-                displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
-                // 暂停时把当前进度写回 baseMs，下次恢复从这里继续
-                tickBaseMs = displayPositionMs
-                tickStartNano = System.nanoTime()
+                displayPositionMs = h.livePositionMs
             }
             delay(200)
         }
@@ -324,6 +315,7 @@ class MediaSessionHelper(private val ctx: Context) {
 
     // callback 驱动的实时数据
     @Volatile var livePositionMs: Long = 0
+    @Volatile var livePositionNano: Long = System.nanoTime()
     @Volatile var liveIsPlaying: Boolean = false
     @Volatile var liveTitle: String = ""
     @Volatile var liveArtist: String = ""
@@ -334,6 +326,7 @@ class MediaSessionHelper(private val ctx: Context) {
         override fun onPlaybackStateChanged(state: PlaybackState?) {
             state ?: return
             livePositionMs = state.position
+            livePositionNano = System.nanoTime()
             liveIsPlaying = state.state == PlaybackState.STATE_PLAYING
         }
         override fun onMetadataChanged(meta: MediaMetadata?) {
