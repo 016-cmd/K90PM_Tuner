@@ -77,7 +77,12 @@ fun PlayerScreen(activity: Activity) {
 
     // ── 外挂模式：仅轮询歌曲信息 ──
     LaunchedEffect(isLocalMode) {
-        if (isLocalMode) return@LaunchedEffect
+        if (isLocalMode) {
+            // 切换到搜索模式时立即清空外挂状态
+            extTitle = ""; extArtist = ""; extAlbum = ""
+            extPkg = ""; extPlaying = false; extAvailable = false
+            return@LaunchedEffect
+        }
         while (true) {
             val info = withContext(Dispatchers.IO) {
                 withTimeoutOrNull(2000) { helper.getSongInfo() }
@@ -135,14 +140,21 @@ fun PlayerScreen(activity: Activity) {
         // ── 模式切换标签 ──
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             TextButton(onClick = {
+                // 切换到外挂模式：彻底清空本地播放状态
+                exoPlayer?.release(); exoPlayer = null
+                currentSong = null; lyricLines = emptyList()
+                searchResults = emptyList(); searchQuery = ""
                 isLocalMode = false
-                exoPlayer?.release(); exoPlayer = null; currentSong = null
-                lyricLines = emptyList(); searchResults = emptyList()
             }) {
                 Text("外挂检测", fontWeight = if (!isLocalMode) FontWeight.Bold else FontWeight.Normal,
                     color = if (!isLocalMode) colors.primary else colors.onSurfaceVariant)
             }
-            TextButton(onClick = { isLocalMode = true }) {
+            TextButton(onClick = {
+                // 切换到搜索模式：清空外挂状态残留
+                extTitle = ""; extArtist = ""; extAlbum = ""
+                extPkg = ""; extPlaying = false; extAvailable = false
+                isLocalMode = true
+            }) {
                 Text("在线搜索", fontWeight = if (isLocalMode) FontWeight.Bold else FontWeight.Normal,
                     color = if (isLocalMode) colors.primary else colors.onSurfaceVariant)
             }
