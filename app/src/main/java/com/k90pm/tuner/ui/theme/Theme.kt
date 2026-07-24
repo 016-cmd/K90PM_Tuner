@@ -1,7 +1,9 @@
 package com.k90pm.tuner.ui.theme
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,22 +115,23 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
 
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
         if (wallpaperUri != null) {
-            AsyncImage(
-                model = wallpaperUri,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            ) {
-                MaterialTheme(colorScheme = colorScheme, content = { /* overlay */ }) {
-                    androidx.compose.foundation.background(
-                        color = if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.55f)
-                    ) {
-                        content()
-                    }
+            Box(modifier = Modifier.fillMaxSize()) {
+                AsyncImage(
+                    model = wallpaperUri,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.55f))
+                ) {
+                    content()
                 }
-                return@MaterialTheme
             }
+        } else {
+            content()
         }
-        content()
     }
 }
