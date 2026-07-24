@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +50,14 @@ fun PlayerScreen(activity: Activity) {
     var albumArt by remember { mutableStateOf<Bitmap?>(null) }
     var available by remember { mutableStateOf(false) }
 
+    // 封面来源1：NotificationListener 捕获的 largeIcon
+    LaunchedEffect(Unit) {
+        snapshotFlow { MediaNotificationListener.currentAlbumArt }
+            .collect { art ->
+                if (art != null) albumArt = art
+            }
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
             val info = withContext(Dispatchers.IO) {
@@ -56,7 +65,10 @@ fun PlayerScreen(activity: Activity) {
             }
             if (info != null) {
                 songInfo = info
-                albumArt = info.albumArt
+                // 封面来源2：MediaSession metadata（优先用 NotificationListener 的）
+                if (info.albumArt != null && albumArt == null) {
+                    albumArt = info.albumArt
+                }
                 available = info.packageName.isNotEmpty()
             }
             delay(1000)
