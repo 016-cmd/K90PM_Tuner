@@ -24,7 +24,7 @@ object WallpaperState {
         original?.recycle()
         blurred?.recycle()
         original = bitmap
-        blurred = BlurUtils.blur(ctx, bitmap, radius = 8f)
+        blurred = BlurUtils.blur(ctx, bitmap, radius = 16f)
         isDark = dark
     }
 
