@@ -13,17 +13,18 @@ class MediaNotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
-        android.util.Log.d("MediaNL", "Listener connected")
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         try {
             val notification = sbn.notification
-            if (notification.isMediaNotification() != true) return
+            // 检查是否为媒体通知（通过 category 判断，兼容所有 API）
+            if (notification.category != "transport") return
 
-            // 提取 largeIcon（专辑封面）
+            // 提取 largeIcon（专辑封面）- 直接从通知中获取，不复制到文件
             val largeIcon: Bitmap? = try {
-                val largeIconObj = notification.extras.getParcelable("android.largeIcon", Icon::class.java)
+                val largeIconObj = notification.extras
+                    .getParcelable("android.largeIcon", Icon::class.java)
                 largeIconObj?.getBitmap(512, 512)
             } catch (_: Exception) { null }
 
@@ -34,8 +35,7 @@ class MediaNotificationListener : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        // 媒体通知被清除时重置封面
-        if (sbn.notification.isMediaNotification() == true) {
+        if (sbn.notification.category == "transport") {
             currentAlbumArt = null
         }
     }
