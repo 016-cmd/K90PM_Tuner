@@ -231,15 +231,14 @@ private fun LyricView(
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
 
-    // 找到当前播放到的歌词行索引
-    val currentIndex = remember(lines, positionMs) {
-        lines.indexOfLast { it.timeMs <= positionMs }.coerceAtLeast(0)
-    }
+    // 找到当前播放到的歌词行索引（不用 remember，每次重组都算）
+    val currentIndex = if (lines.isEmpty()) 0
+        else lines.indexOfLast { it.timeMs <= positionMs }.coerceAtLeast(0)
 
-    // 自动滚动到当前行（播放时）
-    LaunchedEffect(currentIndex, isPlaying) {
-        if (isPlaying && lines.isNotEmpty()) {
-            listState.animateScrollToItem(currentIndex)
+    // 自动滚动到当前行 — 用 snap 而非 animate，避免动画被反复打断导致卡住
+    LaunchedEffect(currentIndex) {
+        if (lines.isNotEmpty()) {
+            listState.scrollToItem(currentIndex)
         }
     }
 
