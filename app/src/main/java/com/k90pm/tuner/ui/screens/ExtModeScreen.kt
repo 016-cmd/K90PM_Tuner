@@ -8,7 +8,6 @@ import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -109,7 +108,7 @@ fun ExtModeScreen(activity: Activity) {
     Spacer(Modifier.height(16.dp))
 
     // 语录
-    Box(Modifier.fillMaxWidth().weight(1f).clip(cardShape).background(cardBg, cardShape)) {
+    Box(Modifier.fillMaxWidth().heightIn(min = 180.dp).clip(cardShape).background(cardBg, cardShape)) {
         QuoteCard(modifier = Modifier.fillMaxSize())
     }
 }
