@@ -253,36 +253,35 @@ class MediaSessionHelper(private val ctx: Context) {
             }
 
             // 方式2：dumpsys fallback（root）
+            // 直接读 dumpsys 输出，格式稳定可靠
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "dumpsys media_session"))
+            val errOutput = process.errorStream.bufferedReader().use { it.readText() }
             val output = process.inputStream.bufferedReader().use { it.readText() }
             process.waitFor()
+
+            android.util.Log.d("PlayerScreen", "dumpsys err=[$errOutput] outLen=${output.length}")
 
             var pkg = ""
             var title = ""
             var artist = ""
             var album = ""
             var isPlaying = false
-            var sessionCount = 0
-            var inFirstSession = false
+            var inStack = false
 
             for (line in output.lines()) {
                 val t = line.trim()
+                // 进入 Sessions Stack
                 if (t.startsWith("Sessions stack") || t.startsWith("Active sessions")) {
-                    inFirstSession = true
+                    inStack = true
                     continue
                 }
-                if (!inFirstSession) continue
-                // 新的顶级 session 条目（以字母开头，包含 Service 名和包名）
-                // 如 "KugouPlaybackService com.kugou.android/..."
-                if (t[0].isLetter() && t.contains(" com.")) {
-                    sessionCount++
-                    if (sessionCount > 1) break  // 只要第一个
-                }
-                if (sessionCount != 1) continue
+                if (!inStack) continue
+                // 退出 Sessions Stack: 遇到 Audio playback 或其他顶级行
+                if (t.startsWith("Audio playback") || t.startsWith("Media session config")) break
 
                 when {
                     t.startsWith("package=") -> pkg = t.substringAfter("package=").trim()
-                    t.contains("state=PlaybackState") -> {
+                    t.startsWith("state=PlaybackState") -> {
                         val m = Regex("""state=(\w+)\((\d+)\)""").find(t)
                         if (m != null) isPlaying = m.groupValues[2] == "3"
                     }
@@ -297,6 +296,8 @@ class MediaSessionHelper(private val ctx: Context) {
                     }
                 }
             }
+
+            android.util.Log.d("PlayerScreen", "Parsed: pkg=[$pkg] title=[$title] artist=[$artist] isPlaying=$isPlaying")
 
             return@withContext SongInfo(
                 title = title.ifEmpty { "未知歌曲" },
