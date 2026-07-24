@@ -95,7 +95,7 @@ fun MainScreen(
             Text(
                 text = "K90PM Tuner v1.0.0 · by 016.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
