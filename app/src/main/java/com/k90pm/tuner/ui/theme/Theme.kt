@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
@@ -120,7 +121,7 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
 
     // WallpaperState 坐标换算需要屏幕物理宽度
     val density = LocalDensity.current
-    val screenWidthPx = with(density) { 432.dp.toPx() } // 后续可以在 onSizeChanged 中精确化，先用常见值
+    val screenWidthPx = 1080 // K90 Pro Max 常见屏幕物理宽度，后续可用 Resources 动态获取
 
     // 壁纸变化时异步加载 bitmap → 模糊 → WallpaperState
     LaunchedEffect(wallpaperUri, isDark) {
