@@ -30,7 +30,7 @@ fun GlassCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
-    val isDark = colors.background.luminance() < 0.5f
+    val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
     // Web UI 暗色模式: rgba(255,255,255,.03)；亮色: 略白
@@ -81,7 +81,7 @@ fun GlassSurface(
     content: @Composable BoxScope.() -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
-    val isDark = colors.background.luminance() < 0.5f
+    val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
     val fillColor = if (isDark) Color.White.copy(alpha = 0.04f)
@@ -109,7 +109,7 @@ fun GlassSettingsCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
-    val isDark = colors.background.luminance() < 0.5f
+    val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(16.dp)
 
     val fillColor = if (isDark) Color.White.copy(alpha = 0.05f)
