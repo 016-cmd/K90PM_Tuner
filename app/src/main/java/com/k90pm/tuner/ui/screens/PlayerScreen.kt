@@ -47,6 +47,12 @@ fun PlayerScreen(activity: Activity) {
     var lyricLoading by remember { mutableStateOf(false) }
     var lastQueryKey by remember { mutableStateOf("") }
 
+    // 本地进度计时器 — 因为酷狗/部分播放器不实时更新 MediaSession position
+    var displayPositionMs by remember { mutableStateOf(0L) }
+    var tickStartNano by remember { mutableStateOf(System.nanoTime()) }
+    var tickBaseMs by remember { mutableStateOf(0L) }
+    var lastDumpsysPos by remember { mutableStateOf(-1L) }
+
     // 定时刷新歌曲信息
     LaunchedEffect(Unit) {
         while (true) {
@@ -54,10 +60,31 @@ fun PlayerScreen(activity: Activity) {
                 withTimeoutOrNull(2000) { helper.getSongInfo() }
             }
             if (info != null) {
+                // 当 dumpsys position 真的变化了（拖动进度条等），重置本地计时器锚点
+                if (info.positionMs != lastDumpsysPos && info.positionMs > 0) {
+                    tickBaseMs = info.positionMs
+                    tickStartNano = System.nanoTime()
+                    lastDumpsysPos = info.positionMs
+                }
                 songInfo = info
                 available = info.packageName.isNotEmpty()
             }
             delay(1000)
+        }
+    }
+
+    // 播放时每 200ms 自增 displayPositionMs
+    LaunchedEffect(Unit) {
+        while (true) {
+            if (songInfo.isPlaying) {
+                displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
+            } else {
+                displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
+                // 暂停时把当前进度写回 baseMs，下次恢复从这里继续
+                tickBaseMs = displayPositionMs
+                tickStartNano = System.nanoTime()
+            }
+            delay(200)
         }
     }
 
@@ -206,7 +233,7 @@ fun PlayerScreen(activity: Activity) {
                     LyricView(
                         lines = lyricLines,
                         source = lyricSource,
-                        positionMs = songInfo.positionMs,
+                        positionMs = displayPositionMs,
                         isPlaying = songInfo.isPlaying,
                         modifier = Modifier.fillMaxSize()
                     )
