@@ -1,7 +1,6 @@
 package com.k90pm.tuner.ui.screens
 
 import android.graphics.Bitmap
-import android.graphics.drawable.Icon
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 
@@ -23,9 +22,15 @@ class MediaNotificationListener : NotificationListenerService() {
 
             // 提取 largeIcon（专辑封面）- 直接从通知中获取，不复制到文件
             val largeIcon: Bitmap? = try {
-                val largeIconObj = notification.extras
-                    .getParcelable("android.largeIcon", Icon::class.java)
-                largeIconObj?.getBitmap(512, 512)
+                val iconObj = notification.largeIcon
+                if (iconObj != null) {
+                    val drawable = iconObj.loadDrawable(this@MediaNotificationListener)
+                    val bmp = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+                    val canvas = android.graphics.Canvas(bmp)
+                    drawable.setBounds(0, 0, 512, 512)
+                    drawable.draw(canvas)
+                    bmp
+                } else null
             } catch (_: Exception) { null }
 
             if (largeIcon != null) {
