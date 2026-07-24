@@ -115,7 +115,6 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
 
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
         if (wallpaperUri != null) {
-            // 支持 file:/ 路径和 content:// URI
             val model: Any = if (wallpaperUri.startsWith("content://")) wallpaperUri else File(wallpaperUri)
             Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
@@ -124,13 +123,8 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.55f))
-                ) {
-                    content()
-                }
+                // 内容层直接叠加在壁纸上，无遮罩
+                content()
             }
         } else {
             content()
