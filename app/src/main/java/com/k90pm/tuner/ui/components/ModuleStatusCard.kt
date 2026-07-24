@@ -28,15 +28,12 @@ fun ModuleStatusCard(
     onRefresh: () -> Unit,
     onActivate: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        onClick = null
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
 
             // ── 标题行 ──
             Row(verticalAlignment = Alignment.CenterVertically) {
