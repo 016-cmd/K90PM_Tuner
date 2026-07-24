@@ -117,8 +117,7 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
 
     // WallpaperState 坐标换算需要屏幕物理宽度
-    val density = LocalDensity.current
-    val screenWidthPx = 1080 // K90 Pro Max 常见屏幕物理宽度，后续可用 Resources 动态获取
+    val screenWidthPx = 1080 // K90 Pro Max
 
     // 壁纸变化时异步加载 bitmap → 模糊 → WallpaperState
     // 使用 state 计数器触发 Compose 重组（WallpaperState 是非 Compose 对象）
