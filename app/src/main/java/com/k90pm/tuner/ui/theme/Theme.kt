@@ -82,8 +82,8 @@ private const val KEY_WALLPAPER = "wallpaper_uri"
 
 object ThemePrefs {
     fun getMode(ctx: Context): ThemeMode = try {
-        ThemeMode.valueOf(ctx.getSharedPreferences(PREFS_THEME, Context.MODE_PRIVATE).getString(KEY_THEME_MODE, "DARK")!!)
-    } catch (_: Exception) { ThemeMode.DARK }
+        ThemeMode.valueOf(ctx.getSharedPreferences(PREFS_THEME, Context.MODE_PRIVATE).getString(KEY_THEME_MODE, "SYSTEM")!!)
+    } catch (_: Exception) { ThemeMode.SYSTEM }
 
     fun setMode(ctx: Context, mode: ThemeMode) {
         ctx.getSharedPreferences(PREFS_THEME, Context.MODE_PRIVATE).edit().putString(KEY_THEME_MODE, mode.name).apply()
