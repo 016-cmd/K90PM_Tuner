@@ -1,5 +1,6 @@
 package com.k90pm.tuner.ui.theme
 
+import android.content.Context
 import android.graphics.Bitmap
 
 /**
@@ -19,13 +20,11 @@ object WallpaperState {
     var isDark: Boolean = false
         private set
 
-    fun set(bitmap: Bitmap, dark: Boolean) {
-        // 缩放原图到 192px 宽（Scene 同款），减少模糊运算量
-        val scaled = scaleToWidth(bitmap, 192)
+    fun set(ctx: Context, bitmap: Bitmap, dark: Boolean) {
         original?.recycle()
         blurred?.recycle()
-        original = scaled
-        blurred = BlurUtils.blur(scaled, radius = 8)
+        original = bitmap
+        blurred = BlurUtils.blur(ctx, bitmap, radius = 8f)
         isDark = dark
     }
 
@@ -34,11 +33,5 @@ object WallpaperState {
         blurred?.recycle()
         original = null
         blurred = null
-    }
-
-    private fun scaleToWidth(src: Bitmap, targetWidth: Int): Bitmap {
-        val ratio = targetWidth.toFloat() / src.width
-        val h = (src.height * ratio).toInt()
-        return Bitmap.createScaledBitmap(src, targetWidth, h.coerceAtLeast(1), true)
     }
 }
