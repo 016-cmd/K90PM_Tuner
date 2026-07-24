@@ -31,9 +31,10 @@ fun GlassCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val surfaceAlpha = if (isDark) 0.18f else 0.22f
-    val borderAlpha = if (isDark) 0.15f else 0.25f
-    val gradientAlpha = if (isDark) 0.06f else 0.08f
+    val bgColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f)
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.5f)
+    val gradientStart = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.5f)
+    val gradientEnd = if (isDark) Color.White.copy(alpha = 0.01f) else Color.White.copy(alpha = 0.15f)
 
     val shape = RoundedCornerShape(20.dp)
 
@@ -42,15 +43,12 @@ fun GlassCard(
             .clip(shape)
             .background(
                 Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = gradientAlpha * 1.5f),
-                        Color.White.copy(alpha = gradientAlpha * 0.3f),
-                        Color.White.copy(alpha = gradientAlpha)
-                    ),
+                    colors = listOf(gradientStart, gradientEnd),
                     start = Offset(Float.POSITIVE_INFINITY, 0f),
                     end = Offset(0f, Float.POSITIVE_INFINITY)
                 )
             )
+            .border(0.5.dp, borderColor, shape)
             .then(
                 if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
             )
@@ -74,13 +72,14 @@ fun GlassSurface(
     content: @Composable BoxScope.() -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val borderAlpha = if (isDark) 0.15f else 0.25f
+    val bgColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f)
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.5f)
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .border(0.5.dp, Color.White.copy(alpha = borderAlpha), RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.55f))
+            .border(0.5.dp, borderColor, RoundedCornerShape(20.dp))
+            .background(bgColor)
     ) {
         content()
     }
