@@ -47,10 +47,13 @@ fun SpectrumView(modifier: Modifier = Modifier) {
 
                     // 用 root 获取当前播放 APP 的 audio sessionId
                     val sessionId = findAudioSession()
-                    sessionLabel = if (sessionId > 0) "session:$sessionId" else ""
+                    android.util.Log.d("Spectrum", "sessionId=$sessionId")
+                    sessionLabel = if (sessionId > 0) "session:$sessionId" else "none"
 
                     if (sessionId > 0) {
+                        android.util.Log.d("Spectrum", "Creating Visualizer($sessionId)...")
                         val viz = Visualizer(sessionId)
+                        android.util.Log.d("Spectrum", "Visualizer created, enabled=${viz.enabled}")
                         val range = Visualizer.getCaptureSizeRange()
                         viz.captureSize = range[1] / 2
 
