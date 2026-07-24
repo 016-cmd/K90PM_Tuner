@@ -26,22 +26,26 @@ object WallpaperState {
         private set
 
     fun set(ctx: Context, bitmap: Bitmap, dark: Boolean, screenWidthPx: Int) {
-        original?.recycle()
-        blurred?.recycle()
+        val oldOriginal = original
+        val oldBlurred = blurred
+        // 先设置新图，再回收旧图 — 避免 Compose 读已回收 Bitmap 崩溃
         original = bitmap
         blurred = BlurUtils.blur(ctx, bitmap, radius = 16f)
         isDark = dark
-        // Scene: float width = rootView.getWidth() / 192
         scale = if (blurred != null && blurred!!.width > 0) {
             screenWidthPx.toFloat() / blurred!!.width.toFloat()
         } else 1f
+        oldOriginal?.recycle()
+        oldBlurred?.recycle()
     }
 
     fun clear() {
-        original?.recycle()
-        blurred?.recycle()
+        val oldOriginal = original
+        val oldBlurred = blurred
         original = null
         blurred = null
         scale = 1f
+        oldOriginal?.recycle()
+        oldBlurred?.recycle()
     }
 }
