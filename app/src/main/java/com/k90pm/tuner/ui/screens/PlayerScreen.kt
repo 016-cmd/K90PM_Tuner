@@ -255,13 +255,8 @@ class MediaSessionHelper(private val ctx: Context) {
             // 方式2：dumpsys fallback（root）
             // 直接读 dumpsys 输出，格式稳定可靠
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "dumpsys media_session"))
-            val errOutput = process.errorStream.bufferedReader().use { it.readText() }
             val output = process.inputStream.bufferedReader().use { it.readText() }
             process.waitFor()
-
-            android.util.Log.d("PlayerScreen", "dumpsys err=[$errOutput] outLen=${output.length}")
-            // DEBUG: 打印前500字符
-            android.util.Log.d("PlayerScreen", "dumpsys HEAD=[${output.take(500)}]")
 
             var pkg = ""
             var title = ""
@@ -298,8 +293,6 @@ class MediaSessionHelper(private val ctx: Context) {
                     }
                 }
             }
-
-            android.util.Log.d("PlayerScreen", "Parsed: pkg=[$pkg] title=[$title] artist=[$artist] isPlaying=$isPlaying")
 
             return@withContext SongInfo(
                 title = title.ifEmpty { "未知歌曲" },
