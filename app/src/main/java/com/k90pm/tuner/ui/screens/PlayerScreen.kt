@@ -48,8 +48,11 @@ fun PlayerScreen(activity: Activity) {
     var lyricLoading by remember { mutableStateOf(false) }
     var lastQueryKey by remember { mutableStateOf("") }
 
-    // 统一进度 — callback 锚点 + 播放时自增
+    // 本地进度计时器 — callback anchor + local increment
     var displayPositionMs by remember { mutableStateOf(0L) }
+    var tickStartNano by remember { mutableStateOf(System.nanoTime()) }
+    var tickBaseMs by remember { mutableStateOf(0L) }
+    var lastCallbackPos by remember { mutableStateOf(-1L) }
 
     // 定时刷新歌曲信息
     LaunchedEffect(Unit) {
@@ -58,6 +61,13 @@ fun PlayerScreen(activity: Activity) {
                 withTimeoutOrNull(2000) { helper.getSongInfo() }
             }
             if (info != null) {
+                // callback 给的 position 变化时（拖动进度条/切歌），重置锚点
+                val callbackPos = helper.livePositionMs
+                if (callbackPos > 0 && callbackPos != lastCallbackPos) {
+                    tickBaseMs = callbackPos
+                    tickStartNano = helper.livePositionNano
+                    lastCallbackPos = callbackPos
+                }
                 songInfo = info
                 available = info.packageName.isNotEmpty()
             }
@@ -65,16 +75,14 @@ fun PlayerScreen(activity: Activity) {
         }
     }
 
-    // 统一进度计时：用 callback 的 livePositionMs + livePositionNano 作为锚点
-    // 播放时自增，暂停时定格，拖动时 callback 会更新锚点自然对齐
+    // 每 200ms 自增，暂停时定格
     LaunchedEffect(Unit) {
         while (true) {
-            val h = helper
-            if (h.liveIsPlaying) {
-                displayPositionMs = h.livePositionMs +
-                    (System.nanoTime() - h.livePositionNano) / 1_000_000
+            if (songInfo.isPlaying) {
+                displayPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
             } else {
-                displayPositionMs = h.livePositionMs
+                // 暂停时定格当前进度
+                displayPositionMs = tickBaseMs
             }
             delay(200)
         }
