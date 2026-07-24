@@ -9,10 +9,11 @@ import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -21,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * 播放器页面
+ * 播放器页面 — 歌曲信息卡片 + 歌词显示（在线获取） + 心情语句后备
  */
 @Composable
 fun PlayerScreen(activity: Activity) {
@@ -42,6 +42,13 @@ fun PlayerScreen(activity: Activity) {
     var songInfo by remember { mutableStateOf(MediaSessionHelper.SongInfo()) }
     var available by remember { mutableStateOf(false) }
 
+    // 歌词状态
+    var lyricLines by remember { mutableStateOf<List<LyricFetcher.LyricLine>>(emptyList()) }
+    var lyricSource by remember { mutableStateOf("") }
+    var lyricLoading by remember { mutableStateOf(false) }
+    var lastQueryKey by remember { mutableStateOf("") }
+
+    // 定时刷新歌曲信息
     LaunchedEffect(Unit) {
         while (true) {
             val info = withContext(Dispatchers.IO) {
@@ -55,6 +62,28 @@ fun PlayerScreen(activity: Activity) {
         }
     }
 
+    // 当歌曲变化时，拉取歌词
+    LaunchedEffect(songInfo.title, songInfo.artist) {
+        if (songInfo.title == "未知歌曲" || songInfo.title.isEmpty()) {
+            lyricLines = emptyList()
+            lyricSource = ""
+            return@LaunchedEffect
+        }
+        val key = "${songInfo.title}|${songInfo.artist}"
+        if (key == lastQueryKey) return@LaunchedEffect
+        lastQueryKey = key
+        lyricLoading = true
+        val result = LyricFetcher.fetch(songInfo.title, songInfo.artist)
+        if (result != null) {
+            lyricLines = result.lines
+            lyricSource = result.source
+        } else {
+            lyricLines = emptyList()
+            lyricSource = ""
+        }
+        lyricLoading = false
+    }
+
     val colors = MaterialTheme.colorScheme
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val cardBg = if (isDark) Color.Black.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.40f)
@@ -63,7 +92,6 @@ fun PlayerScreen(activity: Activity) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
             .padding(top = 60.dp, bottom = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -74,19 +102,17 @@ fun PlayerScreen(activity: Activity) {
                 .fillMaxWidth()
                 .clip(cardShape)
                 .background(cardBg, cardShape)
-                .padding(24.dp),
+                .padding(20.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // 包名提示
                 Text(
                     if (available) songInfo.packageName else "未检测到播放",
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant.copy(alpha = 0.6f)
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(8.dp))
 
-                // 歌曲标题
                 Text(
                     songInfo.title,
                     style = MaterialTheme.typography.headlineSmall,
@@ -99,7 +125,6 @@ fun PlayerScreen(activity: Activity) {
                 )
                 Spacer(Modifier.height(4.dp))
 
-                // 歌手
                 Text(
                     songInfo.artist,
                     style = MaterialTheme.typography.titleMedium,
@@ -109,7 +134,6 @@ fun PlayerScreen(activity: Activity) {
                 )
                 Spacer(Modifier.height(2.dp))
 
-                // 专辑
                 if (songInfo.album.isNotEmpty()) {
                     Text(
                         songInfo.album,
@@ -117,12 +141,10 @@ fun PlayerScreen(activity: Activity) {
                         color = colors.onSurfaceVariant.copy(alpha = 0.6f),
                         maxLines = 1
                     )
-                    Spacer(Modifier.height(20.dp))
-                } else {
-                    Spacer(Modifier.height(20.dp))
                 }
+                Spacer(Modifier.height(16.dp))
 
-                // ── 播放控制按钮 ──
+                // 播放控制
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -130,54 +152,110 @@ fun PlayerScreen(activity: Activity) {
                 ) {
                     IconButton(
                         onClick = { helper.execAsync("input keyevent 88") },
-                        modifier = Modifier.size(52.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(Icons.Rounded.SkipPrevious, "上一首",
-                            modifier = Modifier.size(32.dp),
-                            tint = colors.onSurface)
+                            modifier = Modifier.size(28.dp), tint = colors.onSurface)
                     }
-
                     IconButton(
                         onClick = { helper.execAsync("input keyevent 85") },
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(58.dp)
                             .clip(CircleShape)
                             .background(colors.primary)
                     ) {
                         Icon(
                             if (songInfo.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             if (songInfo.isPlaying) "暂停" else "播放",
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(32.dp),
                             tint = colors.onPrimary
                         )
                     }
-
                     IconButton(
                         onClick = { helper.execAsync("input keyevent 87") },
-                        modifier = Modifier.size(52.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(Icons.Rounded.SkipNext, "下一首",
-                            modifier = Modifier.size(32.dp),
-                            tint = colors.onSurface)
+                            modifier = Modifier.size(28.dp), tint = colors.onSurface)
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
 
-        // ── 频谱特效 ──
-        SpectrumView(
+        // ── 歌词 / 心情语句卡片 ──
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(240.dp)
-        )
+                .weight(1f)
+                .clip(cardShape)
+                .background(cardBg, cardShape)
+        ) {
+            when {
+                lyricLoading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(32.dp),
+                            strokeWidth = 2.dp,
+                            color = colors.primary
+                        )
+                    }
+                }
+                lyricLines.isNotEmpty() -> {
+                    LyricView(
+                        lines = lyricLines,
+                        source = lyricSource,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                else -> {
+                    QuoteCard(modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
+    }
+}
+
+// ── 歌词滚动视图 ──
+@Composable
+private fun LyricView(
+    lines: List<LyricFetcher.LyricLine>,
+    source: String,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+    val listState = rememberLazyListState()
+
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        state = listState,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // 来源提示
+        item {
+            Text(
+                "歌词来源：$source",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+        }
+        itemsIndexed(lines) { _, line ->
+            Text(
+                line.text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.onSurface.copy(alpha = 0.85f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+        }
     }
 }
 
 // ── MediaSession 读取工具 ──
-// 同时尝试 MediaSessionManager API 和 dumpsys fallback
-
 class MediaSessionHelper(private val ctx: Context) {
     data class SongInfo(
         val title: String = "未知歌曲",
@@ -189,23 +267,15 @@ class MediaSessionHelper(private val ctx: Context) {
     )
 
     private val manager = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-    private var activeController: MediaController? = null
-    private var registered = false
 
-    /**
-     * 获取歌曲信息。先尝试 MediaSessionManager.getActiveSessions（需要通知权限或 root），
-     * 失败则 fallback 到 dumpsys（root），再失败返回空。
-     */
     suspend fun getSongInfo(): SongInfo = withContext(Dispatchers.IO) {
         try {
-            // 方式1：MediaSessionManager（标准 API）
             val sessions = try {
                 manager.getActiveSessions(null)
             } catch (_: SecurityException) { null }
 
             if (!sessions.isNullOrEmpty()) {
                 val ctrl = sessions.firstOrNull { it.playbackState != null } ?: sessions.first()
-                activeController = ctrl
                 val meta = ctrl.metadata
                 val state = ctrl.playbackState
                 return@withContext SongInfo(
@@ -213,13 +283,11 @@ class MediaSessionHelper(private val ctx: Context) {
                     artist = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "未知歌手",
                     album = meta?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: "",
                     packageName = ctrl.packageName ?: "",
-                    isPlaying = state?.state == PlaybackState.STATE_PLAYING,
-                    albumArt = meta?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+                    isPlaying = state?.state == PlaybackState.STATE_PLAYING
                 )
             }
 
-            // 方式2：dumpsys fallback（root）
-            // 直接读 dumpsys 输出，格式稳定可靠
+            // dumpsys fallback
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "dumpsys media_session"))
             val output = process.inputStream.bufferedReader().use { it.readText() }
             process.waitFor()
@@ -233,15 +301,11 @@ class MediaSessionHelper(private val ctx: Context) {
 
             for (line in output.lines()) {
                 val t = line.trim()
-                // 进入 Sessions Stack
                 if (t.startsWith("Sessions Stack") || t.startsWith("Active Sessions") || t.startsWith("Active sessions")) {
-                    inStack = true
-                    continue
+                    inStack = true; continue
                 }
                 if (!inStack) continue
-                // 退出 Sessions Stack: 遇到 Audio playback 或其他顶级行
                 if (t.startsWith("Audio playback") || t.startsWith("Media session config")) break
-
                 when {
                     t.startsWith("package=") -> pkg = t.substringAfter("package=").trim()
                     t.startsWith("state=PlaybackState") -> {
@@ -268,7 +332,6 @@ class MediaSessionHelper(private val ctx: Context) {
                 isPlaying = isPlaying
             )
         } catch (_: Exception) {}
-
         SongInfo()
     }
 
