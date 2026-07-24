@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.k90pm.tuner.ui.theme.ThemeMode
 import com.k90pm.tuner.ui.theme.ThemePrefs
+import com.k90pm.tuner.ui.theme.themeRefreshTrigger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +41,7 @@ fun SettingsScreen(
             val persistUri = uri.toString()
             ThemePrefs.setWallpaperUri(ctx, persistUri)
             wallpaperUri = persistUri
+            themeRefreshTrigger++
         }
     }
 
@@ -78,6 +80,7 @@ fun SettingsScreen(
                     onClick = {
                         themeMode = ThemeMode.LIGHT
                         ThemePrefs.setMode(ctx, ThemeMode.LIGHT)
+                        themeRefreshTrigger++
                     }
                 )
                 ThemeOption(
@@ -87,6 +90,7 @@ fun SettingsScreen(
                     onClick = {
                         themeMode = ThemeMode.DARK
                         ThemePrefs.setMode(ctx, ThemeMode.DARK)
+                        themeRefreshTrigger++
                     }
                 )
                 ThemeOption(
@@ -96,6 +100,7 @@ fun SettingsScreen(
                     onClick = {
                         themeMode = ThemeMode.SYSTEM
                         ThemePrefs.setMode(ctx, ThemeMode.SYSTEM)
+                        themeRefreshTrigger++
                     }
                 )
             }
@@ -125,6 +130,7 @@ fun SettingsScreen(
                         onClick = {
                             ThemePrefs.setWallpaperUri(ctx, null)
                             wallpaperUri = null
+                            themeRefreshTrigger++
                         }
                     )
                 }
