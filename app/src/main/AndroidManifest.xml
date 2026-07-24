@@ -4,6 +4,8 @@
     <!-- 前台服务（Shell 守护） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 频谱特效：Visualizer API 需要 RECORD_AUDIO -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="false"
