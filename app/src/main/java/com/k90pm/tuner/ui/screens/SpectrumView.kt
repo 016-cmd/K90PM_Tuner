@@ -47,13 +47,10 @@ fun SpectrumView(modifier: Modifier = Modifier) {
 
                     // 用 root 获取当前播放 APP 的 audio sessionId
                     val sessionId = findAudioSession()
-                    android.util.Log.d("Spectrum", "sessionId=$sessionId")
                     sessionLabel = if (sessionId > 0) "session:$sessionId" else "none"
 
                     if (sessionId > 0) {
-                        android.util.Log.d("Spectrum", "Creating Visualizer($sessionId)...")
                         val viz = Visualizer(sessionId)
-                        android.util.Log.d("Spectrum", "Visualizer created, enabled=${viz.enabled}")
                         val range = Visualizer.getCaptureSizeRange()
                         viz.captureSize = range[1] / 2
 
@@ -138,11 +135,39 @@ private fun findAudioSession(): Int {
         val out = p.inputStream.bufferedReader().use { it.readText() }
         p.waitFor()
 
-        // 需要找到有播放活跃的 session（不含系统 uid）
-        // 格式：
-        //     3593    1   21945  10406  com.kugou.android
-        val regex = Regex("""^\s*(\d+)\s+\d+\s+\d+\s+10\d{3}\s+(com\.\w+\.\w+)""", RegexOption.MULTILINE)
-        val match = regex.find(out)
-        match?.groupValues?.get(1)?.toIntOrNull() ?: -1
+        // 格式：session cnt pid uid name
+        //   321    1   28384  10515  com.k90pm.tuner        ← 排除自己
+        //  3897    1   17697  10406  com.kugou.android     ← 目标：音乐APP
+
+        // 音乐APP 包名特征：com.kugou. / com.tencent.qqmusic / com.netease.cloudmusic
+        val musicPackages = listOf("com.kugou.", "com.tencent.qqmusic", "com.netease.cloudmusic",
+            "com.miui.player", "com.spotify.", "com.apple.android.music")
+
+        val regex = Regex("""^\s*(\d+)\s+\d+\s+\d+\s+(\d+)\s+([\w.]+)""", RegexOption.MULTILINE)
+        val matches = regex.findAll(out)
+        var bestSession = -1
+
+        for (m in matches) {
+            val sid = m.groupValues[1].toIntOrNull() ?: continue
+            val pkg = m.groupValues[3]
+
+            // 排除自己
+            if (pkg == "com.k90pm.tuner") continue
+
+            // 优先音乐APP
+            if (musicPackages.any { pkg.startsWith(it) }) {
+                bestSession = sid
+                break  // 直接取第一个音乐APP
+            }
+
+            // 次选：任何非系统APP（uid >= 10000）
+            if (bestSession < 0) {
+                val uid = m.groupValues[2].toIntOrNull() ?: 0
+                if (uid >= 10000 && uid != 10515) { // 10515 是我们自己
+                    bestSession = sid
+                }
+            }
+        }
+        bestSession
     } catch (_: Exception) { -1 }
 }
