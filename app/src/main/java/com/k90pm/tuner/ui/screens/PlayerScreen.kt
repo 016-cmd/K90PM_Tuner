@@ -3,6 +3,7 @@ package com.k90pm.tuner.ui.screens
 import android.app.Activity
 import android.content.Context
 import android.media.MediaMetadata
+import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import androidx.compose.foundation.background
@@ -318,8 +319,32 @@ class MediaSessionHelper(private val ctx: Context) {
     )
 
     private val manager = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+    private var activeController: MediaController? = null
+    private var callbackRegistered = false
 
-    suspend fun getSongInfo(): SongInfo = withContext(Dispatchers.IO) {
+    // callback 驱动的实时数据
+    @Volatile var livePositionMs: Long = 0
+    @Volatile var liveIsPlaying: Boolean = false
+    @Volatile var liveTitle: String = ""
+    @Volatile var liveArtist: String = ""
+    @Volatile var liveAlbum: String = ""
+    @Volatile var livePkg: String = ""
+
+    private val callback = object : MediaController.Callback() {
+        override fun onPlaybackStateChanged(state: PlaybackState?) {
+            state ?: return
+            livePositionMs = state.position
+            liveIsPlaying = state.state == PlaybackState.STATE_PLAYING
+        }
+        override fun onMetadataChanged(meta: MediaMetadata?) {
+            meta ?: return
+            liveTitle = meta.getString(MediaMetadata.METADATA_KEY_TITLE) ?: ""
+            liveArtist = meta.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+            liveAlbum = meta.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+        }
+    }
+
+    private fun ensureControllerAttached(): SongInfo? {
         try {
             val sessions = try {
                 manager.getActiveSessions(null)
@@ -327,19 +352,48 @@ class MediaSessionHelper(private val ctx: Context) {
 
             if (!sessions.isNullOrEmpty()) {
                 val ctrl = sessions.firstOrNull { it.playbackState != null } ?: sessions.first()
-                val meta = ctrl.metadata
-                val state = ctrl.playbackState
-                return@withContext SongInfo(
-                    title = meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "未知歌曲",
-                    artist = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "未知歌手",
-                    album = meta?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: "",
-                    packageName = ctrl.packageName ?: "",
-                    isPlaying = state?.state == PlaybackState.STATE_PLAYING,
-                    positionMs = state?.position ?: 0
+                val pkg = ctrl.packageName ?: ""
+
+                // 切换 controller 时重新注册 callback
+                if (activeController?.packageName != pkg) {
+                    activeController?.unregisterCallback(callback)
+                    callbackRegistered = false
+                }
+
+                if (!callbackRegistered) {
+                    ctrl.registerCallback(callback)
+                    activeController = ctrl
+                    callbackRegistered = true
+                    livePkg = pkg
+                    // 从已注册返回初始值
+                    val meta = ctrl.metadata
+                    val state = ctrl.playbackState
+                    liveTitle = meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: ""
+                    liveArtist = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+                    liveAlbum = meta?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+                    livePositionMs = state?.position ?: 0
+                    liveIsPlaying = state?.state == PlaybackState.STATE_PLAYING
+                }
+
+                return SongInfo(
+                    title = liveTitle.ifEmpty { "未知歌曲" },
+                    artist = liveArtist.ifEmpty { "未知歌手" },
+                    album = liveAlbum,
+                    packageName = livePkg,
+                    isPlaying = liveIsPlaying,
+                    positionMs = livePositionMs
                 )
             }
+        } catch (_: Exception) {}
+        return null
+    }
 
-            // dumpsys fallback
+    suspend fun getSongInfo(): SongInfo = withContext(Dispatchers.IO) {
+        // 优先用已注册 callback 的 controller
+        ensureControllerAttached()?.let { return@withContext it }
+
+        // dumpsys fallback（用于首次 / controller 不可用时）
+        try {
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "dumpsys media_session"))
             val output = process.inputStream.bufferedReader().use { it.readText() }
             process.waitFor()
@@ -364,7 +418,6 @@ class MediaSessionHelper(private val ctx: Context) {
                     t.startsWith("state=PlaybackState") -> {
                         val m = Regex("""state=(\w+)\((\d+)\)""").find(t)
                         if (m != null) isPlaying = m.groupValues[2] == "3"
-                        // 提取 position=毫秒
                         val p = Regex("""position=(\d+)""").find(t)
                         if (p != null) positionMs = p.groupValues[1].toLongOrNull() ?: 0
                     }
