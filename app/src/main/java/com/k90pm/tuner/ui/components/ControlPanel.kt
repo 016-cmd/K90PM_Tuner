@@ -193,11 +193,7 @@ private fun ControlItem(
                         control.enumValues.forEach { option ->
                             DropdownMenuItem(
                                 text = {
-                                    Text(
-                                        option,
-                                        fontWeight = if (option == currentValue) FontWeight.Bold
-                                        else FontWeight.Normal
-                                    )
+                                    Text(option, fontWeight = if (option == currentValue) FontWeight.Bold else FontWeight.Normal, color = MaterialTheme.colorScheme.onSurface)
                                 },
                                 onClick = {
                                     onValueChange(option)
