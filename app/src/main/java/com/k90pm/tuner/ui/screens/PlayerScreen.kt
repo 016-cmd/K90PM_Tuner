@@ -29,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.isActive
 
 /**
  * 播放器页面 — 歌曲信息卡片 + 歌词显示（在线获取） + 心情语句后备
@@ -48,13 +47,7 @@ fun PlayerScreen(activity: Activity) {
     var lyricLoading by remember { mutableStateOf(false) }
     var lastQueryKey by remember { mutableStateOf("") }
 
-    // 本地计时器：因为 dumpsys position 不实时更新，所以播放时用本地时间自增
-    var localPositionMs by remember { mutableStateOf(0L) }
-    var tickStartNano by remember { mutableStateOf(0L) }
-    var tickBaseMs by remember { mutableStateOf(0L) }
-    var wasPlaying by remember { mutableStateOf(false) }
-
-    // 定时刷新歌曲信息（title/artist/isPlaying 等元数据）
+    // 定时刷新歌曲信息
     LaunchedEffect(Unit) {
         while (true) {
             val info = withContext(Dispatchers.IO) {
@@ -65,25 +58,6 @@ fun PlayerScreen(activity: Activity) {
                 available = info.packageName.isNotEmpty()
             }
             delay(1000)
-        }
-    }
-
-    // 本地进度计时器：播放时每 200ms 自增
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            if (songInfo.isPlaying) {
-                if (!wasPlaying) {
-                    // 开始播放：记录起始时间和基准 position
-                    tickStartNano = System.nanoTime()
-                    tickBaseMs = songInfo.positionMs
-                }
-                localPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
-            } else if (wasPlaying) {
-                // 暂停：定格当前进度
-                localPositionMs = tickBaseMs + (System.nanoTime() - tickStartNano) / 1_000_000
-            }
-            wasPlaying = songInfo.isPlaying
-            delay(200)
         }
     }
 
@@ -232,7 +206,7 @@ fun PlayerScreen(activity: Activity) {
                     LyricView(
                         lines = lyricLines,
                         source = lyricSource,
-                        positionMs = localPositionMs,
+                        positionMs = songInfo.positionMs,
                         isPlaying = songInfo.isPlaying,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -333,7 +307,8 @@ class MediaSessionHelper(private val ctx: Context) {
                     artist = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "未知歌手",
                     album = meta?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: "",
                     packageName = ctrl.packageName ?: "",
-                    isPlaying = state?.state == PlaybackState.STATE_PLAYING
+                    isPlaying = state?.state == PlaybackState.STATE_PLAYING,
+                    positionMs = state?.position ?: 0
                 )
             }
 
