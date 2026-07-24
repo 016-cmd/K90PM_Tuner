@@ -70,15 +70,10 @@ private fun CategorySection(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(0.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Column {
             // 分类标题
@@ -90,9 +85,9 @@ private fun CategorySection(
                     MaterialTheme.colorScheme.primary
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)
             )
-            Divider(
+            HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -167,10 +162,10 @@ private fun ControlItem(
                 var expanded by remember { mutableStateOf(false) }
 
                 Box {
-                    Surface(
-                        onClick = { if (enabled) expanded = true },
-                        shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                    GlassSurface(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .then(if (enabled) Modifier.clickable { expanded = true } else Modifier)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
