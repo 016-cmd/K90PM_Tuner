@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -89,37 +90,43 @@ fun FloatingDockBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             tabs.forEachIndexed { index, tab ->
                 val selected = currentTab == index
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            tab.icon,
-                            contentDescription = tab.label,
-                            modifier = Modifier.size(24.dp),
-                            tint = if (selected) colors.primary
-                            else colors.onSurfaceVariant.copy(alpha = 0.6f)
+                val tabColor = if (selected) colors.primary
+                               else colors.onSurfaceVariant.copy(alpha = 0.6f)
+
+                // 紧凑自定义 tab，比 NavigationBarItem 矮很多
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .then(
+                            if (selected) Modifier.background(
+                                if (isDark) Color.White.copy(alpha = 0.12f)
+                                else Color.Black.copy(alpha = 0.06f),
+                                RoundedCornerShape(12.dp)
+                            ) else Modifier
                         )
-                    },
-                    label = {
-                        Text(
-                            tab.label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (selected) colors.primary
-                            else colors.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    },
-                    selected = selected,
-                    onClick = { onTabSelected(index) },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = if (isDark) Color.White.copy(alpha = 0.12f)
-                        else Color.Black.copy(alpha = 0.06f)
-                    ),
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp))
-                )
+                        .clickable { onTabSelected(index) }
+                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        tab.icon,
+                        contentDescription = tab.label,
+                        modifier = Modifier.size(22.dp),
+                        tint = tabColor
+                    )
+                    Spacer(modifier = Modifier.height(1.dp))
+                    Text(
+                        tab.label,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = androidx.compose.ui.unit.TextUnit(10f, androidx.compose.ui.unit.TextUnitType.Sp)),
+                        color = tabColor
+                    )
+                }
             }
         }
     }
