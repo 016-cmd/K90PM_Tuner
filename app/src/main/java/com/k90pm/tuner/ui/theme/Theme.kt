@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -116,14 +117,15 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     }
     val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
 
-    // WallpaperState 坐标换算需要屏幕物理宽度
-    val screenWidthPx = 1080 // K90 Pro Max
+    // 用 onSizeChanged 获取真实窗口宽度 → WallpaperState.scale（Scene 同款：rootView.width/192）
+    var windowWidthPx by remember { mutableIntStateOf(1080) }
 
     // 壁纸变化时异步加载 bitmap → 模糊 → WallpaperState
     // 使用 state 计数器触发 Compose 重组（WallpaperState 是非 Compose 对象）
     var wallpaperVersion by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(wallpaperUri, isDark) {
+    // 窗口宽度或壁纸变化时重新计算 scale
+    LaunchedEffect(wallpaperUri, isDark, windowWidthPx) {
         if (wallpaperUri != null) {
             try {
                 withContext(Dispatchers.IO) {
@@ -135,7 +137,7 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
                         BitmapFactory.decodeFile(wallpaperUri)
                     }
                     if (bitmap != null) {
-                        WallpaperState.set(ctx, bitmap, isDark, screenWidthPx.toInt())
+                        WallpaperState.set(ctx, bitmap, isDark, windowWidthPx)
                     }
                 }
                 wallpaperVersion++ // 触发重组
@@ -150,7 +152,11 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     val version = wallpaperVersion
 
     MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
-        Box(modifier = Modifier.fillMaxSize().background(colorScheme.background)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(colorScheme.background)
+            .onSizeChanged { size -> windowWidthPx = size.width }
+        ) {
             // 全屏壁纸：直接用 WallpaperState 原始 Bitmap，与模糊壁纸同一来源
             @Suppress("UNUSED_EXPRESSION")
             version // 读取触发重组
