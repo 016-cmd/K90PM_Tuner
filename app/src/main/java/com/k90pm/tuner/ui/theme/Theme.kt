@@ -97,16 +97,13 @@ object ThemePrefs {
     }
 }
 
-// ── 全局主题刷新触发器 ──
-var themeRefreshTrigger by mutableIntStateOf(0)
-
+// ── K90TunerTheme ──
 @Composable
 fun K90TunerTheme(content: @Composable () -> Unit) {
-    // 每次 trigger 变化 → remember 失效 → 重新读取 SharedPreferences
-    val trigger = themeRefreshTrigger
+    // recreate() 后整个 Composable 树重建，直接从 SharedPreferences 读取
     val ctx = LocalContext.current
-    val mode = remember(trigger) { ThemePrefs.getMode(ctx) }
-    val wallpaperUri = remember(trigger) { ThemePrefs.getWallpaperUri(ctx) }
+    val mode = ThemePrefs.getMode(ctx)
+    val wallpaperUri = ThemePrefs.getWallpaperUri(ctx)
 
     val isDark = when (mode) {
         ThemeMode.LIGHT -> false
