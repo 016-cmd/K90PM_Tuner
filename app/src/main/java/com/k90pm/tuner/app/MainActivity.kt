@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             K90TunerTheme {
-                MainScreen()
+                MainScreen(activity = this@MainActivity)
             }
         }
     }
