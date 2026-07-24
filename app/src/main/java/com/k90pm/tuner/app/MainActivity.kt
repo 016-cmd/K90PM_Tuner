@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.k90pm.tuner.ui.AppContextHolder
-import com.k90pm.tuner.ui.screens.MainScreen
+import com.k90pm.tuner.ui.screens.MainApp
 import com.k90pm.tuner.ui.theme.K90TunerTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             K90TunerTheme {
-                MainScreen(activity = this@MainActivity)
+                MainApp(activity = this@MainActivity)
             }
         }
     }
