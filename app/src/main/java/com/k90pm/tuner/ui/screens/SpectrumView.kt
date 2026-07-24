@@ -47,6 +47,7 @@ fun SpectrumView(modifier: Modifier = Modifier) {
 
                     // 用 root 获取当前播放 APP 的 audio sessionId
                     val sessionId = findAudioSession()
+                    android.util.Log.d("Spectrum", "sid=$sessionId")
                     sessionLabel = if (sessionId > 0) "session:$sessionId" else "none"
 
                     if (sessionId > 0) {
@@ -134,6 +135,7 @@ private fun findAudioSession(): Int {
         val p = Runtime.getRuntime().exec(arrayOf("su", "-c", "dumpsys media.audio_flinger"))
         val out = p.inputStream.bufferedReader().use { it.readText() }
         p.waitFor()
+        android.util.Log.d("Spectrum", "dmp_head=${out.take(200)}")
 
         // 格式：session cnt pid uid name
         //   321    1   28384  10515  com.k90pm.tuner        ← 排除自己
