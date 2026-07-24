@@ -16,18 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.k90pm.tuner.ui.theme.WallpaperState
 
 /**
- * 液态玻璃卡片 — Scene 风格毛玻璃。
- * 背景：壁纸模糊 Bitmap + 顶部高光 + 细边框。
+ * 液态玻璃卡片。
+ * 浅色：白底高透 + 模糊壁纸背景 + 细边框
+ * 深色：黑底高透 + 模糊壁纸背景 + 细边框
  */
 @Composable
 fun GlassCard(
@@ -39,17 +37,12 @@ fun GlassCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
-    val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
-    else Color.Black.copy(alpha = 0.08f)
+    // 底色：浅色白底高透 / 深色黑底高透
+    val fillColor = if (isDark) Color.Black.copy(alpha = 0.35f)
+    else Color.White.copy(alpha = 0.55f)
 
-    val highlight = Brush.verticalGradient(
-        colors = listOf(
-            Color.White.copy(alpha = if (isDark) 0.06f else 0.12f),
-            Color.Transparent
-        ),
-        startY = 0f,
-        endY = 80f
-    )
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
+    else Color.Black.copy(alpha = 0.06f)
 
     val blurredBmp = remember { WallpaperState.blurred }
 
@@ -59,7 +52,7 @@ fun GlassCard(
             .border(0.5.dp, borderColor, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
-        // 模糊壁纸背景
+        // 底层：模糊壁纸全填充
         if (blurredBmp != null) {
             androidx.compose.foundation.Image(
                 bitmap = blurredBmp.asImageBitmap(),
@@ -68,14 +61,13 @@ fun GlassCard(
                 contentScale = ContentScale.Crop
             )
         }
-
-        // 顶部高光
+        // 上层：半透明底色
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(highlight, shape)
+                .fillMaxSize()
+                .background(fillColor, shape)
         )
-
+        // 内容
         Column(
             modifier = Modifier.fillMaxWidth().padding(20.dp)
         ) {
@@ -96,8 +88,11 @@ fun GlassSurface(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(20.dp)
 
-    val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
-    else Color.Black.copy(alpha = 0.08f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = 0.35f)
+    else Color.White.copy(alpha = 0.55f)
+
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
+    else Color.Black.copy(alpha = 0.06f)
 
     val blurredBmp = remember { WallpaperState.blurred }
 
@@ -114,12 +109,17 @@ fun GlassSurface(
                 contentScale = ContentScale.Crop
             )
         }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(fillColor, shape)
+        )
         content()
     }
 }
 
 /**
- * 设置页专用卡片——毛玻璃 + 极淡底色保证可读性
+ * 设置页专用卡片——同样风格
  */
 @Composable
 fun GlassSettingsCard(
@@ -130,11 +130,11 @@ fun GlassSettingsCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(16.dp)
 
-    val fillColor = if (isDark) Color.White.copy(alpha = 0.04f)
-    else Color.White.copy(alpha = 0.45f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = 0.40f)
+    else Color.White.copy(alpha = 0.60f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
-    else Color.Black.copy(alpha = 0.10f)
+    else Color.Black.copy(alpha = 0.08f)
 
     val blurredBmp = remember { WallpaperState.blurred }
 
@@ -144,7 +144,6 @@ fun GlassSettingsCard(
             .clip(shape)
             .border(0.5.dp, borderColor, shape)
     ) {
-        // 模糊壁纸底层
         if (blurredBmp != null) {
             androidx.compose.foundation.Image(
                 bitmap = blurredBmp.asImageBitmap(),
@@ -153,7 +152,6 @@ fun GlassSettingsCard(
                 contentScale = ContentScale.Crop
             )
         }
-        // 微白遮盖层（保证文字可读）
         Box(
             modifier = Modifier
                 .fillMaxSize()
