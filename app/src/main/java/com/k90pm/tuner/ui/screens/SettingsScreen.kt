@@ -1,5 +1,6 @@
 package com.k90pm.tuner.ui.screens
 
+import android.app.Activity
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,11 +24,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.k90pm.tuner.ui.theme.ThemeMode
 import com.k90pm.tuner.ui.theme.ThemePrefs
-import com.k90pm.tuner.ui.theme.themeRefreshTrigger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    activity: Activity,
     onBack: () -> Unit
 ) {
     val ctx = LocalContext.current
@@ -38,10 +39,8 @@ fun SettingsScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            val persistUri = uri.toString()
-            ThemePrefs.setWallpaperUri(ctx, persistUri)
-            wallpaperUri = persistUri
-            themeRefreshTrigger++
+            ThemePrefs.setWallpaperUri(ctx, uri.toString())
+            activity.recreate()
         }
     }
 
@@ -80,7 +79,7 @@ fun SettingsScreen(
                     onClick = {
                         themeMode = ThemeMode.LIGHT
                         ThemePrefs.setMode(ctx, ThemeMode.LIGHT)
-                        themeRefreshTrigger++
+                        activity.recreate()
                     }
                 )
                 ThemeOption(
@@ -90,7 +89,7 @@ fun SettingsScreen(
                     onClick = {
                         themeMode = ThemeMode.DARK
                         ThemePrefs.setMode(ctx, ThemeMode.DARK)
-                        themeRefreshTrigger++
+                        activity.recreate()
                     }
                 )
                 ThemeOption(
@@ -100,7 +99,7 @@ fun SettingsScreen(
                     onClick = {
                         themeMode = ThemeMode.SYSTEM
                         ThemePrefs.setMode(ctx, ThemeMode.SYSTEM)
-                        themeRefreshTrigger++
+                        activity.recreate()
                     }
                 )
             }
@@ -129,8 +128,7 @@ fun SettingsScreen(
                         subtitle = null,
                         onClick = {
                             ThemePrefs.setWallpaperUri(ctx, null)
-                            wallpaperUri = null
-                            themeRefreshTrigger++
+                            activity.recreate()
                         }
                     )
                 }
