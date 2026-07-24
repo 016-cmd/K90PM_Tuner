@@ -46,7 +46,8 @@ fun ModuleStatusCard(
             Text(
                 "K90PM 音质模块",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onRefresh, modifier = Modifier.size(36.dp)) {
@@ -96,7 +97,7 @@ fun ModuleStatusCard(
                 ) {
                     Icon(Icons.Rounded.Security, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("授权 Root 并激活", fontWeight = FontWeight.SemiBold)
+                    Text("授权 Root 并激活", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
 
@@ -126,6 +127,6 @@ fun ModuleStatusCard(
 private fun InfoRow(label: String, value: String) {
     Row(Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(36.dp))
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
