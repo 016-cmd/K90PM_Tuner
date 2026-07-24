@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -121,7 +120,7 @@ fun LocalModeScreen(activity: Activity) {
 
     // ── 搜索结果 ──
     if (searchResults.isNotEmpty() && currentSong == null) {
-        LazyColumn(Modifier.fillMaxWidth().weight(1f).clip(cardShape).background(cardBg, cardShape)) {
+        LazyColumn(Modifier.fillMaxWidth().heightIn(min = 200.dp).clip(cardShape).background(cardBg, cardShape)) {
             items(searchResults) { song ->
                 Row(Modifier.fillMaxWidth().clickable {
                     currentSong = song; searchResults = emptyList()
@@ -138,7 +137,7 @@ fun LocalModeScreen(activity: Activity) {
                         }
                     }
                 }.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
+                    Column(Modifier.fillMaxWidth(0.65f)) {
                         Text(song.title, style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium, color = colors.onSurface,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -203,7 +202,7 @@ fun LocalModeScreen(activity: Activity) {
     Spacer(Modifier.height(16.dp))
 
     // ── 歌词区域 ──
-    Box(Modifier.fillMaxWidth().weight(1f).clip(cardShape).background(cardBg, cardShape)) {
+    Box(Modifier.fillMaxWidth().heightIn(min = 180.dp).clip(cardShape).background(cardBg, cardShape)) {
         when {
             lyricLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 2.dp, color = colors.primary)
