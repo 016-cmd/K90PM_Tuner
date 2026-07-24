@@ -158,10 +158,7 @@ fun PlayerScreen(activity: Activity) {
             }
 
             IconButton(
-                onClick = {
-                    if (songInfo.isPlaying) helper.execAsync("input keyevent 127")
-                    else helper.execAsync("input keyevent 126")
-                },
+                onClick = { helper.execAsync("input keyevent 85") },
                 modifier = Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)
             ) {
                 Icon(
@@ -274,15 +271,35 @@ class MediaSessionHelper(private val ctx: Context) {
                     inSession = true; continue
                 }
                 if (!inSession) continue
+                // 遇到第二个 session 就停止
+                if (!t.startsWith(" ") && t.contains(" com.")) {
+                    if (!firstSession) break
+                }
 
                 when {
                     t.startsWith("package=") -> {
-                        if (firstSession) { pkg = t.substringAfter("package="); firstSession = false }
+                        if (firstSession) pkg = t.substringAfter("package=").trim()
                     }
-                    t.contains("state=PlaybackState") -> isPlaying = t.contains("state=3")
-                    t.startsWith("title=") -> { if (title.isEmpty()) title = t.substringAfter("title=") }
-                    t.startsWith("artist=") -> { if (artist.isEmpty()) artist = t.substringAfter("artist=") }
-                    t.startsWith("album=") -> { if (album.isEmpty()) album = t.substringAfter("album=") }
+                    // state=PlaybackState {state=PLAYING(3), ...} 或 state=PAUSED(2)
+                    t.contains("state=PlaybackState") -> {
+                        // 提取 state= 后面的状态数字，PLAYING=3
+                        val stateNum = Regex("""state=\w+\((\d+)\)""").find(t)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                        isPlaying = stateNum == 3
+                    }
+                    // metadata: size=8, description=标题, 歌手, 专辑
+                    t.startsWith("metadata:") -> {
+                        val desc = t.substringAfter("description=").trim()
+                        if (desc.isNotEmpty() && desc != "null") {
+                            val parts = desc.split(", ")
+                            title = parts.getOrNull(0)?.ifEmpty { null } ?: "未知歌曲"
+                            artist = parts.getOrNull(1)?.ifEmpty { null } ?: "未知歌手"
+                            album = parts.getOrNull(2)?.ifEmpty { null } ?: ""
+                        }
+                    }
+                }
+                // 检测 session 结束
+                if (t.startsWith("    ") && !t.startsWith("      ") && firstSession && pkg.isNotEmpty()) {
+                    firstSession = false
                 }
             }
 
