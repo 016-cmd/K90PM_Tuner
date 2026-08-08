@@ -123,7 +123,7 @@ class ViperService : Service() {
                 stopSelf()
             }
             ACTION_TOGGLE_MASTER -> {
-                val next = intent.getBooleanExtra(EXTRA_MASTER_ENABLED, false)
+                val next = intent?.getBooleanExtra(EXTRA_MASTER_ENABLED, false) ?: false
                 scope.launch {
                     ensureConfigLoaded()
                     bootMasterEnabled = next

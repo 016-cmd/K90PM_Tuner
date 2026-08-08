@@ -31,7 +31,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -333,6 +332,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
         EffectList(
             state = state,
             viewModel = viewModel,
+            onResetDefaults = { showResetConfirm = true },
             modifier = Modifier.padding(paddingValues),
         )
     }
@@ -379,11 +379,12 @@ private fun MasterToggleCard(
                 Switch(checked = masterOn, onCheckedChange = null, enabled = false)
             }
             // 右：恢复默认（点击弹确认框）
-            TextButton(
-                onClick = onResetDefaults,
-                colors = TextButtonDefaults.textButtonColors(contentColor = onContainerColor),
-            ) {
-                Text(text = stringResource(R.string.reset_to_defaults), style = MaterialTheme.typography.labelMedium)
+            TextButton(onClick = onResetDefaults) {
+                Text(
+                    text = stringResource(R.string.reset_to_defaults),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = onContainerColor,
+                )
             }
         }
     }
@@ -393,6 +394,7 @@ private fun MasterToggleCard(
 private fun EffectList(
     state: EffectState,
     viewModel: MainViewModel,
+    onResetDefaults: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val targetAlpha = if (state.masterEnable) 1f else 0.38f
@@ -406,7 +408,7 @@ private fun EffectList(
         contentPadding = PaddingValues(bottom = 40.dp),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
-        item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = { showResetConfirm = true }) }
+        item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }
         item { MasterLimiterRows(state, viewModel) }
         item { PlaybackGainSection(state, viewModel) }
         item { LUFSTargetingSection(state, viewModel) }
