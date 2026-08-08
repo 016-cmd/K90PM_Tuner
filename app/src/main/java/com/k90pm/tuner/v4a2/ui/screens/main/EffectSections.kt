@@ -184,9 +184,21 @@ fun MasterLimiterRows(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-        ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.section_master_controller),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Column(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            ) {
         LabeledSlider(
             label = stringResource(R.string.label_output_volume),
             value = outputVolume.toFloat(),
@@ -230,8 +242,9 @@ fun MasterLimiterRows(
                     unit = "dB",
                     onCommit = { viewModel.applyPref(Effects.masterLimiter.threshold, dbToRaw(it).coerceIn(30, 100)) },
                 ),
-        )
-        }   // Column
+        )   // 第三个 LabeledSlider 结束
+        }   // 内层 Column
+        }   // 外层 Column
         }   // Card
 }
 

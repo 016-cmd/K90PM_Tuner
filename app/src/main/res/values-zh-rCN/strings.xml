@@ -44,6 +44,7 @@
     <string name="label_output_volume">输出增益</string>
     <string name="label_output_pan">音量平衡</string>
     <string name="label_output_limiter">阈值限制</string>
+    <string name="section_master_controller">主控制器</string>
 
     <!-- AGC -->
     <string name="section_agc">回放增益控制</string>

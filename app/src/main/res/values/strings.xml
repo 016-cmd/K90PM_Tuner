@@ -42,6 +42,8 @@
     <string name="label_output_volume">Output Gain</string>
     <string name="label_output_pan">Output Pan</string>
     <string name="label_output_limiter">Threshold Limit</string>
+    <string name="section_master_controller">Master Controller</string>
+    <!-- Global effect section -->
     <!-- AGC -->
     <string name="section_agc">Playback Gain Control</string>
     <string name="label_agc_output_threshold">Output Threshold</string>
