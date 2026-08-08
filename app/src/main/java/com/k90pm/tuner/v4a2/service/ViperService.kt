@@ -142,7 +142,12 @@ class ViperService : Service() {
     private suspend fun ensureConfigLoaded() {
         if (configLoaded) return
         useAidlTypeUuid = repository.aidlMode
-        globalMode = repository.getBooleanPreference(ViperRepository.PREF_GLOBAL_MODE).first() ?: false
+        // 全局模式会把 V4A 挂到主输出路径，挤掉杜比（Dolby）处理，永久禁用：
+        // 此处强制 globalMode=false，并顺带清理历史残留的 true 设置，杜绝全局面开启。
+        globalMode = false
+        if (repository.getBooleanPreference(ViperRepository.PREF_GLOBAL_MODE).first() != false) {
+            repository.setBooleanPreference(ViperRepository.PREF_GLOBAL_MODE, false)
+        }
         bootMasterEnabled = repository.getBooleanPreference(ViperRepository.PREF_MASTER_ENABLE).first() ?: false
         ViperContainer.init(this)
         configLoaded = true

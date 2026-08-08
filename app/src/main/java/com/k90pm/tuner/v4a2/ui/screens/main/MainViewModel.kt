@@ -1439,8 +1439,12 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         }
 
         fun toggleGlobalMode(enabled: Boolean) {
-            _globalModeEnabled.value = enabled
-            viewModelScope.launch { repository.setBooleanPreference(PREF_GLOBAL_MODE, enabled) }
-            viperService?.setGlobalMode(enabled)
+            // 全局模式会把 V4A 挂到主输出路径，挤掉杜比（Dolby）处理，故永久禁用本功能。
+            // UI 已置灰不可按动，此处在逻辑层再强制兜底，确保全局模式永远保持关闭。
+            _globalModeEnabled.value = false
+            viewModelScope.launch {
+                repository.setBooleanPreference(PREF_GLOBAL_MODE, false)
+            }
+            viperService?.setGlobalMode(false)
         }
     }

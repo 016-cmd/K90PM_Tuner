@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,7 @@ fun SettingsDialog(
                     label = stringResource(R.string.settings_global_mode),
                     checked = globalModeEnabled,
                     onCheckedChange = onGlobalModeChanged,
+                    enabled = false,
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Text(
@@ -172,11 +174,13 @@ private fun SettingsToggleRow(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .alpha(if (enabled) 1f else 0.4f)
                 .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -187,8 +191,9 @@ private fun SettingsToggleRow(
             modifier = Modifier.weight(1f),
         )
         Switch(
-            checked = checked,
+            checked = checked && enabled,
             onCheckedChange = onCheckedChange,
+            enabled = enabled,
         )
     }
 }
