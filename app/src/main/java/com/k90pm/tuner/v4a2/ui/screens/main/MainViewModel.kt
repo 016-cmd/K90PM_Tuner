@@ -132,6 +132,10 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                     viperService = localBinder.service
                     serviceBound = true
                     viperService?.setStateProvider { _uiState.value }
+                    // 绑定成功后按当前设备加载 DB 调音并写入驱动（确保重进时真实生效，而非只改UI）
+                    viewModelScope.launch {
+                        loadDeviceSettings(audioOutputDetector.activeDevice.value)
+                    }
                     queryDriverStatus()
                 }
 
@@ -152,7 +156,6 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(activeDeviceName = dbName, activeDeviceId = initialDevice.id) }
                 loadEqPresetsForBandCount(_uiState.value.eq.bandCount)
                 loadDsPresets()
-                loadDeviceSettings(initialDevice)
                 ensureDeviceEntry(initialDevice)
                 bindToService()
                 audioOutputDetector.activeDevice.collect { device ->
@@ -343,6 +346,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 val defaults = EffectState().copy(masterEnable = masterOn)
                 _uiState.update { defaults }
                 saveEffectPrefs(repository, defaults)
+                saveCurrentDeviceSettings()
                 dispatchFullState()
             }
         }
@@ -943,7 +947,6 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             val saved = repository.getDeviceSettings(device.id) ?: return
             val json = JSONObject(saved.settingsJson)
             _uiState.update { deserializeEffectPrefs(json, it) }
-            saveEffectPrefs(repository, _uiState.value)
             dispatchFullState()
         }
 
