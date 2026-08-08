@@ -259,6 +259,10 @@
     <!-- Actions -->
     <string name="action_save">保存</string>
     <string name="action_cancel">取消</string>
+    <string name="action_confirm">确定</string>
+    <string name="reset_to_defaults">恢复默认</string>
+    <string name="reset_confirm_title">确认恢复默认？</string>
+    <string name="reset_confirm_message">确定将全部音效恢复为默认设置？当前总开关状态将保留。</string>
     <string name="action_close">关闭</string>
     <string name="action_rename">重命名</string>
     <string name="action_reset">重置</string>

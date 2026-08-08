@@ -333,6 +333,17 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             dispatchFullState()
         }
 
+        /** 恢复默认：保留 master 状态，其余全部恢复官方出厂默认，落 DataStore + 写回驱动。 */
+        fun resetToDefaults() {
+            viewModelScope.launch {
+                val masterOn = _uiState.value.masterEnable
+                val defaults = EffectState().copy(masterEnable = masterOn)
+                _uiState.update { defaults }
+                saveEffectPrefs(repository, defaults)
+                dispatchFullState()
+            }
+        }
+
         fun setConvolverKernel(fileName: String) {
             FileLogger.i("ViewModel", "Convolver kernel: $fileName")
             applyPref(Effects.convolver.kernelFile, fileName)

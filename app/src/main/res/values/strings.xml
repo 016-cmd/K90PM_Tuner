@@ -225,6 +225,10 @@
     <!-- Actions -->
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_confirm">OK</string>
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="reset_confirm_title">Reset to Defaults?</string>
+    <string name="reset_confirm_message">Restore all effects to factory defaults? Current master state will be kept.</string>
     <string name="action_close">Close</string>
     <string name="action_rename">Rename</string>
     <string name="action_reset">Reset</string>

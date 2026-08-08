@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,6 +29,9 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -91,6 +95,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
+    var showResetConfirm by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val appVersionName =
@@ -160,6 +165,29 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
             onUpdate = viewModel::saveDevicePreset,
             onDelete = viewModel::deleteDeviceSettings,
             onDismiss = { showDeviceDialog = false },
+        )
+    }
+
+    if (showResetConfirm) {
+        val resetTitle = stringResource(R.string.reset_confirm_title)
+        val resetMessage = stringResource(R.string.reset_confirm_message)
+        val confirmStr = stringResource(R.string.action_confirm)
+        val cancelStr = stringResource(R.string.action_cancel)
+        AlertDialog(
+            onDismissRequest = { showResetConfirm = false },
+            title = { Text(resetTitle) },
+            text = { Text(resetMessage) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetConfirm = false
+                        viewModel.resetToDefaults()
+                    },
+                ) { Text(confirmStr) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirm = false }) { Text(cancelStr) }
+            },
         )
     }
 
@@ -310,11 +338,12 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     }
 }
 
-/** 页面顶部的 V4A 主总开关卡片（避免右下角 FAB 被底部 dock 遮挡）。 */
+/** 页面顶部的 V4A 主总开关卡片（避免右下角 FAB 被底部 dock 遮挡）。横排：左=总开关，右=恢复默认。 */
 @Composable
 private fun MasterToggleCard(
     state: EffectState,
     onToggle: () -> Unit,
+    onResetDefaults: () -> Unit,
 ) {
     val masterOn = state.masterEnable
     val darkTheme = isSystemInDarkTheme()
@@ -331,7 +360,6 @@ private fun MasterToggleCard(
             else -> master_on_onContainer_light
         }
     Card(
-        onClick = onToggle,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = onContainerColor),
@@ -341,8 +369,22 @@ private fun MasterToggleCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(text = stringResource(R.string.master_enable), style = MaterialTheme.typography.titleMedium)
-            Switch(checked = masterOn, onCheckedChange = { onToggle() }, enabled = false)
+            // 左：总开关（整区可点击切换）
+            Row(
+                modifier = Modifier.clickable(onClick = onToggle),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = stringResource(R.string.master_enable), style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.width(12.dp))
+                Switch(checked = masterOn, onCheckedChange = null, enabled = false)
+            }
+            // 右：恢复默认（点击弹确认框）
+            TextButton(
+                onClick = onResetDefaults,
+                colors = TextButtonDefaults.textButtonColors(contentColor = onContainerColor),
+            ) {
+                Text(text = stringResource(R.string.reset_to_defaults), style = MaterialTheme.typography.labelMedium)
+            }
         }
     }
 }
@@ -364,7 +406,7 @@ private fun EffectList(
         contentPadding = PaddingValues(bottom = 40.dp),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
-        item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }) }
+        item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = { showResetConfirm = true }) }
         item { MasterLimiterRows(state, viewModel) }
         item { PlaybackGainSection(state, viewModel) }
         item { LUFSTargetingSection(state, viewModel) }
