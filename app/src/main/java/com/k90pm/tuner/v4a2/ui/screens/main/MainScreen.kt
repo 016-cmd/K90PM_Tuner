@@ -417,7 +417,7 @@ private fun EffectList(
     )
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
-        contentPadding = PaddingValues(bottom = 120.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }

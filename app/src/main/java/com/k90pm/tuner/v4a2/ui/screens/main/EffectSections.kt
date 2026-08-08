@@ -2362,30 +2362,50 @@ fun CopyrightSection() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             // 项目1：App
-            Text(
-                text = stringResource(R.string.credits_proj_app),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.credits_proj_app_by),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.credits_proj_app),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.credits_proj_app_by),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(onClick = { openRepo(repoApp) }) {
+                    Text(stringResource(R.string.credits_view_source))
+                }
+            }
             Spacer(modifier = Modifier.height(6.dp))
             // 项目2：驱动
-            Text(
-                text = stringResource(R.string.credits_proj_driver),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.credits_proj_driver_by),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.credits_proj_driver),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.credits_proj_driver_by),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(onClick = { openRepo(repoDriver) }) {
+                    Text(stringResource(R.string.credits_view_source))
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             // 许可证
             Text(
@@ -2394,17 +2414,6 @@ fun CopyrightSection() {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            // 两个源码按钮
-            Row(modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = { openRepo(repoApp) }) {
-                    Text(stringResource(R.string.credits_view_source))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = { openRepo(repoDriver) }) {
-                    Text(stringResource(R.string.credits_view_source))
-                }
-            }
         }
     }
 }
