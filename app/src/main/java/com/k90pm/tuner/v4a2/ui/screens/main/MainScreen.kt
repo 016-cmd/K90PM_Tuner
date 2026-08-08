@@ -422,7 +422,7 @@ private fun EffectList(
     val navBottom = with(density) { WindowInsets.navigationBars.getBottom(density) }
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
-        contentPadding = PaddingValues(bottom = navBottom + 16.dp),
+        contentPadding = PaddingValues(bottom = navBottom + 24.dp),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }
