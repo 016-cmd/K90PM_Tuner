@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -369,9 +370,14 @@ private fun MasterToggleCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // 左：总开关（整区可点击切换）
+            // 左：总开关（整区可点击切换；去掉 ripple 白块）
             Row(
-                modifier = Modifier.clickable(onClick = onToggle),
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onToggle,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = stringResource(R.string.master_enable), style = MaterialTheme.typography.titleMedium)
@@ -405,7 +411,7 @@ private fun EffectList(
     )
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
-        contentPadding = PaddingValues(bottom = 40.dp),
+        contentPadding = PaddingValues(bottom = 120.dp),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }
