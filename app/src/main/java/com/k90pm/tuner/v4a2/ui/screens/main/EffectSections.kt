@@ -2328,6 +2328,7 @@ fun SpeakerOptSection(
         icon = Icons.Default.SpeakerPhone,
         toggleOnly = true,
     ) {}
+}
 
 /** 致谢与版权卡片（列表底部）。 */
 @Composable
@@ -2404,5 +2405,4 @@ fun CopyrightSection() {
             }
         }
     }
-}
 }
