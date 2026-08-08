@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toDp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -419,10 +420,12 @@ private fun EffectList(
         label = "effectListAlpha",
     )
     val density = LocalDensity.current
-    val navBottom = with(density) { WindowInsets.navigationBars.getBottom(density) }
+    val navBottom = with(density) {
+        WindowInsets.navigationBars.getBottom(density).toDp() + 24.dp
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
-        contentPadding = PaddingValues(bottom = navBottom + 24.dp),
+        contentPadding = PaddingValues(bottom = navBottom),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }
