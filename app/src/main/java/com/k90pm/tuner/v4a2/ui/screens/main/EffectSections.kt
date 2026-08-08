@@ -2405,5 +2405,4 @@ fun CopyrightSection() {
         }
     }
 }
-
 }
