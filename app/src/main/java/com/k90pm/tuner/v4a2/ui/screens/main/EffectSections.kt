@@ -2333,6 +2333,8 @@ fun SpeakerOptSection(
 @Composable
 fun CopyrightSection() {
     val context = LocalContext.current
+    val repoApp = stringResource(R.string.credits_repo_app)
+    val repoDriver = stringResource(R.string.credits_repo_driver)
     val openRepo: (String) -> Unit = { url ->
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -2392,11 +2394,11 @@ fun CopyrightSection() {
             Spacer(modifier = Modifier.height(8.dp))
             // 两个源码按钮
             Row(modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = { openRepo(stringResource(R.string.credits_repo_app)) }) {
+                TextButton(onClick = { openRepo(repoApp) }) {
                     Text(stringResource(R.string.credits_view_source))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = { openRepo(stringResource(R.string.credits_repo_driver)) }) {
+                TextButton(onClick = { openRepo(repoDriver) }) {
                     Text(stringResource(R.string.credits_view_source))
                 }
             }
