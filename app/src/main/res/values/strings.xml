@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">K90PM Tuner</string>
+    <string name="app_name">ViPER4Android RE</string>
+
+    <string name="credits_title">Credits &amp; License</string>
+    <string name="credits_body">Based on ViPER4Android by likelikeslike, distributed under the GNU General Public License v3.0 (GPL v3.0).</string>
+    <string name="credits_view_source">View Source</string>
+    <string name="credits_license">GPL v3.0</string>
 
     <!-- ===== 以下为 ViPER4Android 官方 2.0.3 音效页字符串（照搬） ===== -->
     <string name="notification_channel_name">Audio Processing</string>

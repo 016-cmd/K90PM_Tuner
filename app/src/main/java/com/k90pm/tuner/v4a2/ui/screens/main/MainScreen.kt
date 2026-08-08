@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
@@ -263,7 +264,12 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
             TopAppBar(
                 title = {
                     Column {
-                        Text(stringResource(R.string.app_name))
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                        )
                         val deviceName = state.activeDeviceName
                         if (deviceName.isNotEmpty()) {
                             val dotColor =
@@ -439,5 +445,6 @@ private fun EffectList(
         item { AuditoryProtectionSection(state, viewModel) }
         item { AnalogXSection(state, viewModel) }
         item { SpeakerOptSection(state, viewModel) }
+        item { CopyrightSection() }
     }
 }
