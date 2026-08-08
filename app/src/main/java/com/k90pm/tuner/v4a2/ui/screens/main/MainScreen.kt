@@ -418,7 +418,7 @@ private fun EffectList(
         animationSpec = tween(durationMillis = 200),
         label = "effectListAlpha",
     )
-    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 25.dp
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 35.dp
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
         contentPadding = PaddingValues(bottom = navBottom),
