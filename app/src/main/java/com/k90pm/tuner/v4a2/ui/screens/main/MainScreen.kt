@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.enabled
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.WindowInsets
@@ -418,6 +420,7 @@ private fun EffectList(
         animationSpec = tween(durationMillis = 200),
         label = "effectListAlpha",
     )
+    val interactive = state.masterEnable
     val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 35.dp
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
@@ -425,30 +428,38 @@ private fun EffectList(
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }
-        item { MasterLimiterRows(state, viewModel) }
-        item { PlaybackGainSection(state, viewModel) }
-        item { LUFSTargetingSection(state, viewModel) }
-        item { MultibandCompressorSection(state, viewModel) }
-        item { FetCompressorSection(state, viewModel) }
-        item { DdcSection(state, viewModel) }
-        item { SpectrumExtensionSection(state, viewModel) }
-        item { EqualizerSection(state, viewModel) }
-        item { DynamicEqSection(state, viewModel) }
-        item { ConvolverSection(state, viewModel) }
-        item { FieldSurroundSection(state, viewModel) }
-        item { DiffSurroundSection(state, viewModel) }
-        item { StereoImagerSection(state, viewModel) }
-        item { HeadphoneSurroundSection(state, viewModel) }
-        item { ReverberationSection(state, viewModel) }
-        item { DynamicSystemSection(state, viewModel) }
-        item { TubeSimulatorSection(state, viewModel) }
-        item { PsychoacousticBassSection(state, viewModel) }
-        item { ViperBassSection(state, viewModel) }
-        item { ViperBassMonoSection(state, viewModel) }
-        item { ViperClaritySection(state, viewModel) }
-        item { AuditoryProtectionSection(state, viewModel) }
-        item { AnalogXSection(state, viewModel) }
-        item { SpeakerOptSection(state, viewModel) }
-        item { CopyrightSection() }
+        item { InteractiveWrapper(enabled = interactive) { MasterLimiterRows(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { PlaybackGainSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { LUFSTargetingSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { MultibandCompressorSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { FetCompressorSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DdcSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { SpectrumExtensionSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { EqualizerSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DynamicEqSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ConvolverSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { FieldSurroundSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DiffSurroundSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { StereoImagerSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { HeadphoneSurroundSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ReverberationSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DynamicSystemSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { TubeSimulatorSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { PsychoacousticBassSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ViperBassSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ViperBassMonoSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ViperClaritySection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { AuditoryProtectionSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { AnalogXSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { SpeakerOptSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { CopyrightSection() } }
     }
+}
+
+@Composable
+private fun InteractiveWrapper(
+    enabled: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = Modifier.enabled(enabled)) { content() }
 }
