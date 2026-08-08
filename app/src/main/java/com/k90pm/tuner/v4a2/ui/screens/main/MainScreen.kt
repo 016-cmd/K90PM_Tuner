@@ -7,7 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.enabled
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.WindowInsets
@@ -49,8 +47,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,6 +68,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.k90pm.tuner.R
 import com.k90pm.tuner.v4a2.effect.EffectState
+import com.k90pm.tuner.v4a2.ui.components.LocalInteractionEnabled
 import com.k90pm.tuner.v4a2.ui.screens.debug.DebugLogDialog
 import com.k90pm.tuner.v4a2.ui.screens.device.DeviceDialog
 import com.k90pm.tuner.v4a2.ui.screens.preset.PresetDialog
@@ -461,5 +462,5 @@ private fun InteractiveWrapper(
     enabled: Boolean,
     content: @Composable () -> Unit,
 ) {
-    Box(modifier = Modifier.enabled(enabled)) { content() }
+    CompositionLocalProvider(LocalInteractionEnabled provides enabled) { content() }
 }

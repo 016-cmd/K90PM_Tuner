@@ -83,6 +83,7 @@ import com.k90pm.tuner.v4a2.ui.components.EqEditDialog
 import com.k90pm.tuner.v4a2.ui.components.LabeledDropdown
 import com.k90pm.tuner.v4a2.ui.components.LabeledSlider
 import com.k90pm.tuner.v4a2.ui.components.LabeledSwitch
+import com.k90pm.tuner.v4a2.ui.components.LocalInteractionEnabled
 import com.k90pm.tuner.v4a2.ui.components.SliderEdit
 import com.k90pm.tuner.v4a2.ui.components.resolvePresetName
 import java.util.Locale
@@ -123,7 +124,7 @@ fun EffectSection(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .then(if (toggleOnly) Modifier else Modifier.clickable { expanded = !expanded })
+                        .then(if (toggleOnly) Modifier else Modifier.clickable(enabled = LocalInteractionEnabled.current) { expanded = !expanded })
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -147,6 +148,7 @@ fun EffectSection(
                     Switch(
                         checked = enabled,
                         onCheckedChange = onEnabledChange,
+                        enabled = LocalInteractionEnabled.current,
                     )
                 }
             }

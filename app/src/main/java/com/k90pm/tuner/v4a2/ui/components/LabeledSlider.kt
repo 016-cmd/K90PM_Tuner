@@ -14,6 +14,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,9 @@ data class SliderEdit(
     val unit: String = "",
 )
 
+/** 全局交互开关：false 时所有组件禁用交互（由总开关驱动）。 */
+val LocalInteractionEnabled = compositionLocalOf { true }
+
 @Composable
 fun LabeledSlider(
     label: String,
@@ -44,7 +48,7 @@ fun LabeledSlider(
     valueRange: ClosedFloatingPointRange<Float>,
     modifier: Modifier = Modifier,
     steps: Int = 0,
-    enabled: Boolean = true,
+    enabled: Boolean = LocalInteractionEnabled.current,
     valueLabel: String? = null,
     edit: SliderEdit? = null,
 ) {
