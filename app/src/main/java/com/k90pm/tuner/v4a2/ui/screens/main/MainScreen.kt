@@ -421,7 +421,7 @@ private fun EffectList(
     )
     val density = LocalDensity.current
     val navBottom = with(density) {
-        WindowInsets.navigationBars.getBottom(density).toDp() + 24.dp
+        WindowInsets.navigationBars.getBottom(density).toDp() + 25.dp
     }
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
