@@ -10,7 +10,7 @@
     <string name="credits_proj_fx">ViPERFX RE（驱动源码）</string>
     <string name="credits_proj_fx_by">作者 AndroidAudioMods（Martmists、Iscle）</string>
     <string name="credits_repo_fx">https://github.com/AndroidAudioMods/ViPERFX_RE</string>
-    <string name="credits_license">许可证：App 与驱动为 GPL v3.0，FX 源码为 GPL v2.0</string>
+    <string name="credits_license">许可证：App 与驱动为 GPL v3.0；ViPERFX RE 源码许可证未明确标注</string>
     <string name="credits_original">由 ViPER520 与 Zhuhang（ViPER Audio）原创；本项目在其基础上重建。</string>
     <string name="credits_view_source">查看源码</string>
     <string name="credits_repo_app">https://github.com/likelikeslike/ViPER4Android</string>
