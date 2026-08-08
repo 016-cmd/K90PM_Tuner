@@ -3,9 +3,15 @@
     <string name="app_name">ViPER4Android RE</string>
 
     <string name="credits_title">Credits &amp; License</string>
-    <string name="credits_body">Based on ViPER4Android by likelikeslike, distributed under the GNU General Public License v3.0 (GPL v3.0).</string>
+    <string name="credits_body">This project incorporates the following open-source projects:</string>
+    <string name="credits_proj_app">ViPER4Android (App)</string>
+    <string name="credits_proj_app_by">by likelikeslike</string>
+    <string name="credits_proj_driver">ViPER4Android-RE (Driver)</string>
+    <string name="credits_proj_driver_by">by Iscle et al.</string>
+    <string name="credits_license">Licensed under GNU GPL v3.0</string>
     <string name="credits_view_source">View Source</string>
-    <string name="credits_license">GPL v3.0</string>
+    <string name="credits_repo_app">https://github.com/likelikeslike/ViPER4Android</string>
+    <string name="credits_repo_driver">https://github.com/iscle/ViPER4Android-RE</string>
 
     <!-- ===== 以下为 ViPER4Android 官方 2.0.3 音效页字符串（照搬） ===== -->
     <string name="notification_channel_name">Audio Processing</string>

@@ -2333,6 +2333,11 @@ fun SpeakerOptSection(
 @Composable
 fun CopyrightSection() {
     val context = LocalContext.current
+    val openRepo: (String) -> Unit = { url ->
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -2350,22 +2355,50 @@ fun CopyrightSection() {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            // 项目1：App
+            Text(
+                text = stringResource(R.string.credits_proj_app),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.credits_proj_app_by),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            // 项目2：驱动
+            Text(
+                text = stringResource(R.string.credits_proj_driver),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.credits_proj_driver_by),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            // 许可证
             Text(
                 text = stringResource(R.string.credits_license),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            TextButton(
-                onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/likelikeslike/ViPER4Android"))
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
-                },
-            ) {
-                Text(stringResource(R.string.credits_view_source))
+            Spacer(modifier = Modifier.height(8.dp))
+            // 两个源码按钮
+            Row(modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { openRepo(stringResource(R.string.credits_repo_app)) }) {
+                    Text(stringResource(R.string.credits_view_source))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = { openRepo(stringResource(R.string.credits_repo_driver)) }) {
+                    Text(stringResource(R.string.credits_view_source))
+                }
             }
         }
     }

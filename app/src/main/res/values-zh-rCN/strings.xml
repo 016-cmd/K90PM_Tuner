@@ -2,9 +2,15 @@
 <resources>
     <string name="app_name">ViPER4Android RE</string>
     <string name="credits_title">致谢与版权</string>
-    <string name="credits_body">基于 likelikeslike 的 ViPER4Android 开源项目，依照 GNU 通用公共许可证 v3.0（GPL v3.0）发布。</string>
+    <string name="credits_body">本项目集成了以下开源项目：</string>
+    <string name="credits_proj_app">ViPER4Android（App）</string>
+    <string name="credits_proj_app_by">作者 likelikeslike</string>
+    <string name="credits_proj_driver">ViPER4Android-RE（驱动）</string>
+    <string name="credits_proj_driver_by">作者 Iscle 等</string>
+    <string name="credits_license">依照 GNU GPL v3.0 许可证发布</string>
     <string name="credits_view_source">查看源码</string>
-    <string name="credits_license">GPL v3.0</string>
+    <string name="credits_repo_app">https://github.com/likelikeslike/ViPER4Android</string>
+    <string name="credits_repo_driver">https://github.com/iscle/ViPER4Android-RE</string>
     <string name="notification_channel_name">音频处理</string>
     <string name="notification_channel_description">当 ViPER4Android 正在处理音频时显示</string>
     <string name="notification_title">ViPER4Android</string>
