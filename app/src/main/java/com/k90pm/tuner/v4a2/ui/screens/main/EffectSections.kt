@@ -201,7 +201,9 @@ fun MasterLimiterRows(
                 )
             }
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             ) {
         LabeledSlider(
             label = stringResource(R.string.label_output_volume),
