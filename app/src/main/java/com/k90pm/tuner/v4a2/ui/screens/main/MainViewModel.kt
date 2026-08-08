@@ -197,6 +197,9 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             _uiState.update { pref.set(it, value) }
             viewModelScope.launch {
                 persistPref(pref, value)
+                // 实时调参：同步刷新设备预设快照（DB），避免重进 APP 时被 onCleared 保存的
+                // 旧设备快照覆盖（导致 UI 弹回上次关机前状态）。幂等、可重复。
+                saveCurrentDeviceSettings()
                 if (pref.paramId == -1 || !_uiState.value.masterEnable || !shouldDispatch(pref)) {
                     return@launch
                 }
