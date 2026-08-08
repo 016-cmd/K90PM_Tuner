@@ -296,7 +296,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         }
 
         private suspend fun loadSettingsPreferences() {
-            _autoStartEnabled.value = repository.getBooleanPreference(PREF_AUTO_START, false).first()
+            _autoStartEnabled.value = repository.getBooleanPreference(PREF_AUTO_START, true).first()
             _globalModeEnabled.value = repository.getBooleanPreference(PREF_GLOBAL_MODE, false).first()
             _debugModeEnabled.value = repository.getBooleanPreference(PREF_DEBUG_MODE, false).first()
             _aidlModeEnabled.value = repository.aidlMode

@@ -191,7 +191,7 @@
     <string name="status_inactive">Inactive</string>
     <string name="status_unknown">Unknown</string>
     <!-- Settings -->
-    <string name="settings_auto_start">Auto-start on boot</string>
+    <string name="settings_auto_start">Module linkage on boot</string>
     <string name="settings_aidl_mode">AIDL mode</string>
     <string name="settings_global_mode">Global mode</string>
     <string name="settings_driver_version">Driver version</string>

@@ -78,14 +78,7 @@ class ViperService : Service() {
     override fun onCreate() {
         super.onCreate()
         FileLogger.i("ViperService", "Service created")
-        scope.launch {
-            ensureConfigLoaded()
-            if (masterEnabled) {
-                val state = ViperDispatcher.loadFullStateFromPrefs(repository)
-                applyState(state, true)
-            }
-            startAudioOutputMonitor()
-        }
+        scope.launch { ensureConfigLoaded() }
     }
 
     override fun onDestroy() {
@@ -101,7 +94,28 @@ class ViperService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        // 模块 am startservice 拉起时 intent 通常不带 action（null）→ 也走开机恢复写回。
+        when (intent?.action ?: ACTION_START) {
+            ACTION_START -> {
+                // 开机（模块拉起）：恢复调音写回驱动 → 写完即关（不静默常驻）。
+                // APP 打开用 bindService（绑定），走 onBind；这里仅处理模块 am startservice 的开机链路。
+                scope.launch {
+                    ensureConfigLoaded()
+                    // 开机模块联动：若用户关闭 auto_start，则不恢复调音、直接关闭（不常驻）
+                    val linkageOnBoot = repository.getBooleanPreference(ViperRepository.PREF_AUTO_START, true).first()
+                    if (!linkageOnBoot) {
+                        FileLogger.i("ViperService", "Module linkage on boot disabled, closing service")
+                        stopSelf()
+                        return@launch
+                    }
+                    if (masterEnabled) {
+                        val state = ViperDispatcher.loadFullStateFromPrefs(repository)
+                        applyState(state, true)
+                    }
+                    FileLogger.i("ViperService", "Boot restore written, closing service")
+                    stopSelf()
+                }
+            }
             ACTION_STOP -> {
                 releaseAllSessions()
                 globalEffect?.let { it.enabled = false; it.release() }
@@ -571,13 +585,15 @@ class ViperService : Service() {
     }
 
     companion object {
+        const val ACTION_START = "com.k90pm.tuner.v4a2.service.START"
         const val ACTION_STOP = "com.k90pm.tuner.v4a2.service.STOP"
         const val ACTION_TOGGLE_MASTER = "com.k90pm.tuner.v4a2.service.TOGGLE_MASTER"
         const val EXTRA_MASTER_ENABLED = "com.k90pm.tuner.v4a2.service.EXTRA_MASTER_ENABLED"
 
+        /** 开机（模块拉起）一次性恢复参数：startService + ACTION_START，写完即关。 */
         fun startService(context: Context) {
             val i = Intent(context, ViperService::class.java)
-            i.action = ACTION_STOP
+            i.action = ACTION_START
             context.startService(i)
         }
 

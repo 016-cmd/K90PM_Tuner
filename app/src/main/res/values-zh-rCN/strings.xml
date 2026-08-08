@@ -223,7 +223,7 @@
     <string name="status_unknown">未知</string>
 
     <!-- Settings -->
-    <string name="settings_auto_start">开机自启</string>
+    <string name="settings_auto_start">开机模块联动</string>
     <string name="settings_aidl_mode">AIDL 模式</string>
     <string name="settings_global_mode">全局模式</string>
     <string name="settings_driver_version">驱动版本</string>
