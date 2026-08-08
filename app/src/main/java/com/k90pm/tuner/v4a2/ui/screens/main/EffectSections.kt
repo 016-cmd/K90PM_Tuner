@@ -179,9 +179,14 @@ fun MasterLimiterRows(
     val limDb = if (limiter > 0) rawToDb(limiter) else -99.9
     val left = 50 - channelPan / 2
     val right = 50 + channelPan / 2
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    // 三个拉条（输出增益/音量平衡/阈值限制）包在一个卡片里，避免直接透到壁纸
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+        ) {
         LabeledSlider(
             label = stringResource(R.string.label_output_volume),
             value = outputVolume.toFloat(),
@@ -226,7 +231,8 @@ fun MasterLimiterRows(
                     onCommit = { viewModel.applyPref(Effects.masterLimiter.threshold, dbToRaw(it).coerceIn(30, 100)) },
                 ),
         )
-    }
+        }   // Column
+        }   // Card
 }
 
 @Composable
