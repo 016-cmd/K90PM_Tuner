@@ -8,7 +8,11 @@
     <string name="credits_proj_app_by">by likelikeslike</string>
     <string name="credits_proj_driver">ViPER4Android-RE (Driver)</string>
     <string name="credits_proj_driver_by">by Iscle et al.</string>
-    <string name="credits_license">Licensed under GNU GPL v3.0</string>
+    <string name="credits_proj_fx">ViPERFX RE (Driver Source)</string>
+    <string name="credits_proj_fx_by">by AndroidAudioMods (Martmists, Iscle)</string>
+    <string name="credits_repo_fx">https://github.com/AndroidAudioMods/ViPERFX_RE</string>
+    <string name="credits_license">Licenses: App &amp; Driver under GPL v3.0, FX source under GPL v2.0</string>
+    <string name="credits_original">Originally created by ViPER520 &amp; Zhuhang (ViPER Audio); this project rebuilds upon their work.</string>
     <string name="credits_view_source">View Source</string>
     <string name="credits_repo_app">https://github.com/likelikeslike/ViPER4Android</string>
     <string name="credits_repo_driver">https://github.com/iscle/ViPER4Android-RE</string>

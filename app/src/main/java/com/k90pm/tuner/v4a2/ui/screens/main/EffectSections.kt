@@ -2338,6 +2338,7 @@ fun CopyrightSection() {
     val context = LocalContext.current
     val repoApp = stringResource(R.string.credits_repo_app)
     val repoDriver = stringResource(R.string.credits_repo_driver)
+    val repoFx = stringResource(R.string.credits_repo_fx)
     val openRepo: (String) -> Unit = { url ->
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -2406,6 +2407,29 @@ fun CopyrightSection() {
                     Text(stringResource(R.string.credits_view_source))
                 }
             }
+            Spacer(modifier = Modifier.height(6.dp))
+            // 项目3：驱动源码（上游）
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.credits_proj_fx),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.credits_proj_fx_by),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(onClick = { openRepo(repoFx) }) {
+                    Text(stringResource(R.string.credits_view_source))
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             // 许可证
             Text(
@@ -2413,6 +2437,13 @@ fun CopyrightSection() {
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            // 原始版权人
+            Text(
+                text = stringResource(R.string.credits_original),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
