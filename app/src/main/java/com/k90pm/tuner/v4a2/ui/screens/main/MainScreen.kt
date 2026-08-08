@@ -422,7 +422,7 @@ private fun EffectList(
         label = "effectListAlpha",
     )
     val interactive = state.masterEnable
-    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 35.dp
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 45.dp
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
         contentPadding = PaddingValues(bottom = navBottom),
