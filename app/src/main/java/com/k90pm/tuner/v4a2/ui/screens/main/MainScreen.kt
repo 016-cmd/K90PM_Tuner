@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -419,10 +420,7 @@ private fun EffectList(
         animationSpec = tween(durationMillis = 200),
         label = "effectListAlpha",
     )
-    val density = LocalDensity.current
-    val navBottom = with(density) {
-        WindowInsets.navigationBars.getBottom(density).toDp() + 25.dp
-    }
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 25.dp
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
         contentPadding = PaddingValues(bottom = navBottom),
