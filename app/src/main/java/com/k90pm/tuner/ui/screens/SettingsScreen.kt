@@ -37,6 +37,13 @@ fun SettingsScreen(
     val ctx = LocalContext.current
     var themeMode by remember { mutableStateOf(ThemePrefs.getMode(ctx)) }
     var wallpaperUri by remember { mutableStateOf(ThemePrefs.getWallpaperUri(ctx)) }
+    val appVersion = remember {
+        try {
+            ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
 
     val wallpaperPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -157,7 +164,7 @@ fun SettingsScreen(
             SectionHeader("关于")
             Spacer(Modifier.height(6.dp))
             GlassSettingsCard {
-                InfoRow("版本", "v2.0.0")
+                InfoRow("版本", "v$appVersion")
                 InfoRow("开发者", "016-cmd")
                 InfoRow("设备", "REDMI K90 Pro Max")
             }

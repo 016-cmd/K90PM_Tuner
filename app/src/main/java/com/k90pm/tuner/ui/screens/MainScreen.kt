@@ -30,6 +30,13 @@ fun MainScreen(
     val hasRoot by viewModel.hasRoot.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val canEdit = viewModel.canEdit
+    val appVersion = remember {
+        try {
+            activity.packageManager.getPackageInfo(activity.packageName, 0).versionName ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
 
     // ⚡ 轮询只在「主页」处于激活/可见时才运行：
     //   - 进入主页 tab (MainScreen 进入组合) → 启动寄存器自动刷新
@@ -100,7 +107,7 @@ fun MainScreen(
 
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "K90PM Tuner v2.0.0 · by 016.",
+                text = "K90PM Tuner v$appVersion · by 016.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
