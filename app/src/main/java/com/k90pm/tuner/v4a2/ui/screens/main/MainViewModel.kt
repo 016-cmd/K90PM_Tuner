@@ -44,8 +44,10 @@ import com.k90pm.tuner.v4a2.utils.FileLogger
 import com.k90pm.tuner.v4a2.viper.ConfigChannel
 import com.k90pm.tuner.v4a2.viper.ViperEffect
 import com.k90pm.tuner.v4a2.viper.ViperParams
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -81,10 +83,23 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             private const val NOTIFY_ID_VDC_IMPORT = 5
             private const val PROGRESS_NOTIFY_MIN_GAP_MS = 200L
             private const val PROGRESS_DRAIN_DELAY_MS = 250L
+
+            /** 调参后写入 DB 快照的 debounce 毫秒：合并连续调参，避免频繁写库。 */
+            private const val PERSIST_DEBOUNCE_MS = 300L
         }
 
         private val repository: ViperRepository
             get() = com.k90pm.tuner.v4a2.data.ViperContainer.repository()
+
+        /**
+         * 持久化专用作用域：不随 viewModelScope 取消，保证调参/恢复默认的落盘（SP+DB）在
+         * 快速退出或杀后台时也能尽量完成，避免重启后 UI 与驱动听感不一致。
+         * 仅承载轻量的 DataStore/Room 写入（毫秒级），不承载重计算，无性能/系统风险。
+         */
+        private val persistScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        /** debounce 用的落盘任务引用：连续调参时取消旧的、只执行最后一次落盘，避免频繁写库。 */
+        private var persistDebounceJob: Job? = null
 
         private val _uiState = MutableStateFlow(EffectState())
         val uiState: StateFlow<EffectState> = _uiState.asStateFlow()
@@ -174,7 +189,15 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
 
         override fun onCleared() {
             super.onCleared()
-            runBlocking(Dispatchers.IO) { saveCurrentDeviceSettings() }
+            // 同步兜底：用不可取消的 persistScope 完成最后的 DB 落盘（含可能未执行的 debounce）。
+            persistDebounceJob?.cancel()
+            persistDebounceJob = null
+            runBlocking(Dispatchers.IO) {
+                val deviceId = _uiState.value.activeDeviceId
+                if (deviceId.isNotEmpty()) {
+                    persistDbSnapshotLocked(deviceId)
+                }
+            }
             audioOutputDetector.stop()
             if (serviceBound) {
                 getApplication<Application>().unbindService(serviceConnection)
@@ -200,22 +223,66 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             last: Boolean = true,
         ) {
             _uiState.update { pref.set(it, value) }
-            viewModelScope.launch {
-                persistPref(pref, value)
-                // 实时调参：同步刷新设备预设快照（DB），避免重进 APP 时被 onCleared 保存的
-                // 旧设备快照覆盖（导致 UI 弹回上次关机前状态）。幂等、可重复。
-                saveCurrentDeviceSettings()
-                if (pref.paramId == -1 || !_uiState.value.masterEnable || !shouldDispatch(pref)) {
-                    return@launch
-                }
-                if (pref is DoubleListPref) {
-                    @Suppress("UNCHECKED_CAST")
-                    val bytes = pref.toRawArray(value as List<Double>)
-                    viperService?.dispatchParam(pref.paramId, bytes, republishAidl = last)
-                } else if (pref !is IntListPref && pref !is BoolListPref) {
-                    viperService?.dispatchParam(pref.paramId, pref.toRaw(value), republishAidl = last)
+            // 实时调参：立即写给驱动（出声），保持实时手感，不因落盘逻辑受影响。
+            if (pref.paramId != -1 && _uiState.value.masterEnable && shouldDispatch(pref)) {
+                viewModelScope.launch {
+                    if (pref is DoubleListPref) {
+                        @Suppress("UNCHECKED_CAST")
+                        val bytes = pref.toRawArray(value as List<Double>)
+                        viperService?.dispatchParam(pref.paramId, bytes, republishAidl = last)
+                    } else if (pref !is IntListPref && pref !is BoolListPref) {
+                        viperService?.dispatchParam(pref.paramId, pref.toRaw(value), republishAidl = last)
+                    }
                 }
             }
+            // 持久化：SP + DB 走独立 persistScope（不随 viewModelScope 取消），配合 debounce
+            // 合并连续调参的频繁写入；退出瞬间由 ON_STOP 同步兜底保证最新值必落盘。
+            schedulePersistLocked(pref, value)
+        }
+
+        /**
+         * 持久化调参结果到 SP + DB。
+         * - 单个参数立即写 SP（独立 key，实时可靠，快退也不丢）
+         * - 整份 DB 快照走 debounce，合并连续调参的频繁写入
+         * - 全部跑在独立 persistScope，不随 viewModelScope 取消
+         */
+        private fun schedulePersistLocked(pref: EffectPref<*>, value: Any?) {
+            persistScope.launch { persistPref(pref, value) }
+            scheduleDbSnapshot()
+        }
+
+        /** 往 DB 落当前调音快照（debounce 合并，锁定调用时设备，避免切设备瞬间写错设备）。 */
+        private fun scheduleDbSnapshot() {
+            persistDebounceJob?.cancel()
+            val deviceId = _uiState.value.activeDeviceId
+            persistDebounceJob =
+                persistScope.launch {
+                    delay(PERSIST_DEBOUNCE_MS)
+                    persistDbSnapshotLocked(deviceId)
+                }
+        }
+
+        /** 立即取消待执行的 debounce，并用最新状态同步落一次 DB（供退出/切设备时强制落盘）。 */
+        fun flushPersistNow() {
+            persistDebounceJob?.cancel()
+            persistDebounceJob = null
+            val deviceId = _uiState.value.activeDeviceId
+            persistScope.launch { persistDbSnapshotLocked(deviceId) }
+        }
+
+        private suspend fun persistDbSnapshotLocked(deviceId: String) {
+            if (deviceId.isEmpty()) return
+            val state = _uiState.value
+            val json = serializeEffectPrefs(state).toString()
+            val existing = repository.getDeviceSettings(deviceId)
+            repository.saveDeviceSettings(
+                DeviceSettings(
+                    deviceId = deviceId,
+                    deviceName = existing?.deviceName ?: state.activeDeviceName,
+                    isHeadphone = existing?.isHeadphone ?: false,
+                    settingsJson = json,
+                ),
+            )
         }
 
         private fun <E> replaceAt(
@@ -341,16 +408,17 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             dispatchFullState()
         }
 
-        /** 恢复默认：保留 master 状态，其余全部恢复官方出厂默认，落 DataStore + 写回驱动。 */
+        /** 恢复默认：保留 master 状态，其余全部恢复官方出厂默认，落 SP + DB + 写回驱动。 */
         fun resetToDefaults() {
-            viewModelScope.launch {
-                val masterOn = _uiState.value.masterEnable
-                val defaults = EffectState().copy(masterEnable = masterOn)
-                _uiState.update { defaults }
-                saveEffectPrefs(repository, defaults)
-                saveCurrentDeviceSettings()
-                dispatchFullState()
-            }
+            val masterOn = _uiState.value.masterEnable
+            val defaults = EffectState().copy(masterEnable = masterOn)
+            _uiState.update { defaults }
+            // 落 SP（独立 persistScope，不随 viewModelScope 取消）
+            persistScope.launch { saveEffectPrefs(repository, defaults) }
+            // 写回驱动（实时生效）
+            dispatchFullState()
+            // 强制落 DB 快照（立即，避免退出时丢写导致重启回弹旧值）
+            flushPersistNow()
         }
 
         fun setConvolverKernel(fileName: String) {
@@ -930,21 +998,6 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             }
         }
 
-        private suspend fun saveCurrentDeviceSettings() {
-            val state = _uiState.value
-            val deviceId = state.activeDeviceId.ifEmpty { return }
-            val json = serializeEffectPrefs(state).toString()
-            val existing = repository.getDeviceSettings(deviceId)
-            repository.saveDeviceSettings(
-                DeviceSettings(
-                    deviceId = deviceId,
-                    deviceName = existing?.deviceName ?: state.activeDeviceName,
-                    isHeadphone = existing?.isHeadphone ?: false,
-                    settingsJson = json,
-                ),
-            )
-        }
-
         private suspend fun loadDeviceSettings(device: AudioDevice) {
             val saved = repository.getDeviceSettings(device.id) ?: return
             val json = JSONObject(saved.settingsJson)
@@ -953,7 +1006,8 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         }
 
         fun saveSettingsOnBackground() {
-            viewModelScope.launch { saveCurrentDeviceSettings() }
+            // 退到后台兜底：立即取消 debounce 并用最新状态强制落 DB（不可取消 scope）。
+            flushPersistNow()
         }
 
         fun renameDevice(
@@ -987,6 +1041,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 _uiState.update { deserializeEffectPrefs(json, it) }
                 saveEffectPrefs(repository, _uiState.value)
                 dispatchFullState()
+                flushPersistNow()
             }
         }
 
