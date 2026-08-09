@@ -23,6 +23,10 @@ object FileLogger {
     private var logFile: File? = null
     private var outputStream: FileOutputStream? = null
 
+    /** 每次进程只轮转一次（进程级去重），避免同一进程多次 init 误滚掉本次日志。 */
+    @Volatile
+    private var rotatedThisProcess = false
+
     @Volatile
     private var listener: ((String) -> Unit)? = null
 
@@ -34,6 +38,14 @@ object FileLogger {
         val dir = File(context.filesDir, "Log")
         if (!dir.exists()) dir.mkdirs()
         logFile = File(dir, LOG_FILE_NAME)
+        // 进程首次启动：把上次运行的当前日志滚动为“上次”，并删除更旧的（最多保留两份）。
+        if (!rotatedThisProcess) {
+            rotatedThisProcess = true
+            val oldFile = File(dir, OLD_LOG_FILE_NAME)
+            if (oldFile.exists()) oldFile.delete()        // 上上次 → 删除
+            val cur = File(dir, LOG_FILE_NAME)
+            if (cur.exists()) cur.renameTo(oldFile)       // 上次运行的 → 变为“上次”
+        }
         openLogFile()
     }
 
@@ -43,13 +55,15 @@ object FileLogger {
         outputStream = FileOutputStream(file, true)
     }
 
+    /**
+     * 运行中若当前日志超限：不再改名成 old（否则会破坏“最多两份”），
+     * 而是直接清空当前文件续写，保持磁盘上始终只有 当前 + 上次 两份。
+     */
     private fun rotateIfNeeded() {
         val file = logFile ?: return
         if (file.length() <= MAX_FILE_SIZE) return
         outputStream?.close()
-        val oldFile = File(file.parentFile, OLD_LOG_FILE_NAME)
-        if (oldFile.exists()) oldFile.delete()
-        file.renameTo(oldFile)
+        file.delete()                       // 清空当前日志（不额外生成历史文件）
         openLogFile()
     }
 
