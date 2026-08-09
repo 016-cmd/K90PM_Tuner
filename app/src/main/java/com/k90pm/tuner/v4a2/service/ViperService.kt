@@ -79,6 +79,8 @@ class ViperService : Service() {
         super.onCreate()
         // 初始化文件日志：落盘到 files/Log/viper.log（此前从未 init，导致日志只进 logcat、不落盘）。
         FileLogger.init(applicationContext)
+        // 安装全局崩溃/ANR捕获（幂等）：避免用户在后台/开机场景的闪退无从记录。
+        com.k90pm.tuner.v4a2.utils.CrashLogger.install(applicationContext)
         FileLogger.i("ViperService", "Service created")
         scope.launch { ensureConfigLoaded() }
     }

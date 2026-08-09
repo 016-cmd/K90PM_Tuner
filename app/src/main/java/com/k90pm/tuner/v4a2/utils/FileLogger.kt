@@ -142,4 +142,26 @@ object FileLogger {
     }
 
     fun getLogFile(): File? = logFile
+
+    /**
+     * 同步写日志（崩溃/ANR 专用）。
+     * 崩溃瞬间异步线程大概率来不及执行，需在主线程同步落盘，确保闪退堆栈不丢失。
+     */
+    fun logSync(
+        level: String,
+        category: String,
+        message: String,
+    ) {
+        try {
+            val file = logFile ?: return
+            if (!file.exists()) file.createNewFile()
+            val ts = dateFormatter.format(Date())
+            FileOutputStream(file, true).use { os ->
+                os.write("$ts [$category][$level] $message\n".toByteArray(Charsets.UTF_8))
+                os.flush()
+                os.fd.sync()
+            }
+        } catch (_: Exception) {
+        }
+    }
 }

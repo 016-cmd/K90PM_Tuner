@@ -146,6 +146,8 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             }
 
         init {
+            // 安装全局崩溃/ANR捕获（幂等）：把用户闪退写入 viper.log 以离线排查。
+            com.k90pm.tuner.v4a2.utils.CrashLogger.install(app)
             refreshFileLists()
             observeExternalMasterChanges()
             val initialDevice = audioOutputDetector.activeDevice.value
