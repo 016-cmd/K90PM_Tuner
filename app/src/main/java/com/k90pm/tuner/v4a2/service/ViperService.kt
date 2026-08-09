@@ -77,6 +77,8 @@ class ViperService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // 初始化文件日志：落盘到 files/Log/viper.log（此前从未 init，导致日志只进 logcat、不落盘）。
+        FileLogger.init(applicationContext)
         FileLogger.i("ViperService", "Service created")
         scope.launch { ensureConfigLoaded() }
     }
