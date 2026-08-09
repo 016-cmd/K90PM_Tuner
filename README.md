@@ -97,11 +97,10 @@
 | KotlinX Coroutines | 异步与协程 | ✅ Apache-2.0 |
 | Coil（coil-compose） | 壁纸图片加载 | ✅ Apache-2.0 |
 | Gson | JSON 解析 | ✅ Apache-2.0 |
-| Backdrop（kyant0，液态玻璃背景） | 液态玻璃视觉 | ⚠️ 通过 JitPack 引入，GitHub 仓库未随附明确 LICENSE 文件 |
+| Backdrop（Kyant0 / AndroidLiquidGlass，液态玻璃背景） | 液态玻璃视觉 | ✅ Apache-2.0 |
 
-> **关于 Backdrop**：该组件经 JitPack（`io.github.kyant0:backdrop`）引入，用于本工程的液态玻璃背景效果；
-> 其 GitHub 仓库当前未检测到明确的 LICENSE 文件。若该组件作者主张相关著作权并希望我们调整使用方式，
-> **请联系我们进行处理**，我们将按要求立即处理并更新本声明。
+> **关于 Backdrop**：该组件（`io.github.kyant0:backdrop`）对应的开发仓库为
+> [`Kyant0/AndroidLiquidGlass`](https://github.com/Kyant0/AndroidLiquidGlass)，依据其 POM 声明采用 **Apache-2.0** 授权。
 
 ---
 
