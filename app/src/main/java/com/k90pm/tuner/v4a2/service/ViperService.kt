@@ -374,15 +374,10 @@ class ViperService : Service() {
 
     fun applyConvolverKernelAidl(fileName: String, force: Boolean = false) {
         if (fileName == lastBulkConvolverKey && !force) return
+        // 官方思路：卷积生效与否由 enable(PARAM_CONVOLVER_ENABLE, 走 v5 params) 独立控制，
+        // 关开关时 enable=0 即不生效，无需清空 bulk 路径/驱动残留。
+        // 本方法只负责"写路径"：切换文件时覆盖 copy 新 IR + 写新路径，bulk 路径指向新文件即只加载新文件。
         if (fileName.isEmpty()) {
-            // 关闭脉冲：清空 bulk 卷积顶点区，驱动读到空路径自行卸载（对应驱动日志 "Bulk Convolver path empty"）
-            ConfigChannel.clearBulkConvolverPath()
-            // 同时删除驱动侧已 copy 的 IR 残留，保持零残留
-            try {
-                RootShell.exec("rm -rf /data/local/tmp/v4a/kernel/ 2>/dev/null")
-            } catch (_: Exception) {
-                FileLogger.e("ViperService", "Failed to remove driver kernel dir", null)
-            }
             lastBulkConvolverKey = null
             return
         }
@@ -392,7 +387,7 @@ class ViperService : Service() {
             return
         }
         try {
-            // ① CK 设备分目录：外放走 kernel/，耳机走 kernel_hp/（若需要分设备，当前统一放 kernel/）
+            // ① 覆盖式写入驱动真实路径（同一文件下 force copy 覆盖；不同文件则新文件就位，bulk 指向它）
             val destDir = "/data/local/tmp/v4a/kernel"
             val destPath = "$destDir/$fileName"
             // ② copy IR 到驱动真实路径（驱动 SetKernel(path) 要 open 这个文件）
