@@ -147,10 +147,9 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                     viperService = localBinder.service
                     serviceBound = true
                     viperService?.setStateProvider { _uiState.value }
-                    // 绑定成功后按当前设备加载 DB 调音并写入驱动（确保重进时真实生效，而非只改UI）
-                    viewModelScope.launch {
-                        loadDeviceSettings(audioOutputDetector.activeDevice.value)
-                    }
+                    // 绑定成功后直接用当前内存状态（已含 SP 载入的参数）写驱动真实生效。
+                    // 不再用 DB 覆盖内存（SP 是唯一真相源），避免旧 DB 快照覆盖重启后的最新 SP。
+                    dispatchFullState()
                     queryDriverStatus()
                 }
 
@@ -1002,6 +1001,8 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             val saved = repository.getDeviceSettings(device.id) ?: return
             val json = JSONObject(saved.settingsJson)
             _uiState.update { deserializeEffectPrefs(json, it) }
+            // 同步写 SP，使 SP 成为与该设备一致的最新真相源；否则重启后 SP(旧)会覆盖刚载入的 DB(新)。
+            saveEffectPrefs(repository, _uiState.value)
             dispatchFullState()
         }
 
