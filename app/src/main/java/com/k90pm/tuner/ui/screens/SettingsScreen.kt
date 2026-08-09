@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -37,6 +38,12 @@ fun SettingsScreen(
     val ctx = LocalContext.current
     var themeMode by remember { mutableStateOf(ThemePrefs.getMode(ctx)) }
     var wallpaperUri by remember { mutableStateOf(ThemePrefs.getWallpaperUri(ctx)) }
+    var showLicense by remember { mutableStateOf(false) }
+    val licenseText = remember {
+        runCatching {
+            ctx.assets.open("license_gpl3.txt").bufferedReader().use { it.readText() }
+        }.getOrNull() ?: ""
+    }
     val appVersion = remember {
         try {
             ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: ""
@@ -167,6 +174,83 @@ fun SettingsScreen(
                 InfoRow("版本", "v$appVersion")
                 InfoRow("开发者", "016-cmd")
                 InfoRow("设备", "REDMI K90 Pro Max")
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                SettingsRow(
+                    icon = Icons.Rounded.Description,
+                    label = "开源许可证",
+                    subtitle = "GNU General Public License v3.0",
+                    onClick = { showLicense = true }
+                )
+            }
+        }
+    }
+    if (showLicense) {
+        Dialog(onDismissRequest = { showLicense = false }) {
+            LicenseDialogContent(
+                title = "开源许可 — GNU GPL v3.0",
+                summary = "本工程基于 GNU General Public License v3.0（GPL-3.0）发布。\n" +
+                    "使用、修改、分发本工程须遵循 GPL-3.0 条款并保留版权声明。",
+                original = licenseText,
+                onDismiss = { showLicense = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun LicenseDialogContent(
+    title: String,
+    summary: String,
+    original: String,
+    onDismiss: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+                .heightIn(max = 600.dp)
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "许可证原文",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                original.ifBlank { "未找到许可证原文。" },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("关闭")
             }
         }
     }
