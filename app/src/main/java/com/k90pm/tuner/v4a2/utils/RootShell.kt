@@ -102,7 +102,7 @@ object RootShell {
     fun copyFile(
         src: File,
         destPath: String,
-    ) {
+    ): Boolean {
         val destFile = File(destPath)
         val destDir = destFile.parentFile
         val tmpPath = "$destPath.tmp"
@@ -113,16 +113,33 @@ object RootShell {
                 src.copyTo(tmpFile, overwrite = true)
                 tmpFile.renameTo(destFile)
                 destFile.setReadable(true, false)
-                FileLogger.i(TAG, "Direct copy OK: $destPath")
-                return
+                if (destFile.exists() && destFile.length() > 0) {
+                    FileLogger.i(TAG, "Direct copy OK: $destPath")
+                    return true
+                }
+                FileLogger.e(TAG, "Direct copy result missing: $destPath")
+                return false
             }
         } catch (_: Exception) {
             FileLogger.d(TAG, "Direct copy failed for $destPath, trying su")
         }
         val safeSrc = src.absolutePath.replace("'", "")
         val safeDest = destPath.replace("'", "")
-        val safeTmp = tmpPath.replace("'", "")
-        exec("cp '$safeSrc' '$safeTmp' && mv '$safeTmp' '$safeDest' && chmod 644 '$safeDest'")
-        FileLogger.i(TAG, "su copy OK: $destPath")
+        // su 分支：先建目标目录，再复制，最后必须校验文件真实存在，避免假 OK
+        val cmd = "mkdir -p '${safeDest.substringBeforeLast('/')}' && cp -f '$safeSrc' '$safeDest' && chmod 644 '$safeDest'"
+        val proc = exec(cmd)
+        val out = try {
+            proc.inputStream.bufferedReader().readText()
+        } catch (_: Exception) {
+            ""
+        }
+        val exit = try { proc.exitValue() } catch (_: Exception) { -1 }
+        val verified = exit == 0 && File(destPath).exists() && File(destPath).length() > 0
+        if (verified) {
+            FileLogger.i(TAG, "su copy OK(verified): $destPath")
+        } else {
+            FileLogger.e(TAG, "su copy FAILED: $destPath exit=$exit out=$out")
+        }
+        return verified
     }
 }

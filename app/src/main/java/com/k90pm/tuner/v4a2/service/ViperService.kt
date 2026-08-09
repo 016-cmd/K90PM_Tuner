@@ -375,8 +375,14 @@ class ViperService : Service() {
     fun applyConvolverKernelAidl(fileName: String, force: Boolean = false) {
         if (fileName == lastBulkConvolverKey && !force) return
         if (fileName.isEmpty()) {
-            // 关闭脉冲：PREPARE(0,0,1) 通知驱动清空卷积
-            dispatchParam(ViperParams.PARAM_CONVOLVER_PREPARE_BUFFER, 0, 0, 1)
+            // 关闭脉冲：清空 bulk 卷积顶点区，驱动读到空路径自行卸载（对应驱动日志 "Bulk Convolver path empty"）
+            ConfigChannel.clearBulkConvolverPath()
+            // 同时删除驱动侧已 copy 的 IR 残留，保持零残留
+            try {
+                RootShell.exec("rm -rf /data/local/tmp/v4a/kernel/ 2>/dev/null")
+            } catch (_: Exception) {
+                FileLogger.e("ViperService", "Failed to remove driver kernel dir", null)
+            }
             lastBulkConvolverKey = null
             return
         }
@@ -386,49 +392,21 @@ class ViperService : Service() {
             return
         }
         try {
-            val decoded = com.k90pm.tuner.v4a2.utils.WavDecoder.decode(src.readBytes())
-            val samples = decoded.samples
-            val totalFloats = samples.size
-            val channelCount = decoded.channels
-
-            // ① 声明：samples + channels（enable 一并置上）
-            dispatchParam(ViperParams.PARAM_CONVOLVER_PREPARE_BUFFER, totalFloats, channelCount, 0)
-
-            // ② float 样本 → little-endian 字节流
-            val rawBytes =
-                java.nio.ByteBuffer.allocate(totalFloats * 4)
-                    .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-                    .also { for (f in samples) it.putFloat(f) }
-                    .array()
-
-            // ③ CRC
-            val crc = java.util.zip.CRC32().apply { update(rawBytes) }.value.toInt()
-
-            // ④ 分块(每块2046样本)写 SET_BUFFER → effect session 直接发驱动
-            val maxFloatsPerChunk = 2046
-            var offset = 0
-            var chunkIndex = 0
-            while (offset < totalFloats) {
-                val floatsInChunk = minOf(totalFloats - offset, maxFloatsPerChunk)
-                val chunk =
-                    java.nio.ByteBuffer.allocate(8192)
-                        .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-                        .putInt(chunkIndex)
-                        .putInt(floatsInChunk)
-                        .put(rawBytes, offset * 4, floatsInChunk * 4)
-                        .array()
-                dispatchParam(ViperParams.PARAM_CONVOLVER_SET_BUFFER, chunk)
-                offset += floatsInChunk
-                chunkIndex++
+            // ① CK 设备分目录：外放走 kernel/，耳机走 kernel_hp/（若需要分设备，当前统一放 kernel/）
+            val destDir = "/data/local/tmp/v4a/kernel"
+            val destPath = "$destDir/$fileName"
+            // ② copy IR 到驱动真实路径（驱动 SetKernel(path) 要 open 这个文件）
+            val copied = RootShell.copyFile(src, destPath)
+            if (!copied) {
+                FileLogger.e("ViperService", "Kernel copy to driver failed: $destPath")
+                return
             }
-
-            // ⑤ 提交：samples + crc + 文件名hash
-            val kernelId = fileName.hashCode()
-            dispatchParam(ViperParams.PARAM_CONVOLVER_COMMIT_BUFFER, totalFloats, crc, kernelId)
-            FileLogger.i("ViperService", "Kernel streamed(AIDL): $fileName chunks=$chunkIndex")
+            // ③ 把路径写进 bulk，驱动据此 SetKernel(path) 加载（cmd=2@2060 size@2064 path@2080，官方2.0.3协议）
+            ConfigChannel.writeBulkConvolverPath(destPath)
+            FileLogger.i("ViperService", "Kernel path(AIDL) written to bulk: $destPath")
             lastBulkConvolverKey = fileName
         } catch (e: Exception) {
-            FileLogger.e("ViperService", "Failed to stream kernel(AIDL): $fileName", e)
+            FileLogger.e("ViperService", "Failed to apply kernel(AIDL): $fileName", e)
         }
     }
 

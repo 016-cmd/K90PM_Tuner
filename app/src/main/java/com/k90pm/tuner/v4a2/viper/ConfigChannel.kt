@@ -239,6 +239,34 @@ object ConfigChannel {
         }
     }
 
+    /**
+     * 关闭脉冲时清空 bulk 卷积顶点区：command/data-size 归 0、路径区填充 0，
+     * 并递增 seq 让驱动感知变化，读到"空路径"自行卸载（对应驱动日志 "Bulk Convolver path empty"）。
+     */
+    fun clearBulkConvolverPath() {
+        ensureInitialized()
+        synchronized(writeLock) {
+            val buf =
+                bulkBuffer ?: run {
+                    FileLogger.w("ConfigChannel", "clearBulkConvolverPath: bulk buf NULL")
+                    return
+                }
+            // 头部 command/size 清 0
+            buf.putInt(BULK_CONVOLVER_BASE + BULK_COMMAND_OFFSET, 0)
+            buf.putInt(BULK_CONVOLVER_BASE + BULK_DATA_SIZE_OFFSET, 0)
+            // 路径区填充 0（从 header 起点到 region 末尾）
+            val clearStart = BULK_CONVOLVER_BASE + BULK_HEADER_SIZE
+            val clearLen = BULK_CONVOLVER_REGION_SIZE - BULK_HEADER_SIZE
+            val zeros = ByteArray(clearLen)
+            buf.position(clearStart)
+            buf.put(zeros)
+            // 递增 seq 通知驱动
+            currentConvolverSeq++
+            buf.putInt(BULK_CONVOLVER_BASE + BULK_SEQ_OFFSET, currentConvolverSeq)
+            FileLogger.i("ConfigChannel", "clearBulkConvolverPath: convolver region cleared")
+        }
+    }
+
     fun readStatus(): FileDriverStatus? {
         ensureInitialized()
         try {
