@@ -375,26 +375,61 @@ class ViperService : Service() {
     fun applyConvolverKernelAidl(fileName: String, force: Boolean = false) {
         if (fileName == lastBulkConvolverKey && !force) return
         if (fileName.isEmpty()) {
-            ConfigChannel.writeBulkConvolverPath("")
+            // 关闭脉冲：PREPARE(0,0,1) 通知驱动清空卷积
+            dispatchParam(ViperParams.PARAM_CONVOLVER_PREPARE_BUFFER, 0, 0, 1)
             lastBulkConvolverKey = null
             return
         }
-        val kernelDir = File(getExternalFilesDir(null), "Kernel")
-        val src = File(kernelDir, fileName)
+        val src = File(File(getExternalFilesDir(null), "Kernel"), fileName)
         if (!src.exists()) {
-            FileLogger.w("ViperService", "Kernel src missing: $fileName")
+            FileLogger.w("ViperService", "Kernel file missing: $fileName")
             return
         }
-        val safeName = fileName.replace("'", "")
-        val stagedPath = "/data/local/tmp/v4a/kernel/$safeName"
-        val staged = File(stagedPath)
-        val needCopy = !(staged.exists() && staged.length() == src.length())
-        if (needCopy) {
-            FileLogger.d("ViperService", "Staging kernel '$fileName' to $stagedPath")
-            RootShell.copyFile(src, stagedPath)
+        try {
+            val decoded = com.k90pm.tuner.v4a2.utils.WavDecoder.decode(src.readBytes())
+            val samples = decoded.samples
+            val totalFloats = samples.size
+            val channelCount = decoded.channels
+
+            // ① 声明：samples + channels（enable 一并置上）
+            dispatchParam(ViperParams.PARAM_CONVOLVER_PREPARE_BUFFER, totalFloats, channelCount, 0)
+
+            // ② float 样本 → little-endian 字节流
+            val rawBytes =
+                java.nio.ByteBuffer.allocate(totalFloats * 4)
+                    .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                    .also { for (f in samples) it.putFloat(f) }
+                    .array()
+
+            // ③ CRC
+            val crc = java.util.zip.CRC32().apply { update(rawBytes) }.value.toInt()
+
+            // ④ 分块(每块2046样本)写 SET_BUFFER → effect session 直接发驱动
+            val maxFloatsPerChunk = 2046
+            var offset = 0
+            var chunkIndex = 0
+            while (offset < totalFloats) {
+                val floatsInChunk = minOf(totalFloats - offset, maxFloatsPerChunk)
+                val chunk =
+                    java.nio.ByteBuffer.allocate(8192)
+                        .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                        .putInt(chunkIndex)
+                        .putInt(floatsInChunk)
+                        .put(rawBytes, offset * 4, floatsInChunk * 4)
+                        .array()
+                dispatchParam(ViperParams.PARAM_CONVOLVER_SET_BUFFER, chunk)
+                offset += floatsInChunk
+                chunkIndex++
+            }
+
+            // ⑤ 提交：samples + crc + 文件名hash
+            val kernelId = fileName.hashCode()
+            dispatchParam(ViperParams.PARAM_CONVOLVER_COMMIT_BUFFER, totalFloats, crc, kernelId)
+            FileLogger.i("ViperService", "Kernel streamed(AIDL): $fileName chunks=$chunkIndex")
+            lastBulkConvolverKey = fileName
+        } catch (e: Exception) {
+            FileLogger.e("ViperService", "Failed to stream kernel(AIDL): $fileName", e)
         }
-        ConfigChannel.writeBulkConvolverPath(stagedPath)
-        lastBulkConvolverKey = fileName
     }
 
     private fun parseVdc(file: File): Pair<List<FloatArray>, List<FloatArray>>? {
@@ -477,10 +512,7 @@ class ViperService : Service() {
         value: ByteArray,
         republishAidl: Boolean = true,
     ) {
-        if (useAidlTypeUuid) {
-            if (republishAidl) republishLastStateOnAidl()
-            return
-        }
+        if (useAidlTypeUuid && republishAidl) republishLastStateOnAidl()
         globalEffect?.setParameter(param, value)
         for (i in 0 until sessions.size()) {
             sessions.valueAt(i).setParameter(param, value)
