@@ -82,6 +82,29 @@
 
 ---
 
+## 三方依赖致谢
+
+本工程直接依赖以下主流开源库（均作为普通依赖引入），按其各自许可证致谢：
+
+| 组件 | 用途 | 许可证 |
+|---|---|---|
+| AndroidX Compose（Compose BOM / Material3 / UI / Graphics / Tooling / Material-Icons / Animation） | 声明式 UI 框架 | ✅ Apache-2.0 |
+| AndroidX Core / Lifecycle / Activity / Navigation | 基础能力与导航 | ✅ Apache-2.0 |
+| Media3 ExoPlayer（exoplayer / hls / session） | 在线/本地音乐流式播放 | ✅ Apache-2.0 |
+| AndroidX Media | 系统媒体通知样式 | ✅ Apache-2.0 |
+| Room（runtime / ktx / compiler） | 本地数据库（预设/收藏/历史） | ✅ Apache-2.0 |
+| Jetpack DataStore（preferences） | 音效偏好持久化（SP 真相源） | ✅ Apache-2.0 |
+| KotlinX Coroutines | 异步与协程 | ✅ Apache-2.0 |
+| Coil（coil-compose） | 壁纸图片加载 | ✅ Apache-2.0 |
+| Gson | JSON 解析 | ✅ Apache-2.0 |
+| Backdrop（kyant0，液态玻璃背景） | 液态玻璃视觉 | ⚠️ 通过 JitPack 引入，GitHub 仓库未随附明确 LICENSE 文件 |
+
+> **关于 Backdrop**：该组件经 JitPack（`io.github.kyant0:backdrop`）引入，用于本工程的液态玻璃背景效果；
+> 其 GitHub 仓库当前未检测到明确的 LICENSE 文件。若该组件作者主张相关著作权并希望我们调整使用方式，
+> **请联系我们进行处理**，我们将按要求立即处理并更新本声明。
+
+---
+
 ## 说明与免责
 
 - 本工程为个人/社区音质优化用途，可能与系统音频架构深度耦合，请仅在具备必要知识的前提下使用。
