@@ -345,7 +345,7 @@ fun DolbyTunerScreen(activity: Activity) {
                         enabled = params.virtualizerEnable,
                         onToggle = { DolbyTunerManager.updateParams(params.copy(virtualizerEnable = it)) }
                     ) {
-                        ParamSlider("起始频段", params.virtualizerStartBand, 0..9) { DolbyTunerManager.updateParams(params.copy(virtualizerStartBand = it)) }
+                        ParamSlider("起始频段", params.virtualizerStartBand, 0..13) { DolbyTunerManager.updateParams(params.copy(virtualizerStartBand = it)) }
                     }
 
                     Spacer(Modifier.height(6.dp))

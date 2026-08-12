@@ -65,10 +65,10 @@ object DolbyTunerManager {
     /** 模块 Link 目录下的杜比主文件（Magisk 开机 bind mount 到 /odm/etc/dolby/ 的源文件） */
     private val MODULE_DAX get() = "${moduleBase()}/Link/odm/etc/dolby/dax-default.xml"
 
-    /** 模块 vendor 目录下的 DAP 3.5 辅助层文件（独立于 DAX 主调音,APP 不调音不写入,保留定义供诊断） */
+    /** 模块 vendor 目录下的杜比文件 */
     private val MODULE_VENDOR_DAX get() = "${moduleBase()}/vendor/etc/dolby/dax-default.xml"
 
-    /** 模块根目录下的 odm 杜比文件（DAX 系,与 Link/factory 保持MD5一致;APP 不写入该目录,不参与挂载） */
+    /** 模块根目录下的 odm 杜比文件（需与 Link/vendor 保持MD5一致,满足五方校验） */
     private val MODULE_ODM_DAX get() = "${moduleBase()}/odm/etc/dolby/dax-default.xml"
 
     /** 模块 factory 目录下的原始杜比文件（不参与挂载,仅用于 APP 重置恢复） */
@@ -531,8 +531,11 @@ object DolbyTunerManager {
                 return@withContext false
             }
 
-            // 注:模块 vendor 目录现为独立的 DAP 3.5 辅助层（无三场景/无 gain_left_surround）,
-            // 不与 odm 的 DAX 主调音同步,故不再向 vendor 复制.哈曼调音仅由 odm 的 DAX 承担.
+            // 5. su -c cp 覆盖到模块 vendor 目录（如果存在）
+            val vendorExists = WsaShell.execSyncCmd("[ -f $MODULE_VENDOR_DAX ] && echo yes || echo no")
+            if (vendorExists.contains("yes")) {
+                WsaShell.execSyncCmd("cp -f '$internalPath' '$MODULE_VENDOR_DAX' && chmod 644 '$MODULE_VENDOR_DAX'")
+            }
 
             // 5.5. DAX3 系统属性写入 + 快照持久化
             applyDax3ToSystem()
@@ -605,7 +608,11 @@ object DolbyTunerManager {
                 return@withContext false
             }
 
-            // 注:vendor 目录为独立 DAP 辅助层,重置时不参与（不覆盖 vendor 的 DAP）.
+            // 4. 同步覆盖 vendor 目录（如果存在）
+            val vendorExists = WsaShell.execSyncCmd("[ -f $MODULE_VENDOR_DAX ] && echo yes || echo no")
+            if (vendorExists.contains("yes")) {
+                WsaShell.execSyncCmd("cp -f '$internalPath' '$MODULE_VENDOR_DAX' && chmod 644 '$MODULE_VENDOR_DAX'")
+            }
 
             // 4.5. DAX3 重置为模块默认值 + 删除快照（让 service.sh 走 else 分支写死默认）
             _dax3.value = DAX3_DEFAULTS.toMap()
