@@ -353,7 +353,7 @@ fun DolbyTunerScreen(activity: Activity) {
                     // 6.1 环绕压缩器舵向
                     SimpleSwitchCard(
                         title = "环绕压缩器舵向",
-                        subtitle = "mi-surround-compressor-steering",
+                        subtitle = "增强环绕声场方向感与定位",
                         icon = Icons.Default.GraphicEq,
                         checked = params.miSurroundCompressorSteeringEnable,
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(miSurroundCompressorSteeringEnable = it)) }
