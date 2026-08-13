@@ -53,8 +53,6 @@ fun DolbyTunerScreen(activity: Activity) {
     var deleteTarget by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showFactoryWarnDialog by remember { mutableStateOf(false) }
-    var showRecommendDialog by remember { mutableStateOf(false) }
-    var pendingOfficialPreset by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         DolbyTunerManager.loadParams(activity)
@@ -108,50 +106,6 @@ fun DolbyTunerScreen(activity: Activity) {
                 }
 
                 if (!isLoading && statusMsg.isBlank() && !isApplying) {
-                    // ── 官方推荐预设 ──
-                    Text(
-                        "推荐预设 · 模块默认参数介于两个预设之间为均衡风格",
-                        color = Accent, fontWeight = FontWeight.Bold, fontSize = 13.sp,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)
-                    )
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    pendingOfficialPreset = "低频特化"
-                                    showRecommendDialog = true
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Accent)
-                            ) {
-                                Icon(Icons.Default.Speed, null, Modifier.size(16.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text("低频特化", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    pendingOfficialPreset = "高频优化"
-                                    showRecommendDialog = true
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Accent)
-                            ) {
-                                Icon(Icons.Default.Star, null, Modifier.size(16.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text("高频优化", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                            }
-                        }
-                    }
-
                     SectionTitle("快速开关")
 
                     // 1. 对话增强
@@ -701,34 +655,6 @@ color = onSurfaceVariant, fontSize = 10.sp, lineHeight = 15.sp
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showLoadDialog = false }) { Text("关闭") }
-            }
-        )
-    }
-
-    // ── 官方推荐预设确认 ──
-    if (showRecommendDialog) {
-        AlertDialog(
-            onDismissRequest = { showRecommendDialog = false },
-            title = { Text("推荐预设", fontWeight = FontWeight.Bold) },
-            text = {
-                Text(
-                    "确认更新UI为「$pendingOfficialPreset」预设?\n\n提示:仅更新UI,请使用下方应用按钮进行应用参数.",
-                    fontSize = 13.sp
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val ok = DolbyTunerManager.loadOfficialPreset(activity, pendingOfficialPreset)
-                    if (ok) {
-                        DolbyTunerManager.setResultMsg("✅ 已更新UI为「$pendingOfficialPreset」预设,请点下方『应用更改』写入并生效")
-                    } else {
-                        DolbyTunerManager.setResultMsg("❌ 加载推荐预设失败")
-                    }
-                    showRecommendDialog = false
-                }) { Text("确认", color = Accent) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRecommendDialog = false }) { Text("取消") }
             }
         )
     }

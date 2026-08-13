@@ -1068,45 +1068,6 @@ private fun replaceInAllProfiles(xml: String, paramName: String, newValue: Strin
         return false
     }
 
-    /** 官方推荐预设名称 */
-    fun officialPresetNames(): List<String> = listOf(OFFICIAL_PRESET_BASS_NAME, OFFICIAL_PRESET_TREBLE_NAME)
-
-    /**
-     * 加载内置官方推荐预设到内存（复用 loadPreset 核心逻辑）,返回是否找到.
-     * 不写 SharedPreferences,是 APP 内置的官方预设,点击后需再点"应用更改"生效.
-     */
-    fun loadOfficialPreset(context: Context, presetName: String): Boolean {
-        val raw = when (presetName) {
-            OFFICIAL_PRESET_BASS_NAME -> OFFICIAL_PRESET_BASS_JSON
-            OFFICIAL_PRESET_TREBLE_NAME -> OFFICIAL_PRESET_TREBLE_JSON
-            else -> return false
-        }
-        val obj = try { JSONObject(raw) } catch (e: Exception) { return false }
-        // 复用与 loadPreset 一致的解析链路
-        _params.value = parseParamsFromJson(obj)
-        if (obj.has("bandOffsets")) {
-            _bandOffsets.value = bandOffsetsFromJson(obj)
-        }
-        if (obj.has("dax3")) {
-            val dax3Json = obj.getJSONObject("dax3")
-            val map = mutableMapOf<String, String>()
-            for (k in dax3Json.keys()) map[k] = dax3Json.getString(k)
-            _dax3.value = map
-        }
-        // 官方预设强制写入其声明的全部 DAX3 属性,保证一键到位
-        _dax3Dirty.clear()
-        for (k in _dax3.value.keys) _dax3Dirty.add(k)
-        return true
-    }
-
-    private const val OFFICIAL_PRESET_BASS_NAME = "低频特化"
-    private const val OFFICIAL_PRESET_TREBLE_NAME = "高频优化"
-
-    /** 低频特化 —— 强烈低音鼓点,增强低频下潜与声场包围感（中等削减高频,收窄动态以突出低音单元的厚重感） */
-    private const val OFFICIAL_PRESET_BASS_JSON = """{"name":"低频特化","dialogEnhancerEnable":true,"dialogEnhancerAmount":5,"dialogEnhancerDucking":0,"bassEnhancerEnable":true,"virtualBassProcessEnable":true,"surroundDecoderEnable":true,"surroundBoost":96,"volumeLevelerEnable":true,"virtualizerEnable":false,"virtualizerStartBand":0,"calibrationBoost":64,"ieqEnhanceEnable":true,"volmaxBoost":96,"peakValue":256,"hearingProtectionEnable":false,"bassExtractionEnable":true,"bassEnhancerBoost":192,"bassEnhancerCutoffFrequency":150,"virtualBassMode":3,"virtualBassOverallGain":72,"virtualBassMixLow":50,"virtualBassMixHigh":280,"bassExtractionCutoffFrequency":80,"regulatorStressOptimize":true,"dax3":{"persist.vendor.dolby.global.enable":"1","persist.vendor.dolby.dialog.enhancer.enable":"0","persist.vendor.dolby.dialog.enhancer.amount":"0","persist.vendor.dolby.volume.leveler.enable":"0","persist.vendor.dolby.volume.leveler.amount":"0","persist.vendor.dolby.virtualizer.enable":"1","persist.vendor.dolby.virtualizer.amount":"16","persist.vendor.dolby.bass.enable":"1","persist.vendor.dolby.bass.boost":"16","persist.vendor.dolby.spectral.enable":"0","persist.vendor.dolby.spectral.boost":"0","persist.vendor.dolby.ieq.enable":"0","vendor.dolby.dap.pcequal":"0","vendor.dolby.dap.pctype":"0"},"bandOffsets":{"left":[256,240,192,128,64,-48,-30,8,-19,-1,-11,-64,-56,-6,32,40,53,8,42,39],"right":[256,240,192,128,64,-43,-11,3,-7,13,9,-15,-15,-20,32,35,83,38,102,99],"surround":[150,205,76,33]}}"""
-
-    /** 高频优化 —— 通透明亮,突出人声与乐器细节,纵深开阔（削减低频能量换取高频延伸与空气感） */
-    private const val OFFICIAL_PRESET_TREBLE_JSON = """{"name":"高频优化","dialogEnhancerEnable":true,"dialogEnhancerAmount":5,"dialogEnhancerDucking":0,"bassEnhancerEnable":false,"virtualBassProcessEnable":false,"surroundDecoderEnable":true,"surroundBoost":105,"volumeLevelerEnable":true,"virtualizerEnable":false,"virtualizerStartBand":0,"calibrationBoost":0,"volmaxBoost":62,"peakValue":1024,"hearingProtectionEnable":false,"bassExtractionEnable":false,"bassEnhancerBoost":50,"bassEnhancerCutoffFrequency":145,"virtualBassMode":3,"virtualBassOverallGain":35,"virtualBassMixLow":30,"virtualBassMixHigh":150,"bassExtractionCutoffFrequency":80,"dax3":{"persist.vendor.dolby.global.enable":"1","persist.vendor.dolby.dialog.enhancer.enable":"1","persist.vendor.dolby.dialog.enhancer.amount":"7","persist.vendor.dolby.volume.leveler.enable":"0","persist.vendor.dolby.volume.leveler.amount":"0","persist.vendor.dolby.virtualizer.enable":"1","persist.vendor.dolby.virtualizer.amount":"6","persist.vendor.dolby.bass.enable":"1","persist.vendor.dolby.bass.boost":"0","persist.vendor.dolby.spectral.enable":"1","persist.vendor.dolby.spectral.boost":"7","persist.vendor.dolby.ieq.enable":"0","vendor.dolby.dap.pcequal":"0","vendor.dolby.dap.pctype":"0"},"bandOffsets":{"left":[178,195,93,20,-22,-58,-53,19,-8,6,-7,-52,-47,-3,35,43,56,11,42,39],"right":[199,195,81,44,-20,-53,-34,4,18,34,27,19,18,5,49,54,105,61,126,121],"surround":[150,205,76,33]}}"""
 /**
  * 保存「用户 UI 当前看到的 Medium 场景最终绝对增益」.
  * 预设只存 Medium（三场景同一偏移 Δ 等比写回,存 Medium 即可;加载时用当前实时 Medium 基线倒推偏移）.
