@@ -116,6 +116,7 @@ object DolbyTunerManager {
         val volumeLevelerEnable: Boolean = true,     // → volume-leveler-amount 0/1
         val virtualizerEnable: Boolean = false,
         val virtualizerStartBand: Int = 0,
+        val miSurroundCompressorSteeringEnable: Boolean = false,  // → mi-surround-compressor-steering-enable (环绕压缩器舵向)
         val calibrationBoost: Int = 0,
         // IEQ 增强开关
         val ieqEnhanceEnable: Boolean = false,
@@ -331,6 +332,9 @@ object DolbyTunerManager {
             virtualizerEnable = extractBool(xml, "virtualizer-enable"),
             virtualizerStartBand = extractInt(xml, "virtualizer-start-band", 0),
 
+            // 环绕压缩器舵向
+            miSurroundCompressorSteeringEnable = extractBool(xml, "mi-surround-compressor-steering-enable"),
+
             // calibration / volmax / peak
             calibrationBoost = extractInt(xml, "calibration-boost", 0),
             ieqEnhanceEnable = extractBool(xml, "ieq-enable"),
@@ -491,6 +495,7 @@ object DolbyTunerManager {
             modified = replaceInSpeaker(modified, "volume-leveler-amount", if (p.volumeLevelerEnable) "1" else "0")
             modified = replaceInSpeaker(modified, "virtualizer-enable", boolToXml(p.virtualizerEnable))
             modified = replaceInSpeaker(modified, "virtualizer-start-band", p.virtualizerStartBand.toString())
+            modified = replaceInSpeaker(modified, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable))
             modified = replaceInSpeaker(modified, "calibration-boost", p.calibrationBoost.toString())
             // ── IEQ 增强（模块已写死曲线与分层 amount/preset,APP 只切换开关）──
             modified = replaceInAllProfiles(modified, "ieq-enable", boolToXml(p.ieqEnhanceEnable))
@@ -1208,6 +1213,7 @@ private fun bandOffsetsFromJson(obj: JSONObject): BandOffsets {
             put("volumeLevelerEnable", p.volumeLevelerEnable)
             put("virtualizerEnable", p.virtualizerEnable)
             put("virtualizerStartBand", p.virtualizerStartBand)
+            put("miSurroundCompressorSteeringEnable", p.miSurroundCompressorSteeringEnable)
             put("calibrationBoost", p.calibrationBoost)
             put("ieqEnhanceEnable", p.ieqEnhanceEnable)
             put("volmaxBoost", p.volmaxBoost)
@@ -1247,6 +1253,7 @@ private fun bandOffsetsFromJson(obj: JSONObject): BandOffsets {
             volumeLevelerEnable = obj.optBoolean("volumeLevelerEnable", true),
             virtualizerEnable = obj.optBoolean("virtualizerEnable", false),
             virtualizerStartBand = obj.optInt("virtualizerStartBand", 0),
+            miSurroundCompressorSteeringEnable = obj.optBoolean("miSurroundCompressorSteeringEnable", false),
             calibrationBoost = obj.optInt("calibrationBoost", 0),
             ieqEnhanceEnable = obj.optBoolean("ieqEnhanceEnable", false),
             volmaxBoost = obj.optInt("volmaxBoost", 50),
