@@ -497,8 +497,8 @@ object DolbyTunerManager {
             modified = replaceInSpeaker(modified, "virtualizer-start-band", p.virtualizerStartBand.toString())
             modified = replaceInSpeaker(modified, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable))
             modified = replaceInSpeaker(modified, "calibration-boost", p.calibrationBoost.toString())
-            // ── IEQ 增强（模块已写死曲线与分层 amount/preset,APP 只切换开关）──
-            modified = replaceInAllProfiles(modified, "ieq-enable", boolToXml(p.ieqEnhanceEnable))
+            // ── IEQ 增强（APP 只切换外放 speaker 的开关,不碰耳机 headphone 端点）──
+            modified = replaceInSpeakerEndpoints(modified, "ieq-enable", boolToXml(p.ieqEnhanceEnable))
             modified = replaceInSpeaker(modified, "volmax-boost", p.volmaxBoost.toString())
             modified = replaceInAllProfiles(modified, "peak-value", p.peakValue.toString())
             modified = replaceInSpeaker(modified, "hearing-protection-enable", boolToXml(p.hearingProtectionEnable))
@@ -708,6 +708,25 @@ private fun replaceInSpeaker(xml: String, paramName: String, newValue: String): 
     )
     // 找第一个匹配（在 speaker 段的匹配优先,但由于文件结构,第一个就是 speaker）
     return regex.replaceFirst(xml, "$1$newValue$3")
+}
+
+/**
+ * 在所有 profile 的 speaker endpoint 内替换参数（严格限定于 id="speaker" 范围）.
+ *
+ * 用于 ieq-enable 这类既存在于 speaker 又存在于 headphone/other 的参数 —— 必须只改外放,
+ * 绝不能碰到耳机(headphone)和其他(other)端点,否则 APP 的 IEQ 开关会误改耳机调音.
+ */
+private fun replaceInSpeakerEndpoints(xml: String, paramName: String, newValue: String): String {
+    val innerRegex = Regex(
+        "(<${Regex.escape(paramName)}\\s+value\\s*=\\s*\")([^\"]*)(\"\\s*/>)"
+    )
+    val endpointRegex = Regex("<endpoint_type id=\"speaker\">(.*?)</endpoint_type>", RegexOption.DOT_MATCHES_ALL)
+    // 对每个 speaker endpoint 块,替换其中的 paramName(每个块仅一处)
+    return endpointRegex.replace(xml) { m ->
+        val blk = m.groupValues[1]
+        val newBlk = innerRegex.replaceFirst(blk, "$1$newValue$3")
+        "<endpoint_type id=\"speaker\">" + newBlk + "</endpoint_type>"
+    }
 }
 
 /**
