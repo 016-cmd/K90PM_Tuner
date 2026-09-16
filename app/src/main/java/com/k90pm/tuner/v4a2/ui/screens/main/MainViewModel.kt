@@ -39,6 +39,8 @@ import com.k90pm.tuner.v4a2.effect.deserializeEffectPrefs
 import com.k90pm.tuner.v4a2.effect.loadEffectPrefs
 import com.k90pm.tuner.v4a2.effect.saveEffectPrefs
 import com.k90pm.tuner.v4a2.effect.serializeEffectPrefs
+import com.k90pm.tuner.v4a2.service.DeviceSwitchManager
+import com.k90pm.tuner.v4a2.service.DeviceSwitchReceiver
 import com.k90pm.tuner.v4a2.service.ViperService
 import com.k90pm.tuner.v4a2.utils.FileLogger
 import com.k90pm.tuner.v4a2.viper.ConfigChannel
@@ -131,6 +133,9 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         private val _debugModeEnabled = MutableStateFlow(false)
         val debugModeEnabled: StateFlow<Boolean> = _debugModeEnabled.asStateFlow()
 
+        private val _deviceSwitchEnabled = MutableStateFlow(false)
+        val deviceSwitchEnabled: StateFlow<Boolean> = _deviceSwitchEnabled.asStateFlow()
+
         private var viperService: ViperService? = null
         private var serviceBound = false
         private val audioOutputDetector = AudioOutputDetector(app)
@@ -162,6 +167,8 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         init {
             // 安装全局崩溃/ANR捕获（幂等）：把用户闪退写入 viper.log 以离线排查。
             com.k90pm.tuner.v4a2.utils.CrashLogger.install(app)
+            // 前台检测器已存在：后台广播 receiver 应让位（互斥），只有进程被清、此标志为 false 时才接管。
+            DeviceSwitchReceiver.existingDetectorActive = true
             refreshFileLists()
             observeExternalMasterChanges()
             val initialDevice = audioOutputDetector.activeDevice.value
@@ -173,6 +180,9 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 loadEqPresetsForBandCount(_uiState.value.eq.bandCount)
                 loadDsPresets()
                 ensureDeviceEntry(initialDevice)
+                // 先加载当前设备的 DB 预设到内存/SP 再把服务绑起来，
+                // 避免 onServiceConnected 的 dispatchFullState() 用 SP 旧值闪写驱动。
+                loadDeviceSettings(initialDevice)
                 bindToService()
                 audioOutputDetector.activeDevice.collect { device ->
                     val currentId = _uiState.value.activeDeviceId
@@ -198,6 +208,8 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 }
             }
             audioOutputDetector.stop()
+            // 前台检测器已销毁：后台广播 receiver 重新接管（若开关开启）。
+            DeviceSwitchReceiver.existingDetectorActive = false
             if (serviceBound) {
                 getApplication<Application>().unbindService(serviceConnection)
                 serviceBound = false
@@ -373,6 +385,8 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
             _autoStartEnabled.value = repository.getBooleanPreference(PREF_AUTO_START, true).first()
             _globalModeEnabled.value = repository.getBooleanPreference(PREF_GLOBAL_MODE, false).first()
             _debugModeEnabled.value = repository.getBooleanPreference(PREF_DEBUG_MODE, false).first()
+            _deviceSwitchEnabled.value =
+                repository.getBooleanPreference(DeviceSwitchManager.PREF_DEVICE_SWITCH_ENABLED, false).first()
             _aidlModeEnabled.value = repository.aidlMode
         }
 
@@ -1494,6 +1508,12 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         fun toggleAutoStart(enabled: Boolean) {
             _autoStartEnabled.value = enabled
             viewModelScope.launch { repository.setBooleanPreference(PREF_AUTO_START, enabled) }
+        }
+
+        fun toggleDeviceSwitch(enabled: Boolean) {
+            _deviceSwitchEnabled.value = enabled
+            DeviceSwitchManager.setEnabled(getApplication(), enabled)
+            viewModelScope.launch { repository.setBooleanPreference(DeviceSwitchManager.PREF_DEVICE_SWITCH_ENABLED, enabled) }
         }
 
         fun toggleGlobalMode(enabled: Boolean) {

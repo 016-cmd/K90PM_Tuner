@@ -505,12 +505,11 @@ Column(Modifier.weight(1f)) {
 Text("💡 温馨提示", color = Warning, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 Spacer(Modifier.height(4.dp))
 Text(
-"参数修改后将自动重启音频服务,效果即时生效,无需重启手机.\n\n" +
-"⚠ 请不要频繁应用参数,每次应用都需要重启音频服务,频繁重启可能导致音频服务出现问题.\n\n" +
-"🛡 若你使用的是 1.8 之前的旧版模块（KSU / AP 版本通过元模块挂载）:由于元模块将 APP 的引用目录进行挂载更换,修改参数后需要重启手机参数才会生效,属正常现象.\n\n" +
-"✅ Magisk（Alpha）用户不受版本限制,修改参数即时生效,无需重启手机.",
-color = onSurfaceVariant, fontSize = 10.sp, lineHeight = 15.sp
-)
+                        "参数修改后将自动重启音频服务,效果即时生效,无需重启手机.\n\n" +
+                        "⚠ 请不要频繁应用参数,每次应用都需要重启音频服务,频繁重启可能导致音频服务出现问题.\n\n" +
+                        "📌 校准增益和最大音量增强修改后需重启手机生效,其他参数不需要.",
+                        color = onSurfaceVariant, fontSize = 10.sp, lineHeight = 15.sp
+                    )
 }
 }
 }

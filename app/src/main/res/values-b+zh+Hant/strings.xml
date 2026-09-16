@@ -239,6 +239,8 @@
 
     <!-- Settings -->
     <string name="settings_auto_start">開機模組聯動</string>
+    <string name="settings_device_switch">後台裝置自動切換</string>
+    <string name="settings_device_switch_hint">需自啟動權限</string>
     <string name="settings_aidl_mode">AIDL 模式</string>
     <string name="settings_global_mode">全域性模式</string>
     <string name="settings_driver_version">驅動版本</string>

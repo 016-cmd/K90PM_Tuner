@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- 媒体通知（Android 13+ 需要运行时请求） -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 后台设备自动切换：蓝牙 ACL 广播（Android 12+ 需要"附近的设备"权限） -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <application
         android:allowBackup="false"
@@ -47,6 +49,30 @@
             android:name=".v4a2.service.ViperService"
             android:exported="true"
             android:enabled="true" />
+
+        <!-- 后台设备自动切换：短命服务（写参即关），由 DeviceSwitchReceiver 拉起 -->
+        <service
+            android:name=".v4a2.service.DeviceSwitchService"
+            android:exported="false"
+            android:enabled="true" />
+
+        <!-- 后台设备自动切换：系统广播接收器。默认 disabled，由设置开关控制启停。 -->
+        <receiver
+            android:name=".v4a2.service.DeviceSwitchReceiver"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <!-- 有线耳机插拔 -->
+                <action android:name="android.intent.action.HEADSET_PLUG" />
+                <!-- 蓝牙连接/断开 -->
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <!-- USB 音频设备插拔（audio 专用 action + 标准 USB 兜底） -->
+                <action android:name="android.hardware.usb.action.USB_AUDIO_DEVICE_PLUG" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
+            </intent-filter>
+        </receiver>
         
     </application>
 
