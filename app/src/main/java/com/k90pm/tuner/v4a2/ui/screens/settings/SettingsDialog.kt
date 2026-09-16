@@ -34,12 +34,10 @@ fun SettingsDialog(
     autoStartEnabled: Boolean,
     globalModeEnabled: Boolean,
     aidlModeActive: Boolean,
-    deviceSwitchEnabled: Boolean,
     driverStatus: DriverStatus,
     appVersionName: String,
     onAutoStartChanged: (Boolean) -> Unit,
     onGlobalModeChanged: (Boolean) -> Unit,
-    onDeviceSwitchChanged: (Boolean) -> Unit,
     onImportPreset: () -> Unit,
     onImportKernel: () -> Unit,
     onDebugUnlocked: () -> Unit,
@@ -59,18 +57,6 @@ fun SettingsDialog(
                     label = stringResource(R.string.settings_auto_start),
                     checked = autoStartEnabled,
                     onCheckedChange = onAutoStartChanged,
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                SettingsToggleRow(
-                    label = stringResource(R.string.settings_device_switch),
-                    checked = deviceSwitchEnabled,
-                    onCheckedChange = onDeviceSwitchChanged,
-                )
-                Text(
-                    text = stringResource(R.string.settings_device_switch_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, top = 0.dp, bottom = 4.dp),
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 SettingsToggleRow(
