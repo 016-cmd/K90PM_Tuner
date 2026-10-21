@@ -62,8 +62,20 @@ object DolbyTunerManager {
     /** 系统杜比文件路径（只读,仅用于读取模板和解析） */
     private const val DAX_SYS = "/odm/etc/dolby/dax-default.xml"
 
-    /** 模块 Aoi 目录下的杜比主文件（Magisk 开机 bind mount 到 /odm/etc/dolby/ 的源文件） */
-    private val MODULE_DAX get() = "${moduleBase()}/Aoi/odm/etc/dolby/dax-default.xml"
+    /**
+     * 模块杜比主文件（Magisk 开机 bind mount 到 /odm/etc/dolby/ 的源文件）
+     *
+     * 兼容两代模块目录：
+     *   - v20261020 及以后：Aoi/odm/etc/dolby/dax-default.xml
+     *   - 旧版模块：Link/odm/etc/dolby/dax-default.xml
+     * 优先 Aoi，不存在时自动回退 Link（两者仅目录名不同，内容格式完全一致）。
+     */
+    private val MODULE_DAX: String get() {
+        val aoi = "${moduleBase()}/Aoi/odm/etc/dolby/dax-default.xml"
+        val link = "${moduleBase()}/Link/odm/etc/dolby/dax-default.xml"
+        val r = WsaShell.execSyncCmd("[ -f '$aoi' ] && echo A || ([ -f '$link' ] && echo L || echo A)")
+        return if (r.trim() == "L") link else aoi
+    }
 
     /** 模块 vendor 目录下的杜比文件 */
     private val MODULE_VENDOR_DAX get() = "${moduleBase()}/vendor/etc/dolby/dax-default.xml"
@@ -531,7 +543,7 @@ object DolbyTunerManager {
                 "cp -f '$internalPath' '$MODULE_DAX' && chmod 644 '$MODULE_DAX' && echo OK || echo FAIL"
             )
             if (!linkOk.contains("OK")) {
-                _resultMsg.value = "❌ 模块 Aoi 目录写入失败,模块可能不存在或只读"
+                _resultMsg.value = "❌ 模块目录写入失败（Aoi/Link 均不可写）,模块可能不存在或只读"
                 _isApplying.value = false
                 return@withContext false
             }
@@ -608,7 +620,7 @@ object DolbyTunerManager {
                 "cp -f '$internalPath' '$MODULE_DAX' && chmod 644 '$MODULE_DAX' && echo OK || echo FAIL"
             )
             if (!linkOk.contains("OK")) {
-                _resultMsg.value = "❌ 模块 Aoi 目录写入失败"
+                _resultMsg.value = "❌ 模块目录写入失败（Aoi/Link 均不可写）"
                 _isApplying.value = false
                 return@withContext false
             }
