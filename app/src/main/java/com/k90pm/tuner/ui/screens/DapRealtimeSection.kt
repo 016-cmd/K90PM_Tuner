@@ -33,8 +33,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val RAccent = Color(0xFF22C55E)
-private val RAccentDim = Color(0xFF166534)
+private val RAccent: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
+private val RAccentDim: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
 private val RDanger = Color(0xFFEF4444)
 private val RWarning = Color(0xFFF59E0B)
 

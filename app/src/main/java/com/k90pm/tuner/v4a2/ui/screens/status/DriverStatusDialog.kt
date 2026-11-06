@@ -27,11 +27,19 @@ fun DriverStatusDialog(
         title = { Text(stringResource(R.string.menu_driver_status)) },
         text = {
             if (!driverStatus.installed) {
-                Text(
-                    text = stringResource(R.string.driver_not_found),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                )
+                Column {
+                    Text(
+                        text = stringResource(R.string.driver_not_found),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Text(
+                        text = "如果确认已经装了带 V4A 驱动的版本，却看不到驱动信息，请尝试重启手机后再进来查看；检测到驱动信息时这条提示不会显示。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
             } else {
                 Column {
                     StatusRow(

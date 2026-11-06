@@ -363,17 +363,19 @@ private fun MasterToggleCard(
 ) {
     val masterOn = state.masterEnable
     val darkTheme = isSystemInDarkTheme()
+    // 颜色跟壁纸派生（不再写死绿色），关闭时仍用语义红
+    val accent = com.k90pm.tuner.ui.theme.Appearance.accent
     val containerColor =
         when {
             !masterOn -> MaterialTheme.colorScheme.errorContainer
-            darkTheme -> master_on_container_dark
-            else -> master_on_container_light
+            darkTheme -> accent.copy(alpha = 0.26f)
+            else -> accent.copy(alpha = 0.20f)
         }
     val onContainerColor =
         when {
             !masterOn -> MaterialTheme.colorScheme.onErrorContainer
-            darkTheme -> master_on_onContainer_dark
-            else -> master_on_onContainer_light
+            darkTheme -> androidx.compose.ui.graphics.Color.White
+            else -> androidx.compose.ui.graphics.Color(0xFF101014)
         }
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),

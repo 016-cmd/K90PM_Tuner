@@ -178,11 +178,13 @@ fun MainApp(activity: Activity) {
                 .clip(RoundedCornerShape(28.dp))
                 .dockSurface()
         ) {
-            val cellW = maxWidth / tabs.size
+            // 与 Row 的 horizontal 10dp 对齐：可用宽 = maxWidth - 20dp，格宽按 4 等分
+            val cellW = (maxWidth - 20.dp) / tabs.size
             val pagePos = pager.currentPage + pager.currentPageOffsetFraction
             val thumbX = cellW * pagePos
-            // 与 DolbyTuner 一致：胶囊高 54dp、圆角 27dp、深色白 14% / 浅色黑 7%
+            // 与 DolbyTuner 一致：胶囊高 54dp、圆角 = 高度一半、深色白 14% / 浅色黑 7%
             val thumbW = (cellW - 2.dp).coerceAtLeast(24.dp)
+            val thumbH = 54.dp
             val thumbColor =
                 if (isDark) Color.White.copy(alpha = 0.14f)
                 else Color.Black.copy(alpha = 0.07f)
@@ -218,14 +220,14 @@ fun MainApp(activity: Activity) {
                         .offset {
                             IntOffset(
                                 (10.dp + thumbX + (cellW - thumbW) / 2f).roundToPx(),
-                                ((62.dp - 54.dp) / 2f).roundToPx()
+                                ((62.dp - thumbH) / 2f).roundToPx()
                             )
                         }
                         .width(thumbW)
-                        .height(54.dp)
-                        .clip(RoundedCornerShape(27.dp))
+                        .height(thumbH)
+                        .clip(RoundedCornerShape(thumbH / 2))
                         .background(thumbColor)
-                        .border(1.dp, thumbBorder, RoundedCornerShape(27.dp))
+                        .border(1.dp, thumbBorder, RoundedCornerShape(thumbH / 2))
                 )
 
                 Row(
