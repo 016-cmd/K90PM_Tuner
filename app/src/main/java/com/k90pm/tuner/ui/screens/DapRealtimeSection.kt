@@ -222,10 +222,8 @@ fun DapRealtimeSection() {
         }
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    com.k90pm.tuner.ui.components.GlassSurface(
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
 

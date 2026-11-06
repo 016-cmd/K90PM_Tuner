@@ -49,8 +49,8 @@ import com.k90pm.tuner.ui.theme.jellyPress
 import com.k90pm.tuner.ui.theme.subInk
 
 /**
- * 设置页里的「外观与个性化」——与 DolbyTuner 同款：展开/闭合，不跳页面。
- * 参数全部用分段按钮与开关，没有滑条。
+ * 设置页里的「外观与个性化」——与 DolbyTuner 完全一致：展开/闭合，不跳页面。
+ * 参数全部用预设按钮与开关，没有滑条。
  */
 @Composable
 fun AppearanceSection(
@@ -67,9 +67,7 @@ fun AppearanceSection(
 
     GlassCard(Modifier.fillMaxWidth()) {
         Row(
-            Modifier.fillMaxWidth()
-                .jellyPress(Appearance.jelly > 0)
-                .clickable { expanded = !expanded },
+            Modifier.fillMaxWidth().jellyPress(Appearance.jelly > 0).clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Palette, null, tint = accent, modifier = Modifier.size(18.dp))
@@ -89,20 +87,50 @@ fun AppearanceSection(
             Column(Modifier.fillMaxWidth()) {
                 Spacer(Modifier.height(10.dp))
 
+                // ── 最上面：性能 + 卡片真折射 ──
+                ToggleRow(
+                    "卡片真折射",
+                    "关掉后用纯色玻璃（省 GPU，最稳）",
+                    Appearance.cardLiquid
+                ) { Appearance.setCardLiquid(ctx, it) }
+                SegRow("性能", listOf("自动", "高画质", "省电"), Appearance.perfMode) {
+                    Appearance.setPerfMode(ctx, it)
+                }
+
                 // ── 玻璃 ──
                 GroupLabel("玻璃")
                 SegRow(
                     "玻璃风格",
                     listOf("清透", "标准", "浓厚", "柔和", "省电"),
-                    Appearance.glass.coerceIn(0, 4)
-                ) { Appearance.setGlass(ctx, it) }
+                    Appearance.presetIndex()
+                ) { Appearance.applyPreset(ctx, it) }
+                SegRow(
+                    "折射强度",
+                    listOf("低", "中", "高"),
+                    nearest(Appearance.refraction, intArrayOf(40, 70, 100))
+                ) { Appearance.setRefraction(ctx, intArrayOf(40, 70, 100)[it]) }
+                SegRow(
+                    "玻璃厚度",
+                    listOf("薄", "标准", "厚"),
+                    Appearance.thickness
+                ) { Appearance.setThickness(ctx, it) }
 
                 // ── 颜色 ──
                 GroupLabel("颜色")
                 SegRow(
+                    "色散",
+                    listOf("关", "轻", "标准", "强"),
+                    nearest(Appearance.dispersion, intArrayOf(0, 25, 50, 80))
+                ) { Appearance.setDispersion(ctx, intArrayOf(0, 25, 50, 80)[it]) }
+                SegRow(
+                    "体积光",
+                    listOf("关", "弱", "标准", "强"),
+                    Appearance.volumeLight.coerceIn(0, 3)
+                ) { Appearance.setVolumeLight(ctx, it) }
+                SegRow(
                     "卡片底色",
                     listOf("自动", "纯白", "纯黑"),
-                    Appearance.tintMode.coerceIn(0, 2)
+                    Appearance.tintMode
                 ) { Appearance.setTintMode(ctx, it) }
 
                 // ── 形状 ──
@@ -120,11 +148,13 @@ fun AppearanceSection(
                     listOf("关", "轻", "标准", "强"),
                     nearest(Appearance.jelly, intArrayOf(0, 40, 70, 100))
                 ) { Appearance.setJelly(ctx, intArrayOf(0, 40, 70, 100)[it]) }
-                ToggleRow("页面切换动画", null, Appearance.animPage == 1) {
-                    Appearance.setAnimPage(ctx, it)
-                }
-                ToggleRow("卡片入场动画", null, Appearance.animCard == 1) {
-                    Appearance.setAnimCard(ctx, it)
+                SegRow(
+                    "弹簧",
+                    listOf("软", "标准", "硬"),
+                    Appearance.spring
+                ) { Appearance.setSpring(ctx, it) }
+                ToggleRow("光照互通", "按压时照亮邻近玻璃", Appearance.crossLight) {
+                    Appearance.setCrossLight(ctx, it)
                 }
 
                 // ── 壁纸 ──
@@ -143,7 +173,7 @@ fun AppearanceSection(
                     Spacer(Modifier.height(6.dp))
                 }
                 Text(
-                    "当前：${if (hasLocalWallpaper) "本地图片" else Appearance.builtinName(wallpaperKind)}",
+                    "当前：${Appearance.builtinName(wallpaperKind)}",
                     fontSize = 9.sp,
                     color = subInk()
                 )
@@ -164,7 +194,7 @@ fun AppearanceSection(
                 }
                 WallButton("从本地选择图片", Icons.Default.PhotoLibrary) { onPickWallpaper() }
 
-                // ── 文字 ──
+                // ── 可读性 ──
                 GroupLabel("文字")
                 ToggleRow(
                     "增强文字可读性",
@@ -172,6 +202,17 @@ fun AppearanceSection(
                     Appearance.readLevel >= 1
                 ) { Appearance.setReadLevel(ctx, if (it) 1 else 0) }
 
+                // ── 页面 ──
+                GroupLabel("页面")
+                ToggleRow("页面切换动画", null, Appearance.animPage == 1) {
+                    Appearance.setAnimPage(ctx, it)
+                }
+                ToggleRow("卡片入场动画", null, Appearance.animCard == 1) {
+                    Appearance.setAnimCard(ctx, it)
+                }
+                ToggleRow("启动动画", null, Appearance.animLaunch == 1) {
+                    Appearance.setAnimLaunch(ctx, it)
+                }
                 Spacer(Modifier.height(4.dp))
             }
         }
@@ -189,9 +230,9 @@ private fun nearest(v: Int, arr: IntArray): Int {
 }
 
 private fun summary(): String {
-    val glass = listOf("清透", "标准", "浓厚", "柔和", "省电")[Appearance.glass.coerceIn(0, 4)]
     val tint = when (Appearance.tintMode) { 1 -> "纯白"; 2 -> "纯黑"; else -> "自动" }
-    return "液态玻璃 · $glass · $tint · 圆角 ${Appearance.radius.toInt()}dp"
+    val preset = listOf("清透", "标准", "浓厚", "柔和", "省电")[Appearance.presetIndex()]
+    return "液态玻璃 · $preset · $tint · 圆角 ${Appearance.radius.toInt()}dp"
 }
 
 @Composable
@@ -256,8 +297,7 @@ private fun SegRow(
                         if (on) Appearance.accent.copy(alpha = 0.22f)
                         else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                     )
-                    .jellyPress(Appearance.jelly > 0)
-                    .clickable { onSelect(i) }
+                    .jellyPress(Appearance.jelly > 0).clickable { onSelect(i) }
                     .padding(vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {

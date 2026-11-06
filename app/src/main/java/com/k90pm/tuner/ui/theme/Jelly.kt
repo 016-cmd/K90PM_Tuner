@@ -31,8 +31,8 @@ fun Modifier.jellyPress(enabled: Boolean): Modifier {
     val pressX = 1f + 0.05f * amt
     val pressY = 1f - 0.07f * amt
     val spec = spring<Float>(
-        dampingRatio = 0.62f,
-        stiffness = 420f,
+        dampingRatio = Appearance.springDamping(),
+        stiffness = Appearance.springStiffness(),
         visibilityThreshold = 0.001f
     )
     return this

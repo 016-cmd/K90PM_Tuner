@@ -29,8 +29,8 @@ import com.k90pm.tuner.service.DolbyTunerManager
 import com.k90pm.tuner.service.DolbyTunerManager.DolbyParams
 import kotlinx.coroutines.launch
 
-private val Accent = Color(0xFF22C55E)
-private val AccentDim = Color(0xFF166534)
+private val Accent: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
+private val AccentDim: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
 private val Danger = Color(0xFFEF4444)
 private val Warning = Color(0xFFF59E0B)
 
@@ -119,13 +119,13 @@ fun DolbyTunerScreen(activity: Activity) {
         containerColor = Color.Transparent
     ) { padding ->
 
-        Column(
-            Modifier
+        androidx.compose.foundation.lazy.LazyColumn(
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
+            item {
                 AlertTipCard(statusMsg, isLoading, isApplying)
 
                 // ═══════════════════════════════════════════
@@ -160,7 +160,9 @@ fun DolbyTunerScreen(activity: Activity) {
                     }
                 }
 
-                if (!isLoading && statusMsg.isBlank() && !isApplying) {
+            }
+            val ok = !isLoading && statusMsg.isBlank() && !isApplying
+            item { if (ok) {
                     SectionTitle("快速开关")
 
                     // 1. 对话增强
@@ -443,6 +445,8 @@ fun DolbyTunerScreen(activity: Activity) {
                     Spacer(Modifier.height(12.dp))
 
                     // ── 高级区 ──
+            } }
+            item { if (ok) {
                     SectionTitle("高级调谐")
 
                     EnterCard(
@@ -499,6 +503,8 @@ fun DolbyTunerScreen(activity: Activity) {
 
                     // ── 频段调节（band_optimizer,Medium基准·三场景同步） ──
                     Spacer(Modifier.height(16.dp))
+            } }
+            item { if (ok) {
                     SectionTitle("频段调节")
                     BandTunerSection()
 
@@ -571,6 +577,8 @@ Text(
                     Spacer(Modifier.height(12.dp))
 
                     // ── 预设保存/加载 ──
+            } }
+            item { if (ok) {
                     SectionTitle("预设")
                     EnterCard(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -640,9 +648,9 @@ Text(
                         }
                     }
                     Spacer(Modifier.height(80.dp))
-                }
-                        Spacer(Modifier.height(70.dp))
-}
+            } }
+            item { Spacer(Modifier.height(70.dp)) }
+        }
     }
 
     // ── 保存预设弹窗 ──
@@ -1270,8 +1278,7 @@ private fun EnterCard(
     border: androidx.compose.foundation.BorderStroke? = null,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
 ) {
-    androidx.compose.material3.Card(
-        modifier = modifier.cardEnter(com.k90pm.tuner.ui.theme.Appearance.animCard == 1),
-        shape = shape, colors = colors, elevation = elevation, border = border, content = content
-    )
+    com.k90pm.tuner.ui.components.GlassSurface(modifier = modifier) {
+        androidx.compose.foundation.layout.Column { content() }
+    }
 }

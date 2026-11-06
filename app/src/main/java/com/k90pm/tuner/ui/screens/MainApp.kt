@@ -93,7 +93,7 @@ fun MainApp(activity: Activity) {
         val launchAnim = remember { androidx.compose.animation.core.Animatable(0f) }
         val dockAnim = remember { androidx.compose.animation.core.Animatable(0f) }
         LaunchedEffect(Unit) {
-            if (Appearance.animCard == 1) {
+            if (Appearance.animLaunch == 1) {
                 launchAnim.animateTo(
                     1f,
                     androidx.compose.animation.core.tween(
@@ -136,7 +136,7 @@ fun MainApp(activity: Activity) {
             val off = (pager.currentPage - page) + pager.currentPageOffsetFraction
             Box(
                 Modifier.fillMaxSize().graphicsLayer {
-                    val d = abs(off).coerceIn(0f, 1f)
+                    val d = if (Appearance.animPage == 1) abs(off).coerceIn(0f, 1f) else 0f
                     alpha = 1f - d * 0.30f
                     val s = 1f - d * 0.04f
                     scaleX = s

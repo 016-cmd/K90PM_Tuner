@@ -33,10 +33,9 @@ object GlassBackdrop {
 }
 
 /**
- * 液态玻璃表面：Backdrop 真折射优先，不可用时退回纯色玻璃。
- *
- * 参数全部由「玻璃风格」档位派生，不额外增加设置项：
- *   0 清透 / 1 标准 / 2 浓厚 / 3 柔和 / 4 省电（省电档关折射）
+ * 液态玻璃表面：参数与 DolbyTuner 完全同一套
+ * （折射 / 边缘宽度 / 模糊 / 提亮 / 色散 / 光源角度 / 体积光 / 厚度 / 性能档）。
+ * Backdrop 不可用时退回纯色玻璃。
  */
 @Composable
 fun Modifier.glassSurface(radius: Float = Appearance.radius): Modifier {
@@ -44,39 +43,23 @@ fun Modifier.glassSurface(radius: Float = Appearance.radius): Modifier {
     val isDark = cs.background.red * 0.299f + cs.background.green * 0.587f +
             cs.background.blue * 0.114f < 0.5f
 
-    val g = Appearance.glass
-    val tint = if (isDark) Color.Black else Color.White
-    val tintAlpha = if (isDark) Appearance.cardAlphaDark else Appearance.cardAlphaLight
-
-    // 折射强度 / 模糊半径跟着玻璃档位走
-    val refr = when (g) {
-        0 -> 1.00f   // 清透：折射最明显
-        2 -> 0.70f   // 浓厚：模糊多、折射淡
-        3 -> 1.20f   // 柔和：折射最柔
-        4 -> 0f      // 省电：不做折射
-        else -> 1.00f
-    }
-    val blurDp = when (g) {
-        0 -> 0.8f
-        2 -> 4.0f
-        3 -> 2.2f
-        4 -> 0f
-        else -> 1.8f
-    }
-    val vib = when (g) {
-        0 -> 0.55f
-        2 -> 1.00f
-        3 -> 0.75f
-        4 -> 0.35f
-        else -> 0.80f
-    }
+    val on = Appearance.enabled
+    val tint = Appearance.tintColor(isDark)
+    val tintAlpha = Appearance.tintAlpha(isDark)
+    val refr = Appearance.refraction / 100f
+    val blurDp = (Appearance.blurRadius * 0.22f).coerceIn(0f, 5f)
+    val vib = Appearance.vibrancy / 100f
+    val angle = Appearance.lightAngle.toFloat()
+    val vol = Appearance.volumeLight
+    val disp = Appearance.dispersion
 
     val density = LocalDensity.current
     val rPx = with(density) { radius.dp.toPx() }
-    val strokePx = with(density) { 0.9.dp.toPx() }
+    val strokePx = with(density) { Appearance.strokeDp().dp.toPx() }
 
     val bd = GlassBackdrop.instance
-    val useBackdrop = bd != null && g != 4 && android.os.Build.VERSION.SDK_INT >= 33
+    val useBackdrop = on && Appearance.cardLiquid && bd != null &&
+            Appearance.perfMode != 2 && android.os.Build.VERSION.SDK_INT >= 33
 
     if (useBackdrop) {
         val shape = RoundedCornerShape(radius.dp)
@@ -87,11 +70,11 @@ fun Modifier.glassSurface(radius: Float = Appearance.radius): Modifier {
                 effects = {
                     if (blurDp > 0f) blur(blurDp.dp.toPx())
                     vibrancy()
-                    if (g != 4) {
+                    if (refr > 0f) {
                         lens(
                             (10f + 12f * refr).dp.toPx(),
                             (18f + 30f * refr).dp.toPx(),
-                            true
+                            disp > 0
                         )
                     }
                 },
@@ -108,14 +91,15 @@ fun Modifier.glassSurface(radius: Float = Appearance.radius): Modifier {
                     val w = size.width
                     val h = size.height
                     val corner = CornerRadius(rPx, rPx)
-                    // 顶部亮线（光源方向固定为左上 → 右下）
-                    if (vib > 0f) {
-                        val rad = Math.toRadians(45.0)
+                    // 顶部亮线：方向由光源角度决定，强度由提亮 + 体积光决定
+                    val light = vib * (0.5f + 0.5f * (vol / 3f))
+                    if (light > 0f) {
+                        val rad = Math.toRadians(angle.toDouble())
                         val dx = cos(rad).toFloat()
                         val dy = sin(rad).toFloat()
                         drawRoundRect(
                             brush = Brush.linearGradient(
-                                0f to Color.White.copy(alpha = 0.04f + 0.16f * vib),
+                                0f to Color.White.copy(alpha = 0.04f + 0.16f * light),
                                 0.5f to Color.White.copy(alpha = 0.02f),
                                 1f to Color.Transparent,
                                 start = Offset(w / 2f - dx * w, h / 2f - dy * h),
@@ -153,7 +137,7 @@ fun Modifier.glassSurface(radius: Float = Appearance.radius): Modifier {
             val h = size.height
             val corner = CornerRadius(rPx, rPx)
             drawRoundRect(
-                color = tint.copy(alpha = tintAlpha),
+                color = tint.copy(alpha = if (on) tintAlpha else if (isDark) 0.88f else 0.94f),
                 cornerRadius = corner
             )
             drawRoundRect(
