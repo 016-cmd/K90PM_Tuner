@@ -266,6 +266,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
         )
     }
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(

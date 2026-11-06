@@ -100,6 +100,7 @@ fun DolbyTunerScreen(activity: Activity) {
     val outline = colors.outlineVariant
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
