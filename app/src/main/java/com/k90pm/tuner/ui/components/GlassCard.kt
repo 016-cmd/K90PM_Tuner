@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.k90pm.tuner.ui.theme.Appearance
 
 /**
  * 半透明玻璃卡片 — 纯色半透明 + 细边框模拟玻璃效果.
@@ -29,10 +30,10 @@ fun GlassCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(Appearance.radius.dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = 0.20f)
-    else Color.White.copy(alpha = 0.35f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = Appearance.cardAlphaDark)
+    else Color.White.copy(alpha = Appearance.cardAlphaLight)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.06f)
@@ -59,10 +60,10 @@ fun GlassSurface(
 ) {
     val colors = MaterialTheme.colorScheme
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(Appearance.radius.dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = 0.20f)
-    else Color.White.copy(alpha = 0.35f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = Appearance.cardAlphaDark)
+    else Color.White.copy(alpha = Appearance.cardAlphaLight)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.06f)
@@ -84,10 +85,10 @@ fun GlassSettingsCard(
 ) {
     val colors = MaterialTheme.colorScheme
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape((Appearance.radius - 8f).coerceAtLeast(10f).dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = 0.25f)
-    else Color.White.copy(alpha = 0.40f)
+    val fillColor = if (isDark) Color.Black.copy(alpha = (Appearance.cardAlphaDark + 0.06f).coerceAtMost(0.92f))
+    else Color.White.copy(alpha = (Appearance.cardAlphaLight + 0.04f).coerceAtMost(0.97f))
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
     else Color.Black.copy(alpha = 0.08f)
