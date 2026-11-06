@@ -22,8 +22,8 @@ import com.k90pm.tuner.service.DolbyTunerManager.BandChannel
 import com.k90pm.tuner.ui.components.BandCurveCanvas
 import kotlinx.coroutines.launch
 
-private val BAccent = Color(0xFF22C55E)
-private val BAccentDim = Color(0xFF166534)
+private val BAccent: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
+private val BAccentDim: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
 
 /**
  * 频段调节（band_optimizer）
@@ -79,10 +79,8 @@ fun BandTunerSection() {
     val curvePointsRight = curvePoints(BandChannel.RIGHT, DolbyTunerManager.ALL_BANDS)
     val curvePointsSurround = curvePoints(BandChannel.SURROUND, DolbyTunerManager.BASS_BANDS)
 
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    com.k90pm.tuner.ui.components.GlassSurface(
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
 // 标题（可点击展开/收起整个频段调节区）
@@ -127,9 +125,9 @@ fun BandTunerSection() {
 
             // 曲线预览
             val curveColor = when (curveTab) {
-                BandChannel.LEFT -> Color(0xFF22C55E)
-                BandChannel.RIGHT -> Color(0xFF3B82F6)
-                BandChannel.SURROUND -> Color(0xFFF59E0B)
+                BandChannel.LEFT -> com.k90pm.tuner.ui.theme.Appearance.accent
+                BandChannel.RIGHT -> com.k90pm.tuner.ui.theme.Appearance.secondary
+                BandChannel.SURROUND -> com.k90pm.tuner.ui.theme.Appearance.colorLimit
             }
             val curvePts = when (curveTab) {
                 BandChannel.LEFT -> curvePointsLeft
@@ -207,7 +205,7 @@ fun BandTunerSection() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF59E0B))
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = com.k90pm.tuner.ui.theme.Appearance.colorLimit)
             ) {
                 Icon(Icons.Default.Refresh, null, Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
@@ -255,10 +253,9 @@ private fun FoldCard(
 ) {
     val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    Card(
+    com.k90pm.tuner.ui.components.GlassSurface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        radius = (com.k90pm.tuner.ui.theme.Appearance.radius - 8f).coerceAtLeast(10f)
     ) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 4.dp)) {
             Row(

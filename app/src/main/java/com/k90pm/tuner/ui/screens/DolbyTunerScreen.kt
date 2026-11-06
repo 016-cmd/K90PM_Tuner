@@ -166,6 +166,8 @@ fun DolbyTunerScreen(activity: Activity) {
                     SectionTitle("快速开关")
 
                     // 1. 对话增强
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "对话增强",
                         subtitle = "提升人声清晰度",
@@ -177,9 +179,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         ParamSlider("回避量", params.dialogEnhancerDucking, 0..9) { DolbyTunerManager.updateParams(params.copy(dialogEnhancerDucking = it)) }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 2. 低音增强 BE
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "低音增强",
                         subtitle = "Bass Enhancer",
@@ -188,9 +194,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(bassEnhancerEnable = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 3. 虚拟低音 VB
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "虚拟低音",
                         subtitle = "Virtual Bass",
@@ -199,9 +209,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(virtualBassProcessEnable = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 4. 低频提取
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "低频提取",
                         subtitle = "Bass Extraction",
@@ -214,9 +228,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // ── DAX3 低音增强 ──
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "DAX3 低音增强",
                         subtitle = "系统属性层",
@@ -241,9 +259,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // ── DAX3 人声增强 ──
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "DAX3 人声增强",
                         subtitle = "系统属性层",
@@ -268,9 +290,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // ── DAX3 高频延伸 ──
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "DAX3 高频延伸",
                         subtitle = "系统属性层",
@@ -295,9 +321,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // ── DAX3 虚拟环绕（虚拟化音效强度）──
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "DAX3 虚拟环绕",
                         subtitle = "系统属性层",
@@ -322,9 +352,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 5. 环绕解码
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "环绕解码",
                         subtitle = "沉浸式环绕声",
@@ -335,9 +369,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         ParamSlider("增强值", params.surroundBoost, 0..150) { DolbyTunerManager.updateParams(params.copy(surroundBoost = it)) }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 5. 音量均衡器
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "音量均衡器",
                         subtitle = "稳定音量波动",
@@ -346,9 +384,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(volumeLevelerEnable = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 6. 虚拟器
+            } }
+            item { if (ok) {
                     ExpandableCard(
                         title = "虚拟器",
                         subtitle = "空间音效扩展",
@@ -359,9 +401,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         ParamSlider("起始频段", params.virtualizerStartBand, 0..13) { DolbyTunerManager.updateParams(params.copy(virtualizerStartBand = it)) }
                     }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 6.1 环绕压缩器舵向
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "环绕压缩器舵向",
                         subtitle = "增强环绕声场方向感与定位",
@@ -370,9 +416,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(miSurroundCompressorSteeringEnable = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
                     
                     // 6.4 动态范围优化
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "动态范围优化",
                         subtitle = "提升输出压力限制,增加响度",
@@ -381,9 +431,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(regulatorStressOptimize = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 6.5 IEQ 智能均衡增强（杜比智能均衡曲线,模块已写死）
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "IEQ 智能均衡",
                         subtitle = "开启后启用杜比智能均衡增强曲线",
@@ -392,9 +446,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(ieqEnhanceEnable = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 7. 校准增益
+            } }
+            item { if (ok) {
                     SimpleSliderCard(
                         title = "校准增益",
                         subtitle = "基础增益校准",
@@ -405,9 +463,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onValueChange = { DolbyTunerManager.updateParams(params.copy(calibrationBoost = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 8. 最大音量增强
+            } }
+            item { if (ok) {
                     SimpleSliderCard(
                         title = "最大音量增强",
                         subtitle = "提升音量上限",
@@ -418,9 +480,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onValueChange = { DolbyTunerManager.updateParams(params.copy(volmaxBoost = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 9. 峰值
+            } }
+            item { if (ok) {
                     SimpleSliderCard(
                         title = "峰值",
                         subtitle = "动态峰值控制",
@@ -431,9 +497,13 @@ fun DolbyTunerScreen(activity: Activity) {
                         onValueChange = { DolbyTunerManager.updateParams(params.copy(peakValue = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(6.dp))
 
                     // 10. 听力保护
+            } }
+            item { if (ok) {
                     SimpleSwitchCard(
                         title = "听力保护",
                         subtitle = "限制过高音量",
@@ -442,6 +512,8 @@ fun DolbyTunerScreen(activity: Activity) {
                         onCheckedChange = { DolbyTunerManager.updateParams(params.copy(hearingProtectionEnable = it)) }
                     )
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(12.dp))
 
                     // ── 高级区 ──
@@ -449,6 +521,8 @@ fun DolbyTunerScreen(activity: Activity) {
             item { if (ok) {
                     SectionTitle("高级调谐")
 
+            } }
+            item { if (ok) {
                     EnterCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -502,15 +576,23 @@ fun DolbyTunerScreen(activity: Activity) {
                     }
 
                     // ── 频段调节（band_optimizer,Medium基准·三场景同步） ──
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(16.dp))
             } }
             item { if (ok) {
                     SectionTitle("频段调节")
+            } }
+            item { if (ok) {
                     BandTunerSection()
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(16.dp))
 
                     // ── 应用 & 重置 按钮 ──
+            } }
+            item { if (ok) {
                     Row(
                         Modifier.fillMaxWidth().padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -574,12 +656,16 @@ Text(
 }
 }
 
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(12.dp))
 
                     // ── 预设保存/加载 ──
             } }
             item { if (ok) {
                     SectionTitle("预设")
+            } }
+            item { if (ok) {
                     EnterCard(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                         shape = RoundedCornerShape(12.dp),
@@ -647,6 +733,8 @@ Text(
                             }
                         }
                     }
+            } }
+            item { if (ok) {
                     Spacer(Modifier.height(80.dp))
             } }
             item { Spacer(Modifier.height(60.dp)) }
