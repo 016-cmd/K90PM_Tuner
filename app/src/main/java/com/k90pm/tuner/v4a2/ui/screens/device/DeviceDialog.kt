@@ -2,7 +2,7 @@ package com.k90pm.tuner.v4a2.ui.screens.device
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
