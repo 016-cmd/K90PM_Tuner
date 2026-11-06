@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import com.k90pm.tuner.ui.theme.cardEnter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -443,7 +444,7 @@ fun DolbyTunerScreen(activity: Activity) {
                     // ── 高级区 ──
                     SectionTitle("高级调谐")
 
-                    Card(
+                    EnterCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -546,7 +547,7 @@ fun DolbyTunerScreen(activity: Activity) {
                     }
 
                     // ── 温馨提示卡 ──
-Card(
+EnterCard(
 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
 shape = RoundedCornerShape(12.dp),
 colors = CardDefaults.cardColors(containerColor = Warning.copy(alpha = 0.12f))
@@ -570,7 +571,7 @@ Text(
 
                     // ── 预设保存/加载 ──
                     SectionTitle("预设")
-                    Card(
+                    EnterCard(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -639,7 +640,7 @@ Text(
                     }
                     Spacer(Modifier.height(80.dp))
                 }
-                        Spacer(Modifier.height(96.dp))
+                        Spacer(Modifier.height(78.dp))
 }
     }
 
@@ -704,7 +705,7 @@ Text(
                 } else {
                     Column {
                         presetNames.forEach { name ->
-                            Card(
+                            EnterCard(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -765,7 +766,7 @@ Text(
                         )
                         Spacer(Modifier.height(6.dp))
                         presetNames.forEach { name ->
-                            Card(
+                            EnterCard(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -922,7 +923,7 @@ private fun LayerBanner(
     desc: String? = null
 ) {
     val colors = MaterialTheme.colorScheme
-    Card(
+    EnterCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = AccentDim.copy(alpha = 0.18f))
@@ -1016,7 +1017,7 @@ private fun AlertTipCard(statusMsg: String, isLoading: Boolean, isApplying: Bool
             isSuccess -> AccentDim.copy(alpha = 0.5f)
             else -> Warning.copy(alpha = 0.12f)
         }
-        Card(
+        EnterCard(
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = bgColor)
@@ -1033,7 +1034,7 @@ private fun AlertTipCard(statusMsg: String, isLoading: Boolean, isApplying: Bool
         }
     }
     if (isApplying) {
-        Card(
+        EnterCard(
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = AccentDim.copy(alpha = 0.4f))
@@ -1065,7 +1066,7 @@ private fun ExpandableCard(
     val onSurfaceVariant = colors.onSurfaceVariant
     val outline = colors.outlineVariant
 
-    Card(
+    EnterCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -1119,7 +1120,7 @@ private fun SimpleSwitchCard(
     val colors = MaterialTheme.colorScheme
     val onSurface = colors.onSurface
     val onSurfaceVariant = colors.onSurfaceVariant
-    Card(
+    EnterCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -1161,7 +1162,7 @@ private fun SimpleSliderCard(
     val colors = MaterialTheme.colorScheme
     val onSurface = colors.onSurface
     val onSurfaceVariant = colors.onSurfaceVariant
-    Card(
+    EnterCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
@@ -1257,4 +1258,19 @@ private fun ParamDropdown(
             )
         }
     }
+}
+/** 带入场动画的 Card（与 DolbyTuner 同款） */
+@Composable
+private fun EnterCard(
+    modifier: Modifier = Modifier,
+    shape: androidx.compose.ui.graphics.Shape = androidx.compose.material3.CardDefaults.shape,
+    colors: androidx.compose.material3.CardColors = androidx.compose.material3.CardDefaults.cardColors(),
+    elevation: androidx.compose.material3.CardElevation = androidx.compose.material3.CardDefaults.cardElevation(),
+    border: androidx.compose.foundation.BorderStroke? = null,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
+) {
+    androidx.compose.material3.Card(
+        modifier = modifier.cardEnter(com.k90pm.tuner.ui.theme.Appearance.animCard == 1),
+        shape = shape, colors = colors, elevation = elevation, border = border, content = content
+    )
 }

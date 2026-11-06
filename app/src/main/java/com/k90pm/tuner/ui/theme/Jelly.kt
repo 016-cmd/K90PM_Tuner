@@ -2,6 +2,9 @@ package com.k90pm.tuner.ui.theme
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -48,4 +51,31 @@ fun Modifier.jellyPress(enabled: Boolean): Modifier {
                 scope.launch { sy.animateTo(1f, spec) }
             }
         }
+}
+/** 切页计数：换页时 +1，让卡片入场动画重播 */
+val LocalCardEpoch = compositionLocalOf { 0 }
+
+/**
+ * 卡片入场：透明度 0→1 + 缩放 0.965→1.0（弹簧）。
+ * 与 DolbyTuner 同款；LocalCardEpoch 变化时重播。
+ */
+@Composable
+fun Modifier.cardEnter(enabled: Boolean): Modifier {
+    if (!enabled) return this
+    val anim = remember { Animatable(0f) }
+    val epoch = LocalCardEpoch.current
+    LaunchedEffect(epoch) {
+        anim.snapTo(0f)
+        anim.animateTo(
+            1f,
+            spring(dampingRatio = 0.78f, stiffness = 240f, visibilityThreshold = 0.001f)
+        )
+    }
+    return this.graphicsLayer {
+        val p = anim.value
+        alpha = p.coerceIn(0f, 1f)
+        val s = 0.965f + 0.035f * p
+        scaleX = s
+        scaleY = s
+    }
 }

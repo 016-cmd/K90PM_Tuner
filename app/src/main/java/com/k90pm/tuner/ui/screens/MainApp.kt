@@ -88,42 +88,58 @@ fun MainApp(activity: Activity) {
     val backdrop = rememberLayerBackdrop { drawContent() }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        var appShown by remember { mutableStateOf(false) }
-        LaunchedEffect(Unit) { appShown = true }
-        val appAppear by animateFloatAsState(
-            targetValue = if (appShown) 1f else 0f,
-            animationSpec = tween(360),
-            label = "appAppear"
-        )
+        // 启动动画：内容淡入 + 轻微放大上移；dock 从下方弹入（与 DolbyTuner 同款）
+        val launchAnim = remember { androidx.compose.animation.core.Animatable(0f) }
+        val dockAnim = remember { androidx.compose.animation.core.Animatable(0f) }
+        LaunchedEffect(Unit) {
+            if (Appearance.animCard == 1) {
+                launchAnim.animateTo(
+                    1f,
+                    androidx.compose.animation.core.tween(
+                        520,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                )
+                dockAnim.animateTo(
+                    1f,
+                    androidx.compose.animation.core.tween(
+                        420,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                )
+            } else {
+                launchAnim.snapTo(1f)
+                dockAnim.snapTo(1f)
+            }
+        }
 
+        androidx.compose.runtime.CompositionLocalProvider(
+            com.k90pm.tuner.ui.theme.LocalCardEpoch provides pager.currentPage
+        ) {
         HorizontalPager(
             state = pager,
+            userScrollEnabled = false,
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop)
                 .graphicsLayer {
-                    alpha = appAppear
-                    translationY = (1f - appAppear) * 24f
+                    val p2 = launchAnim.value
+                    alpha = p2
+                    translationY = (1f - p2) * 22.dp.toPx()
+                    val s = 0.945f + 0.055f * p2
+                    scaleX = s
+                    scaleY = s
                 },
             beyondViewportPageCount = 1
         ) { page ->
             val off = (pager.currentPage - page) + pager.currentPageOffsetFraction
-            // 首次进入该页：淡入 + 上浮
-            var pageShown by remember(page) { mutableStateOf(false) }
-            LaunchedEffect(page) { pageShown = true }
-            val appear by animateFloatAsState(
-                targetValue = if (pageShown) 1f else 0f,
-                animationSpec = tween(if (Appearance.animPage == 1) 420 else 0),
-                label = "pageAppear"
-            )
             Box(
                 Modifier.fillMaxSize().graphicsLayer {
                     val d = abs(off).coerceIn(0f, 1f)
-                    alpha = (1f - d * 0.35f) * appear
-                    val s = 1f - d * 0.05f
+                    alpha = 1f - d * 0.30f
+                    val s = 1f - d * 0.04f
                     scaleX = s
                     scaleY = s
-                    translationY = (1f - appear) * 28f
                 }
             ) {
                 when (page) {
@@ -151,6 +167,11 @@ fun MainApp(activity: Activity) {
                 .padding(bottom = 16.dp)
                 .fillMaxWidth()
                 .height(62.dp)
+                .graphicsLayer {
+                    val p2 = dockAnim.value
+                    alpha = p2
+                    translationY = (1f - p2) * 64.dp.toPx()
+                }
                 .drawBackdrop(
                     backdrop = backdrop,
                     shape = { RoundedCornerShape(28.dp) },
@@ -249,6 +270,7 @@ fun MainApp(activity: Activity) {
                     }
                 }
             }
+        }
         }
     }
 }

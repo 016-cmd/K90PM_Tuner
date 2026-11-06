@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.k90pm.tuner.ui.theme.Appearance
+import com.k90pm.tuner.ui.theme.cardEnter
 
 /**
  * 半透明玻璃卡片 — 纯色半透明 + 细边框模拟玻璃效果.
@@ -39,6 +40,7 @@ fun GlassCard(
 
     Box(
         modifier = modifier
+            .cardEnter(Appearance.animCard == 1)
             .clip(shape)
             .background(fillColor, shape)
             .border(0.5.dp, borderColor, shape)
@@ -68,6 +70,7 @@ fun GlassSurface(
 
     Box(
         modifier = modifier
+            .cardEnter(Appearance.animCard == 1)
             .clip(shape)
             .background(fillColor, shape)
             .border(0.5.dp, borderColor, shape)
@@ -93,6 +96,7 @@ fun GlassSettingsCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .cardEnter(Appearance.animCard == 1)
             .clip(shape)
             .background(fillColor, shape)
             .border(0.5.dp, borderColor, shape)

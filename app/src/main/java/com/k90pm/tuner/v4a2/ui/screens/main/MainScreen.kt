@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import com.k90pm.tuner.ui.theme.cardEnter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
@@ -422,7 +423,7 @@ private fun EffectList(
         label = "effectListAlpha",
     )
     val interactive = state.masterEnable
-    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 96.dp
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 78.dp
     LazyColumn(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
         contentPadding = PaddingValues(bottom = navBottom),
@@ -462,5 +463,11 @@ private fun InteractiveWrapper(
     enabled: Boolean,
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalInteractionEnabled provides enabled) { content() }
+    androidx.compose.foundation.layout.Box(
+        androidx.compose.ui.Modifier.cardEnter(
+            com.k90pm.tuner.ui.theme.Appearance.animCard == 1
+        )
+    ) {
+        CompositionLocalProvider(LocalInteractionEnabled provides enabled) { content() }
+    }
 }
