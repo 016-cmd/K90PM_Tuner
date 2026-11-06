@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -432,30 +433,37 @@ private fun EffectList(
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterToggleCard(state = state, onToggle = { viewModel.setMasterEnabled(!state.masterEnable) }, onResetDefaults = onResetDefaults) }
         item { InteractiveWrapper(enabled = interactive) { MasterLimiterRows(state, viewModel) } }
+        item { GroupTitle("增益 · 音量") }
         item { InteractiveWrapper(enabled = interactive) { PlaybackGainSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { LUFSTargetingSection(state, viewModel) } }
+        item { GroupTitle("低音") }
+        item { InteractiveWrapper(enabled = interactive) { PsychoacousticBassSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ViperBassSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { ViperBassMonoSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { SpectrumExtensionSection(state, viewModel) } }
+        item { GroupTitle("均衡") }
+        item { InteractiveWrapper(enabled = interactive) { EqualizerSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DdcSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DynamicEqSection(state, viewModel) } }
+        item { GroupTitle("动态") }
         item { InteractiveWrapper(enabled = interactive) { MultibandCompressorSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { FetCompressorSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { DdcSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { SpectrumExtensionSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { EqualizerSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { DynamicEqSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { DynamicSystemSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { AuditoryProtectionSection(state, viewModel) } }
+        item { GroupTitle("声场") }
         item { InteractiveWrapper(enabled = interactive) { ConvolverSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { FieldSurroundSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { DiffSurroundSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { StereoImagerSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { HeadphoneSurroundSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { ReverberationSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { DynamicSystemSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { TubeSimulatorSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { PsychoacousticBassSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { ViperBassSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { ViperBassMonoSection(state, viewModel) } }
+        item { GroupTitle("人声 · 音质") }
         item { InteractiveWrapper(enabled = interactive) { ViperClaritySection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { AuditoryProtectionSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { TubeSimulatorSection(state, viewModel) } }
         item { InteractiveWrapper(enabled = interactive) { AnalogXSection(state, viewModel) } }
+        item { GroupTitle("其它") }
         item { InteractiveWrapper(enabled = interactive) { SpeakerOptSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { CopyrightSection() } }
+        item { InteractiveWrapper(enabled = interactive) { CopyrightSection(state, viewModel) } }
     }
 }
 
@@ -471,4 +479,16 @@ private fun InteractiveWrapper(
     ) {
         CompositionLocalProvider(LocalInteractionEnabled provides enabled) { content() }
     }
+}
+
+/** 音效页分组标题：卡片太多时给一串大卡分区，让长列表有结构 */
+@Composable
+private fun GroupTitle(text: String) {
+    androidx.compose.material3.Text(
+        text = text,
+        fontSize = 11.sp,
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f),
+        modifier = androidx.compose.ui.Modifier.padding(start = 20.dp, top = 14.dp, bottom = 2.dp),
+    )
 }
