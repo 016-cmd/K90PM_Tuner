@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -33,6 +33,7 @@ import com.k90pm.tuner.ui.theme.Appearance
 import com.k90pm.tuner.ui.theme.subInk
 import java.io.File
 import java.io.FileOutputStream
+import com.k90pm.tuner.ui.theme.jellyPress
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -317,7 +318,7 @@ private fun ThemeOption(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -351,7 +352,7 @@ private fun SettingsRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

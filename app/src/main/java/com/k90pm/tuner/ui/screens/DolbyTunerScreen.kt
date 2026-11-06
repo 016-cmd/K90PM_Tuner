@@ -5,7 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.k90pm.tuner.service.DolbyTunerManager
 import com.k90pm.tuner.service.DolbyTunerManager.DolbyParams
 import kotlinx.coroutines.launch
+import com.k90pm.tuner.ui.theme.jellyPress
 
 private val Accent: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
 private val AccentDim: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
@@ -534,7 +535,7 @@ fun DolbyTunerScreen(activity: Activity) {
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(AccentDim.copy(alpha = 0.2f))
-                                    .then(Modifier.clickable { showAdvanced = !showAdvanced })
+                                    .then(Modifier.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable { showAdvanced = !showAdvanced })
                                     .padding(horizontal = 12.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -735,7 +736,7 @@ Text(
                     }
             } }
             item { if (ok) {
-                    Spacer(Modifier.height(80.dp))
+                    Spacer(Modifier.height(0.dp))
             } }
             item { Spacer(Modifier.height(60.dp)) }
         }
@@ -1334,7 +1335,7 @@ private fun ParamDropdown(
         Spacer(Modifier.weight(1f))
         Box(
             Modifier.clip(RoundedCornerShape(6.dp)).background(AccentDim.copy(alpha = 0.35f))
-                .clickable { expanded = true }
+                .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable { expanded = true }
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

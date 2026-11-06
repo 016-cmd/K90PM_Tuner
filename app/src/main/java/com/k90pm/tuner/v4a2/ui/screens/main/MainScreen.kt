@@ -6,7 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -82,6 +82,7 @@ import com.k90pm.tuner.v4a2.ui.theme.master_on_onContainer_dark
 import com.k90pm.tuner.v4a2.ui.theme.master_on_onContainer_light
 import com.k90pm.tuner.v4a2.ui.theme.status_active_green
 import kotlinx.coroutines.delay
+import com.k90pm.tuner.ui.theme.jellyPress
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -390,7 +391,7 @@ private fun MasterToggleCard(
             // 左：总开关（整区可点击切换；去掉 ripple 白块）
             Row(
                 modifier = Modifier
-                    .clickable(
+                    .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = onToggle,

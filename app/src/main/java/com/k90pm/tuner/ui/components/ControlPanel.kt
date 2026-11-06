@@ -2,7 +2,7 @@ package com.k90pm.tuner.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.k90pm.tuner.service.*
 import com.k90pm.tuner.ui.MainViewModel
+import com.k90pm.tuner.ui.theme.jellyPress
 
 /**
  * WSA 控件面板
@@ -170,7 +171,7 @@ private fun ControlItem(
                     GlassSurface(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .then(if (enabled) Modifier.clickable { expanded = true } else Modifier)
+                            .then(if (enabled) Modifier.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable { expanded = true } else Modifier)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),

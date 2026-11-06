@@ -1,6 +1,6 @@
 package com.k90pm.tuner.v4a2.ui.screens.preset
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.k90pm.tuner.R
 import com.k90pm.tuner.v4a2.data.model.Preset
+import com.k90pm.tuner.ui.theme.jellyPress
 
 @Composable
 fun PresetDialog(
@@ -337,7 +338,7 @@ private fun PresetItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onLoad)
+                .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable(onClick = onLoad)
                 .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

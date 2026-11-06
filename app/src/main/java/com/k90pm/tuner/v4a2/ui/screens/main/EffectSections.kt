@@ -10,7 +10,7 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -90,6 +90,7 @@ import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import com.k90pm.tuner.ui.theme.jellyPress
 
 private fun rawToDb(raw: Number): Double = 20.0 * log10(raw.toDouble() / 100.0)
 
@@ -119,7 +120,7 @@ fun EffectSection(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .then(if (toggleOnly) Modifier else Modifier.clickable(enabled = LocalInteractionEnabled.current) { expanded = !expanded })
+                        .then(if (toggleOnly) Modifier else Modifier.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable(enabled = LocalInteractionEnabled.current) { expanded = !expanded })
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -1176,7 +1177,7 @@ fun DynamicEqSection(
                     contentAlignment = Alignment.Center,
                     modifier =
                         Modifier
-                            .clickable {
+                            .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable {
                                 viewModel.addDynamicEqBand()
                                 selectedTab = bandCount
                             }.padding(horizontal = 16.dp, vertical = 12.dp),

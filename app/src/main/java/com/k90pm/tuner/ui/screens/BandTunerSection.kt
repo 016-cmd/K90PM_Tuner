@@ -2,7 +2,7 @@ package com.k90pm.tuner.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,6 +21,7 @@ import com.k90pm.tuner.service.DolbyTunerManager
 import com.k90pm.tuner.service.DolbyTunerManager.BandChannel
 import com.k90pm.tuner.ui.components.BandCurveCanvas
 import kotlinx.coroutines.launch
+import com.k90pm.tuner.ui.theme.jellyPress
 
 private val BAccent: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
 private val BAccentDim: Color get() = com.k90pm.tuner.ui.theme.Appearance.accent
@@ -88,7 +89,7 @@ fun BandTunerSection() {
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .clickable { sectionExpanded = !sectionExpanded }
+                    .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable { sectionExpanded = !sectionExpanded }
                     .padding(horizontal = 4.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -230,7 +231,7 @@ private fun CurveTab(label: String, selected: Boolean, onClick: () -> Unit, modi
     Box(
         modifier.clip(RoundedCornerShape(8.dp))
             .background(if (selected) BAccent else Color.Transparent)
-            .clickable(onClick = onClick)
+            .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable(onClick = onClick)
             .padding(vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -260,7 +261,7 @@ private fun FoldCard(
         Column(Modifier.padding(horizontal = 10.dp, vertical = 4.dp)) {
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                    .clickable { onToggle(!expanded) }
+                    .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable { onToggle(!expanded) }
                     .padding(horizontal = 6.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

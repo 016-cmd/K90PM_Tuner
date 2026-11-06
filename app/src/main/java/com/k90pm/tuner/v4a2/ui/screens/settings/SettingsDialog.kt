@@ -2,7 +2,7 @@ package com.k90pm.tuner.v4a2.ui.screens.settings
 
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.k90pm.tuner.R
 import com.k90pm.tuner.v4a2.ui.screens.main.DriverStatus
 import com.k90pm.tuner.v4a2.ui.theme.status_active_green
+import com.k90pm.tuner.ui.theme.jellyPress
 
 @Composable
 fun SettingsDialog(
@@ -104,7 +105,7 @@ fun SettingsDialog(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable {
+                            .jellyPress(com.k90pm.tuner.ui.theme.Appearance.jelly > 0).clickable {
                                 tapCount.intValue++
                                 if (tapCount.intValue >= 7) {
                                     tapCount.intValue = 0
