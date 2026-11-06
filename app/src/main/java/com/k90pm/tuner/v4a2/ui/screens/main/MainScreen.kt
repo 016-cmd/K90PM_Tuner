@@ -463,7 +463,7 @@ private fun EffectList(
         item { InteractiveWrapper(enabled = interactive) { AnalogXSection(state, viewModel) } }
         item { GroupTitle("其它") }
         item { InteractiveWrapper(enabled = interactive) { SpeakerOptSection(state, viewModel) } }
-        item { InteractiveWrapper(enabled = interactive) { CopyrightSection(state, viewModel) } }
+        item { InteractiveWrapper(enabled = interactive) { CopyrightSection() } }
     }
 }
 
