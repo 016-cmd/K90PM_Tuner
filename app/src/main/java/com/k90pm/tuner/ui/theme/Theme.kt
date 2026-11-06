@@ -201,7 +201,16 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
     @Suppress("UNUSED_EXPRESSION")
     val version = wallpaperVersion
 
-    MaterialTheme(colorScheme = colorScheme, typography = Typography()) {
+    val r = Appearance.radius
+    val shapes = Shapes(
+        extraSmall = androidx.compose.foundation.shape.RoundedCornerShape((r - 12f).coerceAtLeast(6f).dp),
+        small = androidx.compose.foundation.shape.RoundedCornerShape((r - 10f).coerceAtLeast(8f).dp),
+        medium = androidx.compose.foundation.shape.RoundedCornerShape(r.dp),
+        large = androidx.compose.foundation.shape.RoundedCornerShape(r.dp),
+        extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(r.dp)
+    )
+
+    MaterialTheme(colorScheme = colorScheme, typography = Typography(), shapes = shapes) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

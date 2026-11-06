@@ -188,7 +188,8 @@ fun SettingsScreen(
                     onClick = { showLicense = true }
                 )
             }
-        }
+                    Spacer(Modifier.height(96.dp))
+}
     }
     if (showLicense) {
         Dialog(onDismissRequest = { showLicense = false }) {

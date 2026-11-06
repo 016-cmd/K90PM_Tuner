@@ -639,7 +639,8 @@ Text(
                     }
                     Spacer(Modifier.height(80.dp))
                 }
-            }
+                        Spacer(Modifier.height(96.dp))
+}
     }
 
     // ── 保存预设弹窗 ──
