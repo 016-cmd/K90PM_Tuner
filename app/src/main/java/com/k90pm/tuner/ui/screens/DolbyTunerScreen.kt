@@ -735,7 +735,7 @@ Text(
                         }
                     }
             } }
-            item { Spacer(Modifier.height(78.dp)) }
+            item { Spacer(Modifier.height(100.dp)) }
         }
     }
 
