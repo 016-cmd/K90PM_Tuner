@@ -1,6 +1,8 @@
 package com.k90pm.tuner.ui.screens
 
 import android.app.Activity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -86,19 +88,42 @@ fun MainApp(activity: Activity) {
     val backdrop = rememberLayerBackdrop { drawContent() }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        var appShown by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { appShown = true }
+        val appAppear by animateFloatAsState(
+            targetValue = if (appShown) 1f else 0f,
+            animationSpec = tween(360),
+            label = "appAppear"
+        )
+
         HorizontalPager(
             state = pager,
-            modifier = Modifier.fillMaxSize().layerBackdrop(backdrop),
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
+                .graphicsLayer {
+                    alpha = appAppear
+                    translationY = (1f - appAppear) * 24f
+                },
             beyondViewportPageCount = 1
         ) { page ->
             val off = (pager.currentPage - page) + pager.currentPageOffsetFraction
+            // 首次进入该页：淡入 + 上浮
+            var pageShown by remember(page) { mutableStateOf(false) }
+            LaunchedEffect(page) { pageShown = true }
+            val appear by animateFloatAsState(
+                targetValue = if (pageShown) 1f else 0f,
+                animationSpec = tween(if (Appearance.animPage == 1) 420 else 0),
+                label = "pageAppear"
+            )
             Box(
                 Modifier.fillMaxSize().graphicsLayer {
                     val d = abs(off).coerceIn(0f, 1f)
-                    alpha = 1f - d * 0.35f
+                    alpha = (1f - d * 0.35f) * appear
                     val s = 1f - d * 0.05f
                     scaleX = s
                     scaleY = s
+                    translationY = (1f - appear) * 28f
                 }
             ) {
                 when (page) {
@@ -121,17 +146,14 @@ fun MainApp(activity: Activity) {
         BoxWithConstraints(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
                 .padding(horizontal = 32.dp)
-                .padding(
-                    bottom = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding() + 18.dp
-                )
+                .padding(bottom = 16.dp)
                 .fillMaxWidth()
                 .height(62.dp)
-                .clip(RoundedCornerShape(Appearance.radius.dp))
                 .drawBackdrop(
                     backdrop = backdrop,
-                    shape = { RoundedCornerShape(Appearance.radius.dp) },
+                    shape = { RoundedCornerShape(28.dp) },
                     effects = {
                         vibrancy()
                         blur((6 + Appearance.glass * 2).dp.toPx())
@@ -184,7 +206,7 @@ fun MainApp(activity: Activity) {
                         .width(cellW)
                         .fillMaxHeight()
                         .padding(5.dp)
-                        .clip(RoundedCornerShape((Appearance.radius - 6f).coerceAtLeast(10f).dp))
+                        .clip(RoundedCornerShape(24.dp))
                         .background(thumbColor)
                 )
 
