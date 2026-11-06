@@ -102,7 +102,7 @@ fun MainScreen(
                     }
                 }
             } else {
-                ControlPanel(viewModel = viewModel, modifier = Modifier.padding(bottom = 96.dp))
+                ControlPanel(viewModel = viewModel, modifier = Modifier.padding(bottom = 96.dp + com.k90pm.tuner.ui.theme.navBottomInset()))
             }
 
             Spacer(Modifier.height(8.dp))

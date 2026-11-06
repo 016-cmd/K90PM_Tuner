@@ -188,7 +188,7 @@ fun SettingsScreen(
                     onClick = { showLicense = true }
                 )
             }
-                    Spacer(Modifier.height(96.dp))
+                    Spacer(Modifier.height(96.dp + com.k90pm.tuner.ui.theme.navBottomInset()))
 }
     }
     if (showLicense) {

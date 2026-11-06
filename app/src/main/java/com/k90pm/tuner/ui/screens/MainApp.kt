@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
@@ -118,8 +121,11 @@ fun MainApp(activity: Activity) {
         BoxWithConstraints(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(horizontal = 32.dp, vertical = 16.dp)
+                .padding(horizontal = 32.dp)
+                .padding(
+                    bottom = WindowInsets.navigationBars.asPaddingValues()
+                        .calculateBottomPadding() + 18.dp
+                )
                 .fillMaxWidth()
                 .height(62.dp)
                 .clip(RoundedCornerShape(Appearance.radius.dp))
@@ -136,8 +142,8 @@ fun MainApp(activity: Activity) {
                     },
                     onDrawSurface = {
                         drawRect(
-                            if (isDark) Color.Black.copy(alpha = 0.15f)
-                            else Color.White.copy(alpha = 0.12f)
+                            if (isDark) Color.Black.copy(alpha = 0.22f)
+                            else Color.White.copy(alpha = 0.20f)
                         )
                     }
                 )
