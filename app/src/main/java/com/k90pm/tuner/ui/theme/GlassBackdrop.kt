@@ -156,3 +156,45 @@ fun Modifier.glassSurface(radius: Float = Appearance.radius): Modifier {
         }
     }
 }
+
+/**
+ * dock 专用玻璃：与 DolbyTuner 完全同一套自绘实现。
+ * 不参与外观自定义、不采样 backdrop（固定参数），避免用户把 dock 调花。
+ */
+@Composable
+fun Modifier.dockSurface(): Modifier {
+    val cs = MaterialTheme.colorScheme
+    val isDark = cs.background.red * 0.299f + cs.background.green * 0.587f +
+            cs.background.blue * 0.114f < 0.5f
+    val density = LocalDensity.current
+    val strokePx = with(density) { 1.dp.toPx() }
+
+    return this.drawWithCache {
+        onDrawBehind {
+            val w = size.width
+            val h = size.height
+            val corner = CornerRadius(h / 2f, h / 2f)
+            // 固定的悬浮玻璃底
+            drawRoundRect(
+                color = if (isDark) Color.Black.copy(alpha = 0.30f)
+                else Color.White.copy(alpha = 0.42f),
+                cornerRadius = corner
+            )
+            // 顶部高光
+            drawRoundRect(
+                brush = Brush.verticalGradient(
+                    0f to Color.White.copy(alpha = if (isDark) 0.14f else 0.55f),
+                    0.45f to Color.Transparent
+                ),
+                cornerRadius = corner
+            )
+            // 外框
+            drawRoundRect(
+                color = if (isDark) Color.White.copy(alpha = 0.14f)
+                else Color.White.copy(alpha = 0.60f),
+                cornerRadius = corner,
+                style = Stroke(strokePx)
+            )
+        }
+    }
+}

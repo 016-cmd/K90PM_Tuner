@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -45,6 +46,7 @@ import com.k90pm.tuner.music.MusicApi
 import com.k90pm.tuner.music.MusicDatabase
 import com.k90pm.tuner.ui.theme.Appearance
 import com.k90pm.tuner.ui.theme.GlassBackdrop
+import com.k90pm.tuner.ui.theme.dockSurface
 import com.k90pm.tuner.ui.theme.jellyPress
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -173,31 +175,20 @@ fun MainApp(activity: Activity) {
                     alpha = p2
                     translationY = (1f - p2) * 64.dp.toPx()
                 }
-                .drawBackdrop(
-                    backdrop = GlassBackdrop.instance ?: backdrop,
-                    shape = { RoundedCornerShape(28.dp) },
-                    effects = {
-                        vibrancy()
-                        blur((6 + Appearance.glass * 2).dp.toPx())
-                        lens(
-                            (8 + Appearance.glass * 2).dp.toPx(),
-                            (16 + Appearance.glass * 3).dp.toPx()
-                        )
-                    },
-                    onDrawSurface = {
-                        drawRect(
-                            if (isDark) Color.Black.copy(alpha = 0.22f)
-                            else Color.White.copy(alpha = 0.20f)
-                        )
-                    }
-                )
+                .clip(RoundedCornerShape(28.dp))
+                .dockSurface()
         ) {
             val cellW = maxWidth / tabs.size
             val pagePos = pager.currentPage + pager.currentPageOffsetFraction
             val thumbX = cellW * pagePos
+            // 与 DolbyTuner 一致：胶囊高 54dp、圆角 27dp、深色白 14% / 浅色黑 7%
+            val thumbW = (cellW - 2.dp).coerceAtLeast(24.dp)
             val thumbColor =
-                if (isDark) Color.White.copy(alpha = 0.16f)
-                else Color.White.copy(alpha = 0.58f)
+                if (isDark) Color.White.copy(alpha = 0.14f)
+                else Color.Black.copy(alpha = 0.07f)
+            val thumbBorder =
+                if (isDark) Color.White.copy(alpha = 0.14f)
+                else Color.Black.copy(alpha = 0.05f)
 
             Box(
                 Modifier
@@ -221,19 +212,24 @@ fun MainApp(activity: Activity) {
                         )
                     }
             ) {
-                // thumb：跟手移动，宽度正好一格
+                // thumb：跟手移动，宽度 = 一格 - 2dp（与杜比同一尺寸）
                 Box(
                     Modifier
-                        .offset { IntOffset(thumbX.roundToPx(), 0) }
-                        .width(cellW)
-                        .fillMaxHeight()
-                        .padding(5.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .offset {
+                            IntOffset(
+                                (10.dp.toPx() + thumbX + (cellW - thumbW) / 2f).roundToInt(),
+                                ((62.dp - 54.dp) / 2f).toPx().roundToInt()
+                            )
+                        }
+                        .width(thumbW)
+                        .height(54.dp)
+                        .clip(RoundedCornerShape(27.dp))
                         .background(thumbColor)
+                        .border(1.dp, thumbBorder, RoundedCornerShape(27.dp))
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     tabs.forEachIndexed { index, tab ->
