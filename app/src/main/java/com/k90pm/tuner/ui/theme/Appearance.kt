@@ -94,35 +94,52 @@ object Appearance {
     // ── 存取 ──
     fun load(ctx: Context) {
         val s = sp(ctx)
-        enabled = s.getBoolean("ap_enabled", true)
-        refraction = s.getInt("ap_refraction", 60).coerceIn(0, 100)
-        edgeWidth = s.getInt("ap_edge_width", 1).coerceIn(0, 2)
-        blurRadius = s.getInt("ap_blur_radius", 16).coerceIn(0, 40)
-        vibrancy = s.getInt("ap_vibrancy", 55).coerceIn(0, 100)
-        dispersion = s.getInt("ap_dispersion", 35).coerceIn(0, 100)
-        lightAngle = s.getInt("ap_light_angle", 315).coerceIn(0, 360)
-        volumeLight = s.getInt("ap_volume_light", 2).coerceIn(0, 3)
-        tintMode = s.getInt("ap_tint", 0).coerceIn(0, 2)
-        radius = s.getFloat("ap_radius", 26f).coerceIn(12f, 34f)
-        thickness = s.getInt("ap_thickness", 1).coerceIn(0, 2)
-        jelly = s.getInt("ap_jelly", 70).coerceIn(0, 100)
-        spring = s.getInt("ap_spring", 1).coerceIn(0, 2)
-        crossLight = s.getBoolean("ap_cross_light", true)
-        perfMode = s.getInt("ap_perf_mode", 0).coerceIn(0, 2)
-        cardLiquid = s.getBoolean("ap_card_liquid", true)
-        animPage = if (s.getBoolean("ap_anim_page", true)) 1 else 0
-        animCard = if (s.getBoolean("ap_anim_card", true)) 1 else 0
-        animLaunch = if (s.getBoolean("ap_anim_launch", true)) 1 else 0
-        wallpaperKind = s.getInt("wp_kind", 1).coerceIn(0, 3)
-        wallpaperDim = s.getInt("ap_wpdim", 0).coerceIn(0, 60)
-        readLevel = s.getInt("ap_read", 0).coerceIn(0, 1)
-        if (s.contains("pal_accent")) accent = Color(s.getInt("pal_accent", 0xFF22C55E.toInt()))
-        if (s.contains("pal_secondary")) secondary = Color(s.getInt("pal_secondary", 0xFF3B82F6.toInt()))
-        if (s.contains("pal_tertiary")) tertiary = Color(s.getInt("pal_tertiary", 0xFFA855F7.toInt()))
-        if (s.contains("pal_bass")) colorBass = Color(s.getInt("pal_bass", 0xFFF97316.toInt()))
-        if (s.contains("pal_vocal")) colorVocal = Color(s.getInt("pal_vocal", 0xFF06B6D4.toInt()))
-        if (s.contains("pal_dyn")) colorDyn = Color(s.getInt("pal_dyn", 0xFFA855F7.toInt()))
-        if (s.contains("pal_limit")) colorLimit = Color(s.getInt("pal_limit", 0xFFF59E0B.toInt()))
+        // 旧版本这里存的是 Int（0/1），直接 getBoolean 会 ClassCastException → 闪退
+        fun b(k: String, d: Boolean): Boolean = try {
+            s.getBoolean(k, d)
+        } catch (_: ClassCastException) {
+            try { s.getInt(k, if (d) 1 else 0) != 0 } catch (_: Exception) { d }
+        }
+        fun i(k: String, d: Int): Int = try {
+            s.getInt(k, d)
+        } catch (_: ClassCastException) {
+            try { if (s.getBoolean(k, d != 0)) 1 else 0 } catch (_: Exception) { d }
+        }
+        fun f(k: String, d: Float): Float = try {
+            s.getFloat(k, d)
+        } catch (_: ClassCastException) {
+            try { s.getInt(k, d.toInt()).toFloat() } catch (_: Exception) { d }
+        }
+
+        enabled = b("ap_enabled", true)
+        refraction = i("ap_refraction", 60).coerceIn(0, 100)
+        edgeWidth = i("ap_edge_width", 1).coerceIn(0, 2)
+        blurRadius = i("ap_blur_radius", 16).coerceIn(0, 40)
+        vibrancy = i("ap_vibrancy", 55).coerceIn(0, 100)
+        dispersion = i("ap_dispersion", 35).coerceIn(0, 100)
+        lightAngle = i("ap_light_angle", 315).coerceIn(0, 360)
+        volumeLight = i("ap_volume_light", 2).coerceIn(0, 3)
+        tintMode = i("ap_tint", 0).coerceIn(0, 2)
+        radius = f("ap_radius", 26f).coerceIn(12f, 34f)
+        thickness = i("ap_thickness", 1).coerceIn(0, 2)
+        jelly = i("ap_jelly", 70).coerceIn(0, 100)
+        spring = i("ap_spring", 1).coerceIn(0, 2)
+        crossLight = b("ap_cross_light", true)
+        perfMode = i("ap_perf_mode", 0).coerceIn(0, 2)
+        cardLiquid = b("ap_card_liquid", true)
+        animPage = if (b("ap_anim_page", true)) 1 else 0
+        animCard = if (b("ap_anim_card", true)) 1 else 0
+        animLaunch = if (b("ap_anim_launch", true)) 1 else 0
+        wallpaperKind = i("wp_kind", 1).coerceIn(0, 3)
+        wallpaperDim = i("ap_wpdim", 0).coerceIn(0, 60)
+        readLevel = i("ap_read", 0).coerceIn(0, 1)
+        if (s.contains("pal_accent")) accent = Color(i("pal_accent", 0xFF22C55E.toInt()))
+        if (s.contains("pal_secondary")) secondary = Color(i("pal_secondary", 0xFF3B82F6.toInt()))
+        if (s.contains("pal_tertiary")) tertiary = Color(i("pal_tertiary", 0xFFA855F7.toInt()))
+        if (s.contains("pal_bass")) colorBass = Color(i("pal_bass", 0xFFF97316.toInt()))
+        if (s.contains("pal_vocal")) colorVocal = Color(i("pal_vocal", 0xFF06B6D4.toInt()))
+        if (s.contains("pal_dyn")) colorDyn = Color(i("pal_dyn", 0xFFA855F7.toInt()))
+        if (s.contains("pal_limit")) colorLimit = Color(i("pal_limit", 0xFFF59E0B.toInt()))
     }
 
     private fun putI(ctx: Context, key: String, v: Int, set: (Int) -> Unit) {
