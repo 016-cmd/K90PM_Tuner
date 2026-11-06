@@ -217,8 +217,8 @@ fun MainApp(activity: Activity) {
                     Modifier
                         .offset {
                             IntOffset(
-                                (10.dp.toPx() + thumbX + (cellW - thumbW) / 2f).roundToInt(),
-                                ((62.dp - 54.dp) / 2f).toPx().roundToInt()
+                                (10.dp + thumbX + (cellW - thumbW) / 2f).roundToPx(),
+                                ((62.dp - 54.dp) / 2f).roundToPx()
                             )
                         }
                         .width(thumbW)
