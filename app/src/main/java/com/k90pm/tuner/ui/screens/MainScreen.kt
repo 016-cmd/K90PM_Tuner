@@ -103,7 +103,7 @@ fun MainScreen(
                     }
                 }
             } else {
-                ControlPanel(viewModel = viewModel, modifier = Modifier.padding(bottom = 70.dp))
+                ControlPanel(viewModel = viewModel, modifier = Modifier.padding(bottom = 60.dp))
             }
 
             Spacer(Modifier.height(8.dp))

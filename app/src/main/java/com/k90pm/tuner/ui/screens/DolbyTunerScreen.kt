@@ -649,7 +649,7 @@ Text(
                     }
                     Spacer(Modifier.height(80.dp))
             } }
-            item { Spacer(Modifier.height(70.dp)) }
+            item { Spacer(Modifier.height(60.dp)) }
         }
     }
 
