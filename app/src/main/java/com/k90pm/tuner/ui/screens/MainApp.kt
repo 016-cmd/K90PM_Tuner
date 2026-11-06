@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import com.k90pm.tuner.ui.theme.Appearance
 import com.k90pm.tuner.ui.theme.jellyPress
@@ -145,7 +146,7 @@ fun MainApp(activity: Activity) {
             val n = tabs.size
             val cellW = maxWidth / n
             var dragX by remember { mutableFloatStateOf(0f) }
-            val thumbX = cellW * currentTab + dragX
+            val thumbX = cellW * currentTab + dragX.dp
             val thumbColor =
                 if (isDark) Color.White.copy(alpha = 0.16f)
                 else Color.White.copy(alpha = 0.60f)

@@ -178,9 +178,6 @@ fun AppearanceSection(
     }
 }
 
-private fun wallpaperKind: Int =
-    if (WallpaperState.original == null) 0 else 0
-
 private fun nearest(v: Int, arr: IntArray): Int {
     var best = 0
     var bd = Int.MAX_VALUE

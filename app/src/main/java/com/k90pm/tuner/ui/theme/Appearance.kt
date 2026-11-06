@@ -40,16 +40,29 @@ object Appearance {
     /** 卡片圆角 12–34dp */
     var radius by mutableFloatStateOf(26f); private set
     /** 果冻按压 0 关 1 开 */
-    var jelly by mutableIntStateOf(1); private set
+    /** 果冻按压强度 0 / 40 / 70 / 100 */
+    var jelly by mutableIntStateOf(70); private set
     /** 可读性 0 默认 / 1 增强 */
     var readLevel by mutableIntStateOf(0); private set
+    /** 卡片底色 0 自动 / 1 纯白 / 2 纯黑 */
+    var tintMode by mutableIntStateOf(0); private set
+    /** 壁纸压暗 0 / 20 / 40 / 60 */
+    var wallpaperDim by mutableIntStateOf(0); private set
+    /** 页面切换动画 */
+    var animPage by mutableIntStateOf(1); private set
+    /** 卡片入场动画 */
+    var animCard by mutableIntStateOf(1); private set
 
     fun load(ctx: Context) {
         val p = sp(ctx)
         glass = p.getInt("ap_glass", 1)
         radius = p.getFloat("ap_radius", 26f)
-        jelly = p.getInt("ap_jelly", 1)
+        jelly = p.getInt("ap_jelly", 70)
         readLevel = p.getInt("ap_read", 0)
+        tintMode = p.getInt("ap_tint", 0)
+        wallpaperDim = p.getInt("ap_wpdim", 0)
+        animPage = p.getInt("ap_anim_page", 1)
+        animCard = p.getInt("ap_anim_card", 1)
     }
 
     fun setGlass(ctx: Context, v: Int) {
@@ -60,9 +73,27 @@ object Appearance {
         radius = v; sp(ctx).edit().putFloat("ap_radius", v).apply()
     }
 
-    fun setJelly(ctx: Context, v: Boolean) {
-        jelly = if (v) 1 else 0
-        sp(ctx).edit().putInt("ap_jelly", jelly).apply()
+    fun setJelly(ctx: Context, strength: Int) {
+        jelly = strength
+        sp(ctx).edit().putInt("ap_jelly", strength).apply()
+    }
+
+    fun setTintMode(ctx: Context, v: Int) {
+        tintMode = v; sp(ctx).edit().putInt("ap_tint", v).apply()
+    }
+
+    fun setWallpaperDim(ctx: Context, v: Int) {
+        wallpaperDim = v; sp(ctx).edit().putInt("ap_wpdim", v).apply()
+    }
+
+    fun setAnimPage(ctx: Context, on: Boolean) {
+        animPage = if (on) 1 else 0
+        sp(ctx).edit().putInt("ap_anim_page", animPage).apply()
+    }
+
+    fun setAnimCard(ctx: Context, on: Boolean) {
+        animCard = if (on) 1 else 0
+        sp(ctx).edit().putInt("ap_anim_card", animCard).apply()
     }
 
     fun setReadLevel(ctx: Context, v: Int) {
