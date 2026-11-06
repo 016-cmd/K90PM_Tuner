@@ -44,6 +44,7 @@ import com.k90pm.tuner.music.FavoriteSong
 import com.k90pm.tuner.music.MusicApi
 import com.k90pm.tuner.music.MusicDatabase
 import com.k90pm.tuner.ui.theme.Appearance
+import com.k90pm.tuner.ui.theme.GlassBackdrop
 import com.k90pm.tuner.ui.theme.jellyPress
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -173,7 +174,7 @@ fun MainApp(activity: Activity) {
                     translationY = (1f - p2) * 64.dp.toPx()
                 }
                 .drawBackdrop(
-                    backdrop = backdrop,
+                    backdrop = GlassBackdrop.instance ?: backdrop,
                     shape = { RoundedCornerShape(28.dp) },
                     effects = {
                         vibrancy()

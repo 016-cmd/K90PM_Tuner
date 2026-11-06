@@ -189,7 +189,7 @@ fun SettingsScreen(
                     onClick = { showLicense = true }
                 )
             }
-                    Spacer(Modifier.height(78.dp))
+                    Spacer(Modifier.height(70.dp))
 }
     }
     if (showLicense) {

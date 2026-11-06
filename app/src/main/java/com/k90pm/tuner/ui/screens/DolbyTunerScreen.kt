@@ -641,7 +641,7 @@ Text(
                     }
                     Spacer(Modifier.height(80.dp))
                 }
-                        Spacer(Modifier.height(78.dp))
+                        Spacer(Modifier.height(70.dp))
 }
     }
 

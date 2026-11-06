@@ -109,15 +109,10 @@ fun EffectSection(
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
 
-    Card(
-        modifier =
-            modifier
+    com.k90pm.tuner.ui.components.GlassSurface(
+        modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            ),
     ) {
         Column {
             Row(
@@ -186,9 +181,8 @@ fun MasterLimiterRows(
     val left = 50 - channelPan / 2
     val right = 50 + channelPan / 2
     // 三个拉条（输出增益/音量平衡/阈值限制）包在一个卡片里，避免直接透到壁纸
-    Card(
+    com.k90pm.tuner.ui.components.GlassSurface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column {
             Row(
@@ -2346,9 +2340,8 @@ fun CopyrightSection() {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
     }
-    Card(
+    com.k90pm.tuner.ui.components.GlassSurface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

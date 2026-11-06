@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import com.kyant.backdrop.backdrops.layerBackdrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -224,23 +225,28 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
         ) {
             @Suppress("UNUSED_EXPRESSION")
             version
+            val glassBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop { drawContent() }
             val wallpaperBitmap = WallpaperState.original
-            if (wallpaperBitmap != null) {
-                Image(
-                    bitmap = wallpaperBitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+            // 壁纸层单独放进 backdrop：卡片是这层之上的内容，不会采样到自己
+            Box(Modifier.fillMaxSize().layerBackdrop(glassBackdrop)) {
+                if (wallpaperBitmap != null) {
+                    Image(
+                        bitmap = wallpaperBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                val dim = Appearance.wallpaperDim
+                if (dim > 0) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = dim / 100f * 0.75f))
+                    )
+                }
             }
-            val dim = Appearance.wallpaperDim
-            if (dim > 0) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = dim / 100f * 0.75f))
-                )
-            }
+            GlassBackdrop.instance = glassBackdrop
             content()
         }
     }
