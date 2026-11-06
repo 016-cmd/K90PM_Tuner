@@ -219,6 +219,14 @@ fun K90TunerTheme(content: @Composable () -> Unit) {
                     contentScale = ContentScale.Crop
                 )
             }
+            val dim = Appearance.wallpaperDim
+            if (dim > 0) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = dim / 100f * 0.75f))
+                )
+            }
             content()
         }
     }

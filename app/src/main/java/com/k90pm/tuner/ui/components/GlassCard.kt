@@ -32,8 +32,7 @@ fun GlassCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(Appearance.radius.dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = Appearance.cardAlphaDark)
-    else Color.White.copy(alpha = Appearance.cardAlphaLight)
+    val fillColor = glassFill(0f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.06f)
@@ -62,8 +61,7 @@ fun GlassSurface(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape(Appearance.radius.dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = Appearance.cardAlphaDark)
-    else Color.White.copy(alpha = Appearance.cardAlphaLight)
+    val fillColor = glassFill(0f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.06f)
     else Color.Black.copy(alpha = 0.06f)
@@ -87,8 +85,7 @@ fun GlassSettingsCard(
     val isDark = colors.background.red * 0.299f + colors.background.green * 0.587f + colors.background.blue * 0.114f < 0.5f
     val shape = RoundedCornerShape((Appearance.radius - 8f).coerceAtLeast(10f).dp)
 
-    val fillColor = if (isDark) Color.Black.copy(alpha = (Appearance.cardAlphaDark + 0.06f).coerceAtMost(0.92f))
-    else Color.White.copy(alpha = (Appearance.cardAlphaLight + 0.04f).coerceAtMost(0.97f))
+    val fillColor = glassFill(0.05f)
 
     val borderColor = if (isDark) Color.White.copy(alpha = 0.08f)
     else Color.Black.copy(alpha = 0.08f)
@@ -105,5 +102,17 @@ fun GlassSettingsCard(
         ) {
             content()
         }
+    }
+}
+/** 卡片底色：自动跟深浅色；纯白 / 纯黑由外观设置强制 */
+@androidx.compose.runtime.Composable
+private fun glassFill(extra: Float): Color {
+    val cs = MaterialTheme.colorScheme
+    val isDark = cs.background.red * 0.299f + cs.background.green * 0.587f + cs.background.blue * 0.114f < 0.5f
+    return when (Appearance.tintMode) {
+        1 -> Color.White.copy(alpha = (Appearance.cardAlphaLight + extra).coerceAtMost(0.97f))
+        2 -> Color.Black.copy(alpha = (Appearance.cardAlphaDark + extra).coerceAtMost(0.95f))
+        else -> if (isDark) Color.Black.copy(alpha = (Appearance.cardAlphaDark + extra).coerceAtMost(0.95f))
+        else Color.White.copy(alpha = (Appearance.cardAlphaLight + extra).coerceAtMost(0.97f))
     }
 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.k90pm.tuner.ui.components.GlassSettingsCard
+import com.k90pm.tuner.ui.components.AppearanceSection
 import com.k90pm.tuner.ui.theme.ThemeMode
 import com.k90pm.tuner.ui.theme.ThemePrefs
 import com.k90pm.tuner.ui.theme.Appearance
@@ -142,98 +143,30 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── 背景 ──
-            SectionHeader("背景")
+            // ── 外观与个性化 ──
+            SectionHeader("外观")
             Spacer(Modifier.height(6.dp))
 
-            GlassSettingsCard {
-                listOf(1, 2, 3).forEach { k ->
-                    SettingsRow(
-                        icon = Icons.Rounded.Wallpaper,
-                        label = Appearance.builtinName(k),
-                        subtitle = if (wallpaperUri == null && wallpaperKind == k) "使用中" else null,
-                        onClick = {
-                            ThemePrefs.setWallpaperUri(ctx, null)
-                            ThemePrefs.setWallpaperKind(ctx, k)
-                            File(ctx.filesDir, "windowBg.jpg").delete()
-                            activity.recreate()
-                        }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                }
-                SettingsRow(
-                    icon = Icons.Rounded.Wallpaper,
-                    label = "自定义壁纸",
-                    subtitle = if (wallpaperUri != null) "已设置" else "未设置",
-                    onClick = { wallpaperPicker.launch("image/*") }
-                )
-                if (wallpaperUri != null) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    SettingsRow(
-                        icon = Icons.Rounded.Delete,
-                        label = "移除壁纸",
-                        subtitle = null,
-                        onClick = {
-                            ThemePrefs.setWallpaperUri(ctx, null)
-                            // 删除 Scene 同款壁纸文件
-                            File(ctx.filesDir, "windowBg.jpg").delete()
-                            activity.recreate()
-                        }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // ── 显示 ──
-            SectionHeader("显示")
-            Spacer(Modifier.height(6.dp))
-
-            GlassSettingsCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("增强文字可读性", fontSize = 14.sp)
-                        Text(
-                            if (readLevel >= 1) "小字为满不透明纯黑 / 纯白"
-                            else "小字跟随主题，透明卡片上略淡",
-                            fontSize = 11.sp, color = subInk()
-                        )
+            AppearanceSection(
+                onPickWallpaper = { wallpaperPicker.launch("image/*") },
+                onClearWallpaper = {
+                    ThemePrefs.setWallpaperUri(ctx, null)
+                    File(ctx.filesDir, "windowBg.jpg").delete()
+                    activity.recreate()
+                },
+                hasLocalWallpaper = wallpaperUri != null,
+                wallpaperKind = if (wallpaperUri != null) 0 else wallpaperKind,
+                onWallpaperKind = { k ->
+                    if (k == 0 && wallpaperUri == null) {
+                        wallpaperPicker.launch("image/*")
+                    } else {
+                        ThemePrefs.setWallpaperUri(ctx, null)
+                        ThemePrefs.setWallpaperKind(ctx, k)
+                        File(ctx.filesDir, "windowBg.jpg").delete()
+                        activity.recreate()
                     }
-                    androidx.compose.material3.Switch(
-                        checked = readLevel >= 1,
-                        onCheckedChange = { on ->
-                            readLevel = if (on) 1 else 0
-                            Appearance.setReadLevel(ctx, readLevel)
-                            activity.recreate()
-                        }
-                    )
                 }
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-                    Text("卡片圆角 ${cardRadius.toInt()} dp", fontSize = 14.sp)
-                    androidx.compose.material3.Slider(
-                        value = cardRadius,
-                        onValueChange = {
-                            cardRadius = it
-                            Appearance.setRadius(ctx, it)
-                        },
-                        onValueChangeFinished = { activity.recreate() },
-                        valueRange = 12f..34f
-                    )
-                }
-            }
+            )
 
             Spacer(Modifier.height(16.dp))
 

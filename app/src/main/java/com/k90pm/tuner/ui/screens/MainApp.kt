@@ -11,6 +11,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -19,6 +20,9 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.IntOffset
+import com.k90pm.tuner.ui.theme.Appearance
+import com.k90pm.tuner.ui.theme.jellyPress
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,62 +110,106 @@ fun MainApp(activity: Activity) {
                 3 -> com.k90pm.tuner.v4a2.ui.V4AScreen()
             }
         }
-
-        // 官方示例:drawBackdrop 底部栏（与 layerBackdrop 同级,不嵌套）
-        Box(
+        // 底部液态玻璃 Dock：thumb 可拖动，拖到哪一格就切哪一页
+        BoxWithConstraints(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 32.dp, vertical = 16.dp)
-                .height(58.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .fillMaxWidth()
+                .height(62.dp)
                 .drawBackdrop(
                     backdrop = backdrop,
-                    shape = { RoundedCornerShape(28.dp) },
+                    shape = { RoundedCornerShape(Appearance.radius.dp) },
                     effects = {
                         vibrancy()
-                        blur(6.dp.toPx())
-                        lens(10.dp.toPx(), 18.dp.toPx())
+                        blur((6 + Appearance.glass * 2).dp.toPx())
+                        lens(
+                            (8 + Appearance.glass * 2).dp.toPx(),
+                            (16 + Appearance.glass * 3).dp.toPx()
+                        )
                     },
                     onDrawSurface = {
-                        drawRect(if (isDark) Color.Black.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.12f))
+                        drawRect(
+                            if (isDark) Color.Black.copy(alpha = 0.15f)
+                            else Color.White.copy(alpha = 0.12f)
+                        )
                     }
                 )
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val tabs = listOf(
-                    DockTab("主页", Icons.Default.Home),
-                    DockTab("播放器", Icons.Default.MusicNote),
-                    DockTab("调音台", Icons.Default.Tune),
-                    DockTab("音效", Icons.Default.Equalizer)
-                )
-                tabs.forEachIndexed { index, tab ->
-                    val selected = currentTab == index
-                    val tabColor = if (selected) colors.primary
-                                   else colors.onSurfaceVariant.copy(alpha = if (isDark) 0.5f else 0.6f)
+            val tabs = listOf(
+                DockTab("主页", Icons.Default.Home),
+                DockTab("播放器", Icons.Default.MusicNote),
+                DockTab("调音台", Icons.Default.Tune),
+                DockTab("音效", Icons.Default.Equalizer)
+            )
+            val n = tabs.size
+            val cellW = maxWidth / n
+            var dragX by remember { mutableFloatStateOf(0f) }
+            val thumbX = cellW * currentTab + dragX
+            val thumbColor =
+                if (isDark) Color.White.copy(alpha = 0.16f)
+                else Color.White.copy(alpha = 0.60f)
 
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
-                            .then(
-                                if (selected) Modifier.background(
-                                    if (isDark) Color.White.copy(alpha = 0.12f)
-                                    else Color.Black.copy(alpha = 0.05f),
-                                    RoundedCornerShape(14.dp)
-                                ) else Modifier
+            Box(Modifier.fillMaxSize()) {
+                // 选中胶囊（thumb）
+                Box(
+                    Modifier
+                        .offset { IntOffset(thumbX.roundToPx(), 0) }
+                        .width(cellW)
+                        .fillMaxHeight()
+                        .padding(5.dp)
+                        .clip(RoundedCornerShape((Appearance.radius - 6f).coerceAtLeast(10f).dp))
+                        .background(thumbColor)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(n, cellW) {
+                            detectHorizontalDragGestures(
+                                onDragStart = { dragX = 0f },
+                                onDragEnd = {
+                                    val cw = cellW.toPx().coerceAtLeast(1f)
+                                    val target = ((currentTab * cw + dragX + cw / 2f) / cw)
+                                        .toInt().coerceIn(0, n - 1)
+                                    dragX = 0f
+                                    switchTab(target)
+                                },
+                                onDragCancel = { dragX = 0f },
+                                onHorizontalDrag = { _, delta ->
+                                    val cw = cellW.toPx()
+                                    val minX = -currentTab * cw
+                                    val maxX = (n - 1 - currentTab) * cw
+                                    dragX = (dragX + delta).coerceIn(minX, maxX)
+                                }
                             )
-                            .clickable { switchTab(index) }
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(tab.icon, contentDescription = tab.label, modifier = Modifier.size(22.dp), tint = tabColor)
-                        Spacer(modifier = Modifier.height(1.dp))
-                        Text(tab.label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp), color = tabColor)
+                        },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        val selected = currentTab == index
+                        val tabColor = if (selected) colors.primary
+                        else colors.onSurfaceVariant.copy(alpha = if (isDark) 0.6f else 0.72f)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .jellyPress(Appearance.jelly > 0)
+                                .clickable { switchTab(index) }
+                        ) {
+                            Icon(
+                                tab.icon, contentDescription = tab.label,
+                                modifier = Modifier.size(21.dp), tint = tabColor
+                            )
+                            Spacer(modifier = Modifier.height(1.dp))
+                            Text(
+                                tab.label,
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = tabColor
+                            )
+                        }
                     }
                 }
             }
