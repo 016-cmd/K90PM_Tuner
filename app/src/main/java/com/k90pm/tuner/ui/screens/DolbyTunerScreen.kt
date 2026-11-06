@@ -735,10 +735,7 @@ Text(
                         }
                     }
             } }
-            item { if (ok) {
-                    Spacer(Modifier.height(0.dp))
-            } }
-            item { Spacer(Modifier.height(60.dp)) }
+            item { Spacer(Modifier.height(78.dp)) }
         }
     }
 
