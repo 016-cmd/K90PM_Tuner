@@ -554,11 +554,11 @@ object DolbyTunerManager {
             modified = applyIfDirty("virtualizer-enable", modified) { replaceInSpeaker(it, "virtualizer-enable", boolToXml(p.virtualizerEnable)) }
             modified = applyIfDirty("virtualizer-start-band", modified) { replaceInSpeaker(it, "virtualizer-start-band", p.virtualizerStartBand.toString()) }
             modified = applyIfDirty("mi-surround-compressor-steering-enable", modified) { replaceInSpeaker(it, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable)) }
-            modified = applyIfDirty("calibration-boost", modified) { replaceInSpeaker(it, "calibration-boost", p.calibrationBoost.toString()) }
+            modified = applyIfDirty("calibration-boost", modified) { replaceInSpeakerEndpoints(it, "calibration-boost", p.calibrationBoost.toString()) }
             // ── IEQ 增强（APP 只切换外放 speaker 的开关,不碰耳机 headphone 端点）──
             modified = applyIfDirty("ieq-enable", modified) { replaceInSpeakerEndpoints(it, "ieq-enable", boolToXml(p.ieqEnhanceEnable)) }
             // volmax-boost 每个 profile 各一份：必须改所有 speaker 端点，否则只改到 Default
-            modified = applyIfDirty("volmax-boost", modified) { replaceInSpeaker(it, "volmax-boost", p.volmaxBoost.toString()) }
+            modified = applyIfDirty("volmax-boost", modified) { replaceInSpeakerEndpoints(it, "volmax-boost", p.volmaxBoost.toString()) }
             modified = applyIfDirty("peak-value", modified) { replaceInAllProfiles(it, "peak-value", p.peakValue.toString()) }
             modified = applyIfDirty("hearing-protection-enable", modified) { replaceInSpeaker(it, "hearing-protection-enable", boolToXml(p.hearingProtectionEnable)) }
 
@@ -612,7 +612,12 @@ object DolbyTunerManager {
             // 5.5. DAX3 系统属性写入 + 快照持久化
             applyDax3ToSystem()
 
-            // 6. 重启 audioserver 使杜比引擎重新加载
+            // 6. 机型校准类参数（校准增益 / 最大音量增强）落在参数库里，需让 DMS 重建库
+            val needDms = _dirty.contains("volmax-boost") || _dirty.contains("calibration-boost")
+            if (needDms) {
+                if (restartDms()) waitDbRebuilt()
+            }
+            // 6.1 重启 audioserver 使杜比引擎重新加载
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
             // 6.5 音频服务重启会清空 DSP 内存里的参数 → 把实时层保存过的 GEQ 写回去
