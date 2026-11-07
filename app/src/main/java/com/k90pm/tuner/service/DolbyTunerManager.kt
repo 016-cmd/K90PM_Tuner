@@ -543,24 +543,24 @@ object DolbyTunerManager {
             var modified = original
 
             // ── speaker 层参数 ──
-            modified = applyIfDirty("dialog-enhancer-enable", modified) { replaceInSpeakerEndpoints(it, "dialog-enhancer-enable", boolToXml(p.dialogEnhancerEnable)) }
-            modified = applyIfDirty("dialog-enhancer-amount", modified) { replaceInSpeakerEndpoints(it, "dialog-enhancer-amount", p.dialogEnhancerAmount.toString()) }
-            modified = applyIfDirty("dialog-enhancer-ducking", modified) { replaceInSpeakerEndpoints(it, "dialog-enhancer-ducking", p.dialogEnhancerDucking.toString()) }
-            modified = applyIfDirty("bass-enhancer-enable", modified) { replaceInSpeakerEndpoints(it, "bass-enhancer-enable", boolToXml(p.bassEnhancerEnable)) }
-            modified = applyIfDirty("virtual-bass-process-enable", modified) { replaceInSpeakerEndpoints(it, "virtual-bass-process-enable", boolToXml(p.virtualBassProcessEnable)) }
-            modified = applyIfDirty("surround-decoder-enable", modified) { replaceInSpeakerEndpoints(it, "surround-decoder-enable", boolToXml(p.surroundDecoderEnable)) }
-            modified = applyIfDirty("surround-boost", modified) { replaceInSpeakerEndpoints(it, "surround-boost", p.surroundBoost.toString()) }
-            modified = applyIfDirty("volume-leveler-amount", modified) { replaceInSpeakerEndpoints(it, "volume-leveler-amount", if (p.volumeLevelerEnable) "1" else "0") }
-            modified = applyIfDirty("virtualizer-enable", modified) { replaceInSpeakerEndpoints(it, "virtualizer-enable", boolToXml(p.virtualizerEnable)) }
-            modified = applyIfDirty("virtualizer-start-band", modified) { replaceInSpeakerEndpoints(it, "virtualizer-start-band", p.virtualizerStartBand.toString()) }
-            modified = applyIfDirty("mi-surround-compressor-steering-enable", modified) { replaceInSpeakerEndpoints(it, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable)) }
-            modified = applyIfDirty("calibration-boost", modified) { replaceInSpeakerEndpoints(it, "calibration-boost", p.calibrationBoost.toString(), emptySet()) }
+            modified = applyIfDirty("dialog-enhancer-enable", modified) { replaceInSpeaker(it, "dialog-enhancer-enable", boolToXml(p.dialogEnhancerEnable)) }
+            modified = applyIfDirty("dialog-enhancer-amount", modified) { replaceInSpeaker(it, "dialog-enhancer-amount", p.dialogEnhancerAmount.toString()) }
+            modified = applyIfDirty("dialog-enhancer-ducking", modified) { replaceInSpeaker(it, "dialog-enhancer-ducking", p.dialogEnhancerDucking.toString()) }
+            modified = applyIfDirty("bass-enhancer-enable", modified) { replaceInSpeaker(it, "bass-enhancer-enable", boolToXml(p.bassEnhancerEnable)) }
+            modified = applyIfDirty("virtual-bass-process-enable", modified) { replaceInSpeaker(it, "virtual-bass-process-enable", boolToXml(p.virtualBassProcessEnable)) }
+            modified = applyIfDirty("surround-decoder-enable", modified) { replaceInSpeaker(it, "surround-decoder-enable", boolToXml(p.surroundDecoderEnable)) }
+            modified = applyIfDirty("surround-boost", modified) { replaceInSpeaker(it, "surround-boost", p.surroundBoost.toString()) }
+            modified = applyIfDirty("volume-leveler-amount", modified) { replaceInSpeaker(it, "volume-leveler-amount", if (p.volumeLevelerEnable) "1" else "0") }
+            modified = applyIfDirty("virtualizer-enable", modified) { replaceInSpeaker(it, "virtualizer-enable", boolToXml(p.virtualizerEnable)) }
+            modified = applyIfDirty("virtualizer-start-band", modified) { replaceInSpeaker(it, "virtualizer-start-band", p.virtualizerStartBand.toString()) }
+            modified = applyIfDirty("mi-surround-compressor-steering-enable", modified) { replaceInSpeaker(it, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable)) }
+            modified = applyIfDirty("calibration-boost", modified) { replaceInSpeaker(it, "calibration-boost", p.calibrationBoost.toString()) }
             // ── IEQ 增强（APP 只切换外放 speaker 的开关,不碰耳机 headphone 端点）──
             modified = applyIfDirty("ieq-enable", modified) { replaceInSpeakerEndpoints(it, "ieq-enable", boolToXml(p.ieqEnhanceEnable)) }
             // volmax-boost 每个 profile 各一份：必须改所有 speaker 端点，否则只改到 Default
-            modified = applyIfDirty("volmax-boost", modified) { replaceInSpeakerEndpoints(it, "volmax-boost", p.volmaxBoost.toString(), emptySet()) }
-            modified = applyIfDirty("peak-value", modified) { replaceInSpeakerEndpoints(it, "peak-value", p.peakValue.toString()) }
-            modified = applyIfDirty("hearing-protection-enable", modified) { replaceInSpeakerEndpoints(it, "hearing-protection-enable", boolToXml(p.hearingProtectionEnable)) }
+            modified = applyIfDirty("volmax-boost", modified) { replaceInSpeaker(it, "volmax-boost", p.volmaxBoost.toString()) }
+            modified = applyIfDirty("peak-value", modified) { replaceInAllProfiles(it, "peak-value", p.peakValue.toString()) }
+            modified = applyIfDirty("hearing-protection-enable", modified) { replaceInSpeaker(it, "hearing-protection-enable", boolToXml(p.hearingProtectionEnable)) }
 
             // ── Tuning 层三场景同步 ──
             modified = applyIfDirty("bass-enhancer-boost", modified) { replaceInAllTunings(it, "bass-enhancer-boost", p.bassEnhancerBoost.toString()) }
@@ -612,9 +612,7 @@ object DolbyTunerManager {
             // 5.5. DAX3 系统属性写入 + 快照持久化
             applyDax3ToSystem()
 
-            // 6. 先重启杜比 DMS 重建参数库，再重启 audioserver（顺序不能反）
-            val dmsOk = restartDms()
-            if (dmsOk) waitDbRebuilt()
+            // 6. 重启 audioserver 使杜比引擎重新加载
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
             // 6.5 音频服务重启会清空 DSP 内存里的参数 → 把实时层保存过的 GEQ 写回去
@@ -793,9 +791,7 @@ object DolbyTunerManager {
             _dax3Dirty.clear()
             WsaShell.execSyncCmd("rm -f $DAX3_SNAPSHOT 2>/dev/null")  // 删快照,重启后 service.sh 用默认
 
-            // 5. 先让 DMS 按还原后的 dax 重建库，再重启 audioserver
-            val dmsOk = restartDms()
-            if (dmsOk) waitDbRebuilt()
+            // 5. 重启 audioserver 使杜比引擎重新加载
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
 
