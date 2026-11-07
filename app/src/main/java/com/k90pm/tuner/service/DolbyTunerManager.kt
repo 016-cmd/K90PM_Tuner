@@ -614,7 +614,7 @@ object DolbyTunerManager {
 
             // 6. 先重启杜比 DMS 重建参数库，再重启 audioserver（顺序不能反）
             val dmsOk = restartDms()
-            if (dmsOk) delay(2500)
+            if (dmsOk) waitDbRebuilt()
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
             // 6.5 音频服务重启会清空 DSP 内存里的参数 → 把实时层保存过的 GEQ 写回去
@@ -658,6 +658,28 @@ object DolbyTunerManager {
         if (!exists.contains("yes")) return false
         val r = WsaShell.execSyncCmd("stop dms-hal 2>/dev/null; sleep 1; start dms-hal 2>/dev/null; echo OK")
         return r.contains("OK")
+    }
+
+    /**
+     * 等杜比 DMS 把参数库真的重建完。
+     *
+     * 固定 sleep 会抖动：换场景后有时 1 秒就写完、有时要 6 秒，
+     * 之前「有时好使有时不好使」的多半就是等的时间不够，音频服务先起来了。
+     * 这里轮询 dax_sqlite3.db 的修改时间，变化即视为重建完成。
+     */
+    private fun waitDbRebuilt(timeoutMs: Long = 15000): Boolean {
+        val db = "/data/vendor/dolby/dax_sqlite3.db"
+        val before = WsaShell.execSyncCmd("stat -c %Y '$db' 2>/dev/null").trim()
+        val start = System.currentTimeMillis()
+        while (System.currentTimeMillis() - start < timeoutMs) {
+            Thread.sleep(250)
+            val now = WsaShell.execSyncCmd("stat -c %Y '$db' 2>/dev/null").trim()
+            if (now.isNotEmpty() && now != before) {
+                Thread.sleep(400)   // 让 DMS 把库写完并推给 DSP
+                return true
+            }
+        }
+        return false
     }
 
     /**
@@ -773,7 +795,7 @@ object DolbyTunerManager {
 
             // 5. 先让 DMS 按还原后的 dax 重建库，再重启 audioserver
             val dmsOk = restartDms()
-            if (dmsOk) delay(2500)
+            if (dmsOk) waitDbRebuilt()
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
 
