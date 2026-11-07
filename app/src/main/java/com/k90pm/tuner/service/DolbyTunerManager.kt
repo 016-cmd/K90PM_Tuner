@@ -601,10 +601,20 @@ object DolbyTunerManager {
                 WsaShell.execSyncCmd("cp -f '$internalPath' '$MODULE_VENDOR_DAX' && chmod 644 '$MODULE_VENDOR_DAX'")
             }
 
+            // 5.6 系统路径同步校验：挂载丢了就热挂一次，仍不同步就报错（不假装成功）
+            val syncErr = ensureSystemSync()
+            if (syncErr != null) {
+                _resultMsg.value = syncErr
+                _isApplying.value = false
+                return@withContext false
+            }
+
             // 5.5. DAX3 系统属性写入 + 快照持久化
             applyDax3ToSystem()
 
-// 6. 重启 audioserver 使杜比引擎重新加载
+            // 6. 先重启杜比 DMS 重建参数库，再重启 audioserver（顺序不能反）
+            val dmsOk = restartDms()
+            if (dmsOk) delay(2500)
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
             // 6.5 音频服务重启会清空 DSP 内存里的参数 → 把实时层保存过的 GEQ 写回去
@@ -624,6 +634,30 @@ object DolbyTunerManager {
             _isApplying.value = false
             false
         }
+    }
+
+    /**
+     * 校验系统路径上的 dax 是否真的就是模块里那份文件。
+     * 模块靠 post-fs-data 的 mount --bind 把 Aoi/ 挂到系统路径；
+     * 挂载丢了的话写模块文件等于白写，这里顺手补一次 bind。
+     */
+    private fun ensureSystemSync(): String? {
+        fun md5(path: String): String =
+            WsaShell.execSyncCmd("md5sum '$path' 2>/dev/null | cut -d' ' -f1").trim()
+        val mod = md5(MODULE_DAX)
+        if (mod.isEmpty()) return "❌ 读不到模块里的 dax 文件，请确认模块已安装"
+        if (md5(DAX_SYS) == mod) return null
+        WsaShell.execSyncCmd("mount --bind '$MODULE_DAX' '$DAX_SYS' 2>/dev/null")
+        if (md5(DAX_SYS) == mod) return null
+        return "❌ 模块文件与系统路径不同步（热挂载失败），请重启手机后再点应用"
+    }
+
+    /** 重启杜比 DMS，让它按新 dax 重新生成参数库（不重启它，改了文件也不会生效） */
+    private fun restartDms(): Boolean {
+        val exists = WsaShell.execSyncCmd("[ -e /vendor/bin/hw/vendor.dolby.dms.service ] && echo yes || echo no")
+        if (!exists.contains("yes")) return false
+        val r = WsaShell.execSyncCmd("stop dms-hal 2>/dev/null; sleep 1; start dms-hal 2>/dev/null; echo OK")
+        return r.contains("OK")
     }
 
     /**
@@ -718,6 +752,14 @@ object DolbyTunerManager {
                 WsaShell.execSyncCmd("cp -f '$internalPath' '$MODULE_VENDOR_DAX' && chmod 644 '$MODULE_VENDOR_DAX'")
             }
 
+            // 4.2 系统路径同步校验
+            val syncErr = ensureSystemSync()
+            if (syncErr != null) {
+                _resultMsg.value = syncErr
+                _isApplying.value = false
+                return@withContext false
+            }
+
             // 4.5. DAX3 重置为模块默认值 + 删除快照（让 service.sh 走 else 分支写死默认）
             _dax3.value = DAX3_DEFAULTS.toMap()
             // 重置时必须将 dirty 的 key（用户改过的）setprop 回默认值
@@ -729,7 +771,9 @@ object DolbyTunerManager {
             _dax3Dirty.clear()
             WsaShell.execSyncCmd("rm -f $DAX3_SNAPSHOT 2>/dev/null")  // 删快照,重启后 service.sh 用默认
 
-            // 5. 重启 audioserver 使杜比引擎重新加载
+            // 5. 先让 DMS 按还原后的 dax 重建库，再重启 audioserver
+            val dmsOk = restartDms()
+            if (dmsOk) delay(2500)
             val restartResult = WsaShell.execSyncCmd("setprop ctl.restart audioserver && echo OK || echo FAIL")
             val restartOk = restartResult.contains("OK")
 
