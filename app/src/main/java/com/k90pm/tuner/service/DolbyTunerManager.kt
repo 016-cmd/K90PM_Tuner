@@ -476,15 +476,16 @@ object DolbyTunerManager {
     private fun applyDax3ToSystem() {
         try {
             if (_dax3Dirty.isEmpty()) return  // 没改过任何 DAX3 参数,跳过
+            val cmds = StringBuilder("set +e;")
             val sb = StringBuilder("{\n")
             for (key in _dax3Dirty) {
                 val value = _dax3.value[key] ?: continue
-                WsaShell.execSyncCmd("setprop $key '$value' 2>/dev/null")
-                WsaShell.execSyncCmd("resetprop $key '$value' 2>/dev/null")
+                cmds.append(" setprop $key '$value' 2>/dev/null; resetprop $key '$value' 2>/dev/null;")
                 sb.append("  \"$key\": \"$value\",\n")
             }
             val json = sb.toString().trimEnd('\n').trimEnd(',') + "\n}\n"
-            WsaShell.execSyncCmd("cat > $DAX3_SNAPSHOT << 'DAX3EOF'\n$json\nDAX3EOF")
+            cmds.append(" cat > $DAX3_SNAPSHOT << 'DAX3EOF'\n$json\nDAX3EOF")
+            WsaShell.execSyncCmd(cmds.toString())
         } catch (_: Exception) {
             // 静默
         }
@@ -604,10 +605,8 @@ object DolbyTunerManager {
             // 5.5. DAX3 系统属性写入 + 快照持久化
             applyDax3ToSystem()
 
-            // 6. 杀 DMS + audioserver，让参数库与 DSP 都按新文件重来（所有 profile 一并刷新）
-            val dbBefore = WsaShell.execSyncCmd("stat -c %Y /data/vendor/dolby/dax_sqlite3.db 2>/dev/null").trim()
-            val restartOk = restartDolbyStack()
-            val dbOk = if (restartOk) waitDbRebuilt(dbBefore) else false
+            // 6. 杀 DMS + audioserver，并在同一条脚本里等参数库重建（只起一次 su）
+            val (restartOk, dbOk) = restartDolbyStack()
             // 6.5 音频服务重启会清空 DSP 内存里的参数 → 把实时层保存过的 GEQ 写回去
             val rtOk = if (restartOk) reapplyRealtimeAfterRestart(context) else false
             if (restartOk) {
@@ -662,66 +661,60 @@ object DolbyTunerManager {
      * 挂载丢了的话写模块文件等于白写，这里顺手补一次 bind。
      */
     private fun ensureSystemSync(): String? {
-        fun md5(path: String): String =
-            WsaShell.execSyncCmd("md5sum '$path' 2>/dev/null | cut -d' ' -f1").trim()
         val srcs = moduleDaxTargets().filter { it.contains("/Aoi/") || it.contains("/Link/") }
-        val src = srcs.firstOrNull { md5(it).isNotEmpty() }
+        if (srcs.isEmpty()) return "❌ 找不到模块目录，请确认模块已安装"
+        val args = (srcs + DAX_SYS).joinToString(" ") { "'$it'" }
+        val out = WsaShell.execSyncCmd("md5sum $args 2>/dev/null").trim()
+        val map = out.lines().mapNotNull { line ->
+            val p = line.trim().split(Regex("\\s+"), 2)
+            if (p.size == 2) p[1].trim().removePrefix("*") to p[0].trim() else null
+        }.toMap()
+        val src = srcs.firstOrNull { !map[it].isNullOrEmpty() }
             ?: return "❌ 读不到模块里的 dax 文件，请确认模块已安装"
-        val want = md5(src)
-        if (want.isEmpty()) return "❌ 读不到模块里的 dax 文件，请确认模块已安装"
-        if (md5(DAX_SYS) == want) return null
-        for (t in srcs) WsaShell.execSyncCmd("mount --bind '$t' '$DAX_SYS' 2>/dev/null")
-        if (md5(DAX_SYS) == want) return null
-        return "❌ 模块文件与系统路径不同步（热挂载失败），请重启手机后再点应用"
+        val want = map[src]
+        if (map[DAX_SYS] == want) return null
+        WsaShell.execSyncCmd("mount --bind '$src' '$DAX_SYS' 2>/dev/null")
+        val now = WsaShell.execSyncCmd("md5sum '$DAX_SYS' 2>/dev/null | cut -d' ' -f1").trim().removePrefix("*")
+        return if (now == want) null else "❌ 模块文件与系统路径不同步（热挂载失败），请重启手机后再点应用"
     }
 
     /**
      * 让杜比整条链路重读参数：先停 DMS（它按新 dax 重建参数库），再停 audioserver
      * （它重新挂 effect 时才把库里的值推给 DSP）。顺序反了就会拿到旧值。
      */
-    private fun restartDolbyStack(): Boolean {
+    private fun restartDolbyStack(): Pair<Boolean, Boolean> {
         val script = """
             set +e
+            db=/data/vendor/dolby/dax_sqlite3.db
+            before=${'$'}(stat -c %Y ${'$'}db 2>/dev/null)
             for n in vendor.dolby.dms.service audioserver; do
               P=${'$'}(pidof ${'$'}n); [ -n "${'$'}P" ] && kill ${'$'}P 2>/dev/null
             done
-            sleep 1
+            sleep 0.3
             for n in vendor.dolby.dms.service audioserver; do
               P=${'$'}(pidof ${'$'}n); [ -n "${'$'}P" ] && kill -9 ${'$'}P 2>/dev/null
             done
             i=0
-            while [ ${'$'}i -lt 40 ]; do
+            while [ ${'$'}i -lt 60 ]; do
               a=${'$'}(pidof audioserver); d=${'$'}(pidof vendor.dolby.dms.service)
               [ -n "${'$'}a" ] && [ -n "${'$'}d" ] && break
-              i=${'$'}((i+1)); sleep 0.25
+              i=${'$'}((i+1)); sleep 0.2
             done
             pidof vendor.dolby.dms.service >/dev/null 2>&1 || start vendor.dolby.dms.service 2>/dev/null
             pidof audioserver >/dev/null 2>&1 || start audioserver 2>/dev/null
-            sleep 1
-            pidof audioserver >/dev/null 2>&1 && pidof vendor.dolby.dms.service >/dev/null 2>&1 && echo OK || echo FAIL
+            ok=0
+            pidof audioserver >/dev/null 2>&1 && pidof vendor.dolby.dms.service >/dev/null 2>&1 && ok=1
+            dbok=0
+            i=0
+            while [ ${'$'}i -lt 48 ]; do
+              now=${'$'}(stat -c %Y ${'$'}db 2>/dev/null)
+              if [ -n "${'$'}now" ] && [ "${'$'}now" != "${'$'}before" ]; then dbok=1; break; fi
+              i=${'$'}((i+1)); sleep 0.25
+            done
+            echo "STACK=${'$'}ok DB=${'$'}dbok"
         """.trimIndent()
-        return WsaShell.execSyncCmd(script).contains("OK")
-    }
-
-    /**
-     * 等杜比 DMS 把参数库真的重建完。
-     *
-     * 固定 sleep 会抖动：换场景后有时 1 秒就写完、有时要 6 秒，
-     * 之前「有时好使有时不好使」的多半就是等的时间不够，音频服务先起来了。
-     * 这里轮询 dax_sqlite3.db 的修改时间，变化即视为重建完成。
-     */
-    private fun waitDbRebuilt(before: String, timeoutMs: Long = 15000): Boolean {
-        val db = "/data/vendor/dolby/dax_sqlite3.db"
-        val start = System.currentTimeMillis()
-        while (System.currentTimeMillis() - start < timeoutMs) {
-            Thread.sleep(250)
-            val now = WsaShell.execSyncCmd("stat -c %Y '$db' 2>/dev/null").trim()
-            if (now.isNotEmpty() && now != before) {
-                Thread.sleep(400)   // 让 DMS 把库写完并推给 DSP
-                return true
-            }
-        }
-        return false
+        val r = WsaShell.execSyncCmd(script)
+        return r.contains("STACK=1") to r.contains("DB=1")
     }
 
     /**
@@ -738,7 +731,7 @@ object DolbyTunerManager {
             ?: runCatching { DapCurveStore.load(context) }.getOrNull()
             ?: return false
         repeat(8) { attempt ->
-            if (attempt > 0) delay(700)   // audioserver 起来后 effect 挂载需要一点时间
+            if (attempt > 0) delay(260)   // audioserver 起来后 effect 挂载需要一点时间
             // ① 优先复用页面常驻会话：重启后它会自愈重开；
             //    也避免「新开实例抢不到控制权」被误判成写回失败
             val e1 = runCatching { DapRealtime.writeLive(curve) }
@@ -816,29 +809,26 @@ object DolbyTunerManager {
                 return@withContext false
             }
 
-            // 4.5. DAX3 重置为模块默认值 + 删除快照（让 service.sh 走 else 分支写死默认）
-            _dax3.value = DAX3_DEFAULTS.toMap()
-            // 重置时必须将 dirty 的 key（用户改过的）setprop 回默认值
+            // 4.5. DAX3 重置为模块默认值 + 删除快照（合成一次 su，别用几十次往返）
+            val dax3Reset = StringBuilder("set +e;")
             for (key in _dax3Dirty) {
                 val defVal = DAX3_DEFAULTS[key] ?: continue
-                WsaShell.execSyncCmd("setprop $key '$defVal' 2>/dev/null")
-                WsaShell.execSyncCmd("resetprop $key '$defVal' 2>/dev/null")
+                dax3Reset.append(" setprop $key '$defVal' 2>/dev/null; resetprop $key '$defVal' 2>/dev/null;")
             }
             _dax3Dirty.clear()
-            WsaShell.execSyncCmd("rm -f $DAX3_SNAPSHOT 2>/dev/null")  // 删快照,重启后 service.sh 用默认
+            dax3Reset.append(" rm -f $DAX3_SNAPSHOT 2>/dev/null")
+            WsaShell.execSyncCmd(dax3Reset.toString())
+            _dax3.value = DAX3_DEFAULTS.toMap()
 
-            // 5. 杀 DMS + audioserver，让参数库与 DSP 都按出厂文件重来
-            val dbBefore = WsaShell.execSyncCmd("stat -c %Y /data/vendor/dolby/dax_sqlite3.db 2>/dev/null").trim()
-            val restartOk = restartDolbyStack()
-            if (restartOk) waitDbRebuilt(dbBefore)
+            // 5. 杀 DMS + audioserver，让参数库与 DSP 都按出厂文件重来（等库也在同一条脚本里）
+            val (restartOk, _) = restartDolbyStack()
 
-            // 6. 重启后 Dolby HAL 初始化可能从内部状态恢复旧 persist 值,
-            //    因此需要再次 setprop 覆盖,确保 DAX3 属性回到默认值
-            for (key in DAX3_DEFAULTS.keys) {
-                val defVal = DAX3_DEFAULTS[key]!!
-                WsaShell.execSyncCmd("setprop $key '$defVal' 2>/dev/null")
-                WsaShell.execSyncCmd("resetprop $key '$defVal' 2>/dev/null")
+            // 6. 重启后 Dolby HAL 初始化可能从内部状态恢复旧 persist 值，一次 su 覆盖回默认值
+            val dax3Restore = StringBuilder("set +e;")
+            for ((key, defVal) in DAX3_DEFAULTS) {
+                dax3Restore.append(" setprop $key '$defVal' 2>/dev/null; resetprop $key '$defVal' 2>/dev/null;")
             }
+            WsaShell.execSyncCmd(dax3Restore.toString())
 
 // 7. 重新读取参数刷新UI
             loadParams(context)

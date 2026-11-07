@@ -16,8 +16,8 @@ android {
         applicationId = "com.k90pm.tuner"
         minSdk = 33
         targetSdk = 37
-        versionCode = 58
-        versionName = "3.12.0"
+        versionCode = 59
+        versionName = "3.12.1"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
