@@ -276,7 +276,12 @@ object DolbyTunerManager {
                 _isLoading.value = false
                 return@withContext false
             }
-            parseAndSet(xml)
+            // 用户还有没应用的改动时，只刷新频段基值，不覆盖他刚改的开关
+            if (hasUnsavedChanges()) {
+                parseBandOptimizers(xml)
+            } else {
+                parseAndSet(xml)
+            }
             // 同步加载 DAX3 系统属性
             loadDax3Props()
             hasParsedOnce = true
@@ -376,8 +381,48 @@ object DolbyTunerManager {
         )
     }
 
+    /**
+     * 用户这次真正改动过的参数名。
+     *
+     * 为什么需要：dax 里同一个参数在不同场景 / 不同端点上本来就可以有不同的值
+     *（例如 bass-enhancer-boost 有 160 / 50 / 96 / 47 几种）。
+     * 以前「应用」是拿内存里的单一值把全文同名的参数全部覆盖，
+     * 结果只要动一个开关，三场景差异会被一把抹平。
+     * 现在只写用户真正改过的那几个参数，其他一律保持模块原样。
+     */
+    private val _dirty = linkedSetOf<String>()
+
+    /** 是否有还没应用的改动（有的话重进页面时不要拿文件值覆盖 UI） */
+    fun hasUnsavedChanges(): Boolean = _dirty.isNotEmpty()
+
     /** 更新参数（不写文件,只更新内存状态） */
     fun updateParams(new: DolbyParams) {
+        val old = _params.value
+        if (old.dialogEnhancerEnable != new.dialogEnhancerEnable) _dirty += "dialog-enhancer-enable"
+        if (old.dialogEnhancerAmount != new.dialogEnhancerAmount) _dirty += "dialog-enhancer-amount"
+        if (old.dialogEnhancerDucking != new.dialogEnhancerDucking) _dirty += "dialog-enhancer-ducking"
+        if (old.bassEnhancerEnable != new.bassEnhancerEnable) _dirty += "bass-enhancer-enable"
+        if (old.virtualBassProcessEnable != new.virtualBassProcessEnable) _dirty += "virtual-bass-process-enable"
+        if (old.surroundDecoderEnable != new.surroundDecoderEnable) _dirty += "surround-decoder-enable"
+        if (old.surroundBoost != new.surroundBoost) _dirty += "surround-boost"
+        if (old.volumeLevelerEnable != new.volumeLevelerEnable) _dirty += "volume-leveler-amount"
+        if (old.virtualizerEnable != new.virtualizerEnable) _dirty += "virtualizer-enable"
+        if (old.virtualizerStartBand != new.virtualizerStartBand) _dirty += "virtualizer-start-band"
+        if (old.miSurroundCompressorSteeringEnable != new.miSurroundCompressorSteeringEnable) _dirty += "mi-surround-compressor-steering-enable"
+        if (old.calibrationBoost != new.calibrationBoost) _dirty += "calibration-boost"
+        if (old.ieqEnhanceEnable != new.ieqEnhanceEnable) _dirty += "ieq-enable"
+        if (old.volmaxBoost != new.volmaxBoost) _dirty += "volmax-boost"
+        if (old.peakValue != new.peakValue) _dirty += "peak-value"
+        if (old.hearingProtectionEnable != new.hearingProtectionEnable) _dirty += "hearing-protection-enable"
+        if (old.bassEnhancerBoost != new.bassEnhancerBoost) _dirty += "bass-enhancer-boost"
+        if (old.bassEnhancerCutoffFrequency != new.bassEnhancerCutoffFrequency) _dirty += "bass-enhancer-cutoff-frequency"
+        if (old.virtualBassMode != new.virtualBassMode) _dirty += "virtual-bass-mode"
+        if (old.virtualBassOverallGain != new.virtualBassOverallGain) _dirty += "virtual-bass-overall-gain"
+        if (old.virtualBassMixLow != new.virtualBassMixLow) _dirty += "virtual-bass-mix-freqs"
+        if (old.virtualBassMixHigh != new.virtualBassMixHigh) _dirty += "virtual-bass-mix-freqs"
+        if (old.bassExtractionEnable != new.bassExtractionEnable) _dirty += "bass-extraction-enable"
+        if (old.bassExtractionCutoffFrequency != new.bassExtractionCutoffFrequency) _dirty += "bass-extraction-cutoff-frequency"
+        if (old.regulatorStressOptimize != new.regulatorStressOptimize) _dirty += "regulator-stress-amount"
         _params.value = new
     }
 
@@ -498,39 +543,39 @@ object DolbyTunerManager {
             var modified = original
 
             // ── speaker 层参数 ──
-            modified = replaceInSpeakerEndpoints(modified, "dialog-enhancer-enable", boolToXml(p.dialogEnhancerEnable))
-            modified = replaceInSpeakerEndpoints(modified, "dialog-enhancer-amount", p.dialogEnhancerAmount.toString())
-            modified = replaceInSpeakerEndpoints(modified, "dialog-enhancer-ducking", p.dialogEnhancerDucking.toString())
-            modified = replaceInSpeakerEndpoints(modified, "bass-enhancer-enable", boolToXml(p.bassEnhancerEnable))
-            modified = replaceInSpeakerEndpoints(modified, "virtual-bass-process-enable", boolToXml(p.virtualBassProcessEnable))
-            modified = replaceInSpeakerEndpoints(modified, "surround-decoder-enable", boolToXml(p.surroundDecoderEnable))
-            modified = replaceInSpeakerEndpoints(modified, "surround-boost", p.surroundBoost.toString())
-            modified = replaceInSpeakerEndpoints(modified, "volume-leveler-amount", if (p.volumeLevelerEnable) "1" else "0")
-            modified = replaceInSpeakerEndpoints(modified, "virtualizer-enable", boolToXml(p.virtualizerEnable))
-            modified = replaceInSpeakerEndpoints(modified, "virtualizer-start-band", p.virtualizerStartBand.toString())
-            modified = replaceInSpeakerEndpoints(modified, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable))
-            modified = replaceInSpeakerEndpoints(modified, "calibration-boost", p.calibrationBoost.toString(), emptySet())
+            modified = applyIfDirty("dialog-enhancer-enable", modified) { replaceInSpeakerEndpoints(it, "dialog-enhancer-enable", boolToXml(p.dialogEnhancerEnable)) }
+            modified = applyIfDirty("dialog-enhancer-amount", modified) { replaceInSpeakerEndpoints(it, "dialog-enhancer-amount", p.dialogEnhancerAmount.toString()) }
+            modified = applyIfDirty("dialog-enhancer-ducking", modified) { replaceInSpeakerEndpoints(it, "dialog-enhancer-ducking", p.dialogEnhancerDucking.toString()) }
+            modified = applyIfDirty("bass-enhancer-enable", modified) { replaceInSpeakerEndpoints(it, "bass-enhancer-enable", boolToXml(p.bassEnhancerEnable)) }
+            modified = applyIfDirty("virtual-bass-process-enable", modified) { replaceInSpeakerEndpoints(it, "virtual-bass-process-enable", boolToXml(p.virtualBassProcessEnable)) }
+            modified = applyIfDirty("surround-decoder-enable", modified) { replaceInSpeakerEndpoints(it, "surround-decoder-enable", boolToXml(p.surroundDecoderEnable)) }
+            modified = applyIfDirty("surround-boost", modified) { replaceInSpeakerEndpoints(it, "surround-boost", p.surroundBoost.toString()) }
+            modified = applyIfDirty("volume-leveler-amount", modified) { replaceInSpeakerEndpoints(it, "volume-leveler-amount", if (p.volumeLevelerEnable) "1" else "0") }
+            modified = applyIfDirty("virtualizer-enable", modified) { replaceInSpeakerEndpoints(it, "virtualizer-enable", boolToXml(p.virtualizerEnable)) }
+            modified = applyIfDirty("virtualizer-start-band", modified) { replaceInSpeakerEndpoints(it, "virtualizer-start-band", p.virtualizerStartBand.toString()) }
+            modified = applyIfDirty("mi-surround-compressor-steering-enable", modified) { replaceInSpeakerEndpoints(it, "mi-surround-compressor-steering-enable", boolToXml(p.miSurroundCompressorSteeringEnable)) }
+            modified = applyIfDirty("calibration-boost", modified) { replaceInSpeakerEndpoints(it, "calibration-boost", p.calibrationBoost.toString(), emptySet()) }
             // ── IEQ 增强（APP 只切换外放 speaker 的开关,不碰耳机 headphone 端点）──
-            modified = replaceInSpeakerEndpoints(modified, "ieq-enable", boolToXml(p.ieqEnhanceEnable))
+            modified = applyIfDirty("ieq-enable", modified) { replaceInSpeakerEndpoints(it, "ieq-enable", boolToXml(p.ieqEnhanceEnable)) }
             // volmax-boost 每个 profile 各一份：必须改所有 speaker 端点，否则只改到 Default
-            modified = replaceInSpeakerEndpoints(modified, "volmax-boost", p.volmaxBoost.toString(), emptySet())
-            modified = replaceInSpeakerEndpoints(modified, "peak-value", p.peakValue.toString())
-            modified = replaceInSpeakerEndpoints(modified, "hearing-protection-enable", boolToXml(p.hearingProtectionEnable))
+            modified = applyIfDirty("volmax-boost", modified) { replaceInSpeakerEndpoints(it, "volmax-boost", p.volmaxBoost.toString(), emptySet()) }
+            modified = applyIfDirty("peak-value", modified) { replaceInSpeakerEndpoints(it, "peak-value", p.peakValue.toString()) }
+            modified = applyIfDirty("hearing-protection-enable", modified) { replaceInSpeakerEndpoints(it, "hearing-protection-enable", boolToXml(p.hearingProtectionEnable)) }
 
             // ── Tuning 层三场景同步 ──
-            modified = replaceInAllTunings(modified, "bass-enhancer-boost", p.bassEnhancerBoost.toString())
-            modified = replaceInAllTunings(modified, "bass-enhancer-cutoff-frequency", p.bassEnhancerCutoffFrequency.toString())
-            modified = replaceInAllTunings(modified, "virtual-bass-mode", p.virtualBassMode.toString())
-            modified = replaceInAllTunings(modified, "virtual-bass-overall-gain", p.virtualBassOverallGain.toString())
-            modified = replaceMixFreqs(modified, p.virtualBassMixLow, p.virtualBassMixHigh)
+            modified = applyIfDirty("bass-enhancer-boost", modified) { replaceInAllTunings(it, "bass-enhancer-boost", p.bassEnhancerBoost.toString()) }
+            modified = applyIfDirty("bass-enhancer-cutoff-frequency", modified) { replaceInAllTunings(it, "bass-enhancer-cutoff-frequency", p.bassEnhancerCutoffFrequency.toString()) }
+            modified = applyIfDirty("virtual-bass-mode", modified) { replaceInAllTunings(it, "virtual-bass-mode", p.virtualBassMode.toString()) }
+            modified = applyIfDirty("virtual-bass-overall-gain", modified) { replaceInAllTunings(it, "virtual-bass-overall-gain", p.virtualBassOverallGain.toString()) }
+            modified = applyIfDirty("virtual-bass-mix-freqs", modified) { replaceMixFreqs(it, p.virtualBassMixLow, p.virtualBassMixHigh) }
 
             // ── Tuning 层三场景同步（低频提取） ──
-            modified = replaceInAllTunings(modified, "bass-extraction-enable", boolToXml(p.bassExtractionEnable))
-            modified = replaceInAllTunings(modified, "bass-extraction-cutoff-frequency", p.bassExtractionCutoffFrequency.toString())
+            modified = applyIfDirty("bass-extraction-enable", modified) { replaceInAllTunings(it, "bass-extraction-enable", boolToXml(p.bassExtractionEnable)) }
+            modified = applyIfDirty("bass-extraction-cutoff-frequency", modified) { replaceInAllTunings(it, "bass-extraction-cutoff-frequency", p.bassExtractionCutoffFrequency.toString()) }
             
             // ── 动态范围优化（regulator-stress-amount） ──
             val regulatorValue = if (p.regulatorStressOptimize) "240,240,240,96" else "120,116,112,64"
-            modified = replaceInAllTunings(modified, "regulator-stress-amount", regulatorValue)
+            modified = applyIfDirty("regulator-stress-amount", modified) { replaceInAllTunings(it, "regulator-stress-amount", regulatorValue) }
 
             // ── Tuning 层三场景频段 band_optimizer（Medium基准 + 偏移三场景同比） ──
             modified = applyBandOffsets(modified)
@@ -571,6 +616,7 @@ object DolbyTunerManager {
             } else {
                 _resultMsg.value = "✅ 参数已保存!但音频服务重启失败,请重启手机后生效."
             }
+            _dirty.clear()
             _isApplying.value = false
             true
         } catch (e: Exception) {
@@ -747,6 +793,10 @@ object DolbyTunerManager {
             // 静默失败,不影响主流程
         }
     }
+
+    /** 只有用户真改过这个参数才写，其他参数保持文件原样 */
+    private fun applyIfDirty(name: String, xml: String, block: (String) -> String): String =
+        if (name in _dirty) block(xml) else xml
 
     // ═══════════════════════════════════════════
     //  XML 替换辅助
